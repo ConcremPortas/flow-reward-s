@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { 
   Table, 
   TableBody, 
@@ -137,12 +137,15 @@ export const DSS = () => {
                       <TableCell>{funcionario.nome}</TableCell>
                       <TableCell>{funcionario.setor}</TableCell>
                       <TableCell className="text-center">
-                        <Checkbox
-                          checked={presencas[funcionario.id] || false}
-                          onCheckedChange={(checked) => 
-                            handlePresencaChange(funcionario.id, checked as boolean)
-                          }
-                        />
+                        <div className="flex items-center justify-center">
+                          <Switch
+                            className="switch-present"
+                            checked={presencas[funcionario.id] || false}
+                            onCheckedChange={(checked) => 
+                              handlePresencaChange(funcionario.id, checked)
+                            }
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

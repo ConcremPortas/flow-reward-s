@@ -153,4 +153,13 @@ Todas as cores em HSL seguindo especificação do usuário
   .status-warning {
     @apply bg-status-warning/10 text-status-warning;
   }
+  
+  /* Switch personalizado para presente/conforme */
+  .switch-present {
+    @apply data-[state=checked]:bg-success;
+  }
+  
+  .switch-conforme {
+    @apply data-[state=checked]:bg-success;
+  }
 }

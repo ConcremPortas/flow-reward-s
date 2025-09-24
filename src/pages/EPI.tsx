@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { 
   Table, 
@@ -131,7 +132,7 @@ export const EPI = () => {
                     <TableHead>Código</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Setor</TableHead>
-                    <TableHead>Status EPI</TableHead>
+                    <TableHead className="text-center">Conforme</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -140,19 +141,16 @@ export const EPI = () => {
                       <TableCell className="font-medium">{funcionario.codigo}</TableCell>
                       <TableCell>{funcionario.nome}</TableCell>
                       <TableCell>{funcionario.setor}</TableCell>
-                      <TableCell>
-                        <Select 
-                          value={statusEPI[funcionario.id] || ""} 
-                          onValueChange={(value) => handleStatusChange(funcionario.id, value)}
-                        >
-                          <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Selecionar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="conforme">Conforme</SelectItem>
-                            <SelectItem value="nao_conforme">Não Conforme</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center">
+                          <Switch
+                            className="switch-conforme"
+                            checked={statusEPI[funcionario.id] === "conforme"}
+                            onCheckedChange={(checked) => 
+                              handleStatusChange(funcionario.id, checked ? "conforme" : "nao_conforme")
+                            }
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
