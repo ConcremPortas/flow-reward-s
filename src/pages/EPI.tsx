@@ -75,25 +75,34 @@ export const EPI = () => {
   const handleEdit = (epi: any) => {
     setEditingRecord(epi.id);
     setEditingData(epi);
-    setEditSelectedFuncionario(epi.funcionario_id || "");
+    // Set up the status for the specific funcionario from the EPI record
+    const editStatus: Record<string, string> = {};
+    if (epi.funcionario_id) {
+      editStatus[epi.funcionario_id] = epi.status || "nao_conforme";
+    }
+    setStatusEPI(editStatus);
   };
 
   const handleUpdate = async () => {
     if (!editingRecord || !editingData) return;
 
+    // Get the funcionario_id and their status from statusEPI
+    const funcionarioId = Object.keys(statusEPI)[0];
+    const status = statusEPI[funcionarioId] || "nao_conforme";
+
     await updateEPI(editingRecord, {
-      funcionario_id: editSelectedFuncionario,
+      funcionario_id: funcionarioId,
       tipo_epi: editingData.tipo_epi,
-      status: editingData.status,
+      status: status,
       descricao: editingData.descricao,
-      observacoes: editingData.observacoes,
+      observacoes: `Status: ${status === 'conforme' ? 'Conforme' : 'Não conforme'}`,
       numero_ca: editingData.numero_ca,
       data_vencimento: editingData.data_vencimento
     });
 
     setEditingRecord(null);
     setEditingData(null);
-    setEditSelectedFuncionario("");
+    setStatusEPI({});
   };
 
   const handleDelete = async (id: string) => {
@@ -105,7 +114,7 @@ export const EPI = () => {
   const handleCancelEdit = () => {
     setEditingRecord(null);
     setEditingData(null);
-    setEditSelectedFuncionario("");
+    setStatusEPI({});
   };
 
   if (loading) {
@@ -297,9 +306,9 @@ export const EPI = () => {
                         </div>
                       </div>
 
-                      {/* Lista de funcionários para seleção */}
+                      {/* Lista de funcionários para auditoria */}
                       <div className="space-y-4">
-                        <h4 className="text-lg font-medium">Selecionar Funcionário</h4>
+                        <h4 className="text-lg font-medium">Status dos EPIs por Funcionário</h4>
                         
                         {funcionarios.length > 0 ? (
                           <div className="border rounded-lg overflow-hidden">
@@ -309,7 +318,7 @@ export const EPI = () => {
                                   <TableHead>Nome</TableHead>
                                   <TableHead>Setor</TableHead>
                                   <TableHead>Empresa</TableHead>
-                                  <TableHead className="text-center">Selecionado</TableHead>
+                                  <TableHead className="text-center">Conforme</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -321,9 +330,10 @@ export const EPI = () => {
                                     <TableCell className="text-center">
                                       <div className="flex items-center justify-center">
                                         <Switch
-                                          checked={editSelectedFuncionario === funcionario.id}
+                                          className="switch-conforme"
+                                          checked={statusEPI[funcionario.id] === "conforme"}
                                           onCheckedChange={(checked) => 
-                                            setEditSelectedFuncionario(checked ? funcionario.id : "")
+                                            handleStatusChange(funcionario.id, checked ? "conforme" : "nao_conforme")
                                           }
                                         />
                                       </div>
