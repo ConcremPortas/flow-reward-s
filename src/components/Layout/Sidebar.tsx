@@ -1,5 +1,5 @@
 import { useState } from "react";
-import logoImage from "@/assets/logo-concrem.png";
+import logoImage from "@/assets/logo-concrem-new.png";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
