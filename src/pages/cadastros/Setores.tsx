@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Table, 
   TableBody, 
@@ -66,12 +68,51 @@ const setores = [
 
 export const Setores = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedSetor, setSelectedSetor] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    nome: "",
+    matriculaEncarregado: "",
+    nomeEncarregado: "",
+    matriculaSupervisor: "",
+    nomeSupervisor: ""
+  });
 
   const filteredSetores = setores.filter(setor =>
     setor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     setor.encarregado.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     setor.supervisor.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAdd = () => {
+    setFormData({
+      nome: "",
+      matriculaEncarregado: "",
+      nomeEncarregado: "",
+      matriculaSupervisor: "",
+      nomeSupervisor: ""
+    });
+    setIsAddOpen(true);
+  };
+
+  const handleEdit = (setor: any) => {
+    setSelectedSetor(setor);
+    setFormData({
+      nome: setor.nome,
+      matriculaEncarregado: setor.encarregado.matricula,
+      nomeEncarregado: setor.encarregado.nome,
+      matriculaSupervisor: setor.supervisor.matricula,
+      nomeSupervisor: setor.supervisor.nome
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleSave = () => {
+    console.log("Salvando setor:", formData);
+    setIsAddOpen(false);
+    setIsEditOpen(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -84,10 +125,74 @@ export const Setores = () => {
                 Gerenciamento dos setores da empresa
               </CardDescription>
             </div>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Setor
-            </Button>
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2" onClick={handleAdd}>
+                  <Plus className="h-4 w-4" />
+                  Novo Setor
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Novo Setor</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome do Setor</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                      placeholder="Ex: Produção"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="matriculaEncarregado">Matrícula do Encarregado</Label>
+                    <Input
+                      id="matriculaEncarregado"
+                      value={formData.matriculaEncarregado}
+                      onChange={(e) => setFormData({...formData, matriculaEncarregado: e.target.value})}
+                      placeholder="Ex: E001"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nomeEncarregado">Nome do Encarregado</Label>
+                    <Input
+                      id="nomeEncarregado"
+                      value={formData.nomeEncarregado}
+                      onChange={(e) => setFormData({...formData, nomeEncarregado: e.target.value})}
+                      placeholder="Ex: João Silva"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="matriculaSupervisor">Matrícula do Supervisor</Label>
+                    <Input
+                      id="matriculaSupervisor"
+                      value={formData.matriculaSupervisor}
+                      onChange={(e) => setFormData({...formData, matriculaSupervisor: e.target.value})}
+                      placeholder="Ex: S001"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nomeSupervisor">Nome do Supervisor</Label>
+                    <Input
+                      id="nomeSupervisor"
+                      value={formData.nomeSupervisor}
+                      onChange={(e) => setFormData({...formData, nomeSupervisor: e.target.value})}
+                      placeholder="Ex: Maria Santos"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSave}>
+                    Salvar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
         
@@ -128,7 +233,12 @@ export const Setores = () => {
                     <TableCell>{setor.supervisor.matricula}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm" className="gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="gap-1"
+                          onClick={() => handleEdit(setor)}
+                        >
                           <Edit className="h-3 w-3" />
                           Editar
                         </Button>
@@ -152,6 +262,65 @@ export const Setores = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog de Edição */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Setor</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-nome">Nome do Setor</Label>
+              <Input
+                id="edit-nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({...formData, nome: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-matriculaEncarregado">Matrícula do Encarregado</Label>
+              <Input
+                id="edit-matriculaEncarregado"
+                value={formData.matriculaEncarregado}
+                onChange={(e) => setFormData({...formData, matriculaEncarregado: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-nomeEncarregado">Nome do Encarregado</Label>
+              <Input
+                id="edit-nomeEncarregado"
+                value={formData.nomeEncarregado}
+                onChange={(e) => setFormData({...formData, nomeEncarregado: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-matriculaSupervisor">Matrícula do Supervisor</Label>
+              <Input
+                id="edit-matriculaSupervisor"
+                value={formData.matriculaSupervisor}
+                onChange={(e) => setFormData({...formData, matriculaSupervisor: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-nomeSupervisor">Nome do Supervisor</Label>
+              <Input
+                id="edit-nomeSupervisor"
+                value={formData.nomeSupervisor}
+                onChange={(e) => setFormData({...formData, nomeSupervisor: e.target.value})}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave}>
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

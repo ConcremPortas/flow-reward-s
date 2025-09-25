@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Table, 
   TableBody, 
@@ -96,6 +98,22 @@ export const Funcionarios = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSetor, setSelectedSetor] = useState("Todos");
   const [selectedStatus, setSelectedStatus] = useState("Todos");
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedFuncionario, setSelectedFuncionario] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    codigo: "",
+    nome: "",
+    setor: "",
+    funcao: "",
+    categoria: "",
+    categoriaBônus: "",
+    status: "",
+    basePremiacao: "",
+    empresa: "",
+    valorFixo: ""
+  });
 
   const filteredFuncionarios = funcionarios.filter(funcionario => {
     const matchesSearch = funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -116,6 +134,50 @@ export const Funcionarios = () => {
     }).format(value);
   };
 
+  const handleAdd = () => {
+    setFormData({
+      codigo: "",
+      nome: "",
+      setor: "",
+      funcao: "",
+      categoria: "",
+      categoriaBônus: "",
+      status: "",
+      basePremiacao: "",
+      empresa: "",
+      valorFixo: ""
+    });
+    setIsAddOpen(true);
+  };
+
+  const handleEdit = (funcionario: any) => {
+    setSelectedFuncionario(funcionario);
+    setFormData({
+      codigo: funcionario.codigo,
+      nome: funcionario.nome,
+      setor: funcionario.setor,
+      funcao: funcionario.funcao,
+      categoria: funcionario.categoria,
+      categoriaBônus: funcionario.categoriaBônus,
+      status: funcionario.status,
+      basePremiacao: funcionario.basePremiacao,
+      empresa: funcionario.empresa,
+      valorFixo: funcionario.valorFixo.toString()
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleView = (funcionario: any) => {
+    setSelectedFuncionario(funcionario);
+    setIsViewOpen(true);
+  };
+
+  const handleSave = () => {
+    console.log("Salvando funcionário:", formData);
+    setIsAddOpen(false);
+    setIsEditOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       <Card className="card-elegant">
@@ -127,10 +189,97 @@ export const Funcionarios = () => {
                 Cadastro e controle de funcionários do sistema
               </CardDescription>
             </div>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Funcionário
-            </Button>
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2" onClick={handleAdd}>
+                  <Plus className="h-4 w-4" />
+                  Novo Funcionário
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Novo Funcionário</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="codigo">Código</Label>
+                    <Input
+                      id="codigo"
+                      value={formData.codigo}
+                      onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+                      placeholder="Ex: FN001"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                      placeholder="Nome completo"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="setor">Setor</Label>
+                    <Select value={formData.setor} onValueChange={(value) => setFormData({...formData, setor: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar setor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Produção">Produção</SelectItem>
+                        <SelectItem value="Qualidade">Qualidade</SelectItem>
+                        <SelectItem value="Montagem">Montagem</SelectItem>
+                        <SelectItem value="Expedição">Expedição</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="funcao">Função</Label>
+                    <Select value={formData.funcao} onValueChange={(value) => setFormData({...formData, funcao: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar função" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Operador">Operador</SelectItem>
+                        <SelectItem value="Analista">Analista</SelectItem>
+                        <SelectItem value="Coordenador">Coordenador</SelectItem>
+                        <SelectItem value="Supervisor">Supervisor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="categoria">Categoria</Label>
+                    <Select value={formData.categoria} onValueChange={(value) => setFormData({...formData, categoria: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CLT">CLT</SelectItem>
+                        <SelectItem value="Terceirizado">Terceirizado</SelectItem>
+                        <SelectItem value="Estagiário">Estagiário</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="valorFixo">Valor Fixo</Label>
+                    <Input
+                      id="valorFixo"
+                      value={formData.valorFixo}
+                      onChange={(e) => setFormData({...formData, valorFixo: e.target.value})}
+                      placeholder="R$ 0,00"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSave}>
+                    Salvar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
         
@@ -204,11 +353,21 @@ export const Funcionarios = () => {
                     <TableCell>{formatCurrency(funcionario.valorFixo)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm" className="gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="gap-1"
+                          onClick={() => handleView(funcionario)}
+                        >
                           <Eye className="h-3 w-3" />
                           Ver
                         </Button>
-                        <Button variant="ghost" size="sm" className="gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="gap-1"
+                          onClick={() => handleEdit(funcionario)}
+                        >
                           <Edit className="h-3 w-3" />
                           Editar
                         </Button>
@@ -233,6 +392,113 @@ export const Funcionarios = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog de Edição */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Funcionário</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-codigo">Código</Label>
+              <Input
+                id="edit-codigo"
+                value={formData.codigo}
+                onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-nome">Nome</Label>
+              <Input
+                id="edit-nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({...formData, nome: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-setor">Setor</Label>
+              <Select value={formData.setor} onValueChange={(value) => setFormData({...formData, setor: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Produção">Produção</SelectItem>
+                  <SelectItem value="Qualidade">Qualidade</SelectItem>
+                  <SelectItem value="Montagem">Montagem</SelectItem>
+                  <SelectItem value="Expedição">Expedição</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-funcao">Função</Label>
+              <Select value={formData.funcao} onValueChange={(value) => setFormData({...formData, funcao: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Operador">Operador</SelectItem>
+                  <SelectItem value="Analista">Analista</SelectItem>
+                  <SelectItem value="Coordenador">Coordenador</SelectItem>
+                  <SelectItem value="Supervisor">Supervisor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave}>
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Visualização */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Funcionário</DialogTitle>
+          </DialogHeader>
+          {selectedFuncionario && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Código</Label>
+                <div className="p-2 bg-muted rounded">{selectedFuncionario.codigo}</div>
+              </div>
+              <div className="space-y-2">
+                <Label>Nome</Label>
+                <div className="p-2 bg-muted rounded">{selectedFuncionario.nome}</div>
+              </div>
+              <div className="space-y-2">
+                <Label>Setor</Label>
+                <div className="p-2 bg-muted rounded">{selectedFuncionario.setor}</div>
+              </div>
+              <div className="space-y-2">
+                <Label>Função</Label>
+                <div className="p-2 bg-muted rounded">{selectedFuncionario.funcao}</div>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <div className="p-2">
+                  <StatusBadge status={selectedFuncionario.status} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Fixo</Label>
+                <div className="p-2 bg-muted rounded">{formatCurrency(selectedFuncionario.valorFixo)}</div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setIsViewOpen(false)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
