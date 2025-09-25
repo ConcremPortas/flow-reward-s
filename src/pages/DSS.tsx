@@ -1,8 +1,8 @@
+// Página DSS - conectada ao banco de dados
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { 
   Table, 
@@ -17,56 +17,47 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, CalendarIcon, Save, FileText } from "lucide-react";
-
-// Dados de exemplo
-const funcionariosAtivos = [
-  { id: 1, codigo: "FN001", nome: "João Silva Santos", setor: "Produção" },
-  { id: 2, codigo: "FN002", nome: "Maria Santos Oliveira", setor: "Qualidade" },
-  { id: 3, codigo: "FN004", nome: "Ana Paula Costa", setor: "Expedição" },
-  { id: 4, codigo: "FN006", nome: "Pedro Alves Lima", setor: "Montagem" },
-  { id: 5, codigo: "FN007", nome: "Carla Mendes Silva", setor: "Produção" },
-];
-
-const dssRealizados = [
-  {
-    id: 1,
-    data: new Date(2024, 0, 15),
-    tema: "Uso correto de EPIs",
-    participantes: 4,
-    totalFuncionarios: 5
-  },
-  {
-    id: 2,
-    data: new Date(2024, 0, 8),
-    tema: "Prevenção de acidentes na operação de máquinas",
-    participantes: 5,
-    totalFuncionarios: 5
-  },
-  {
-    id: 3,
-    data: new Date(2024, 0, 1),
-    tema: "Ordem e limpeza no ambiente de trabalho",
-    participantes: 3,
-    totalFuncionarios: 5
-  }
-];
+import { CalendarIcon, Save, FileText } from "lucide-react";
+import { useFuncionarios } from "@/hooks/useFuncionarios";
 
 export const DSS = () => {
+  const { funcionarios, loading } = useFuncionarios();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [tema, setTema] = useState("");
-  const [presencas, setPresencas] = useState<Record<number, boolean>>({});
+  const [presencas, setPresencas] = useState<Record<string, boolean>>({});
 
-  const handlePresencaChange = (funcionarioId: number, presente: boolean) => {
+  const handlePresencaChange = (funcionarioId: string, presente: boolean) => {
     setPresencas(prev => ({
       ...prev,
       [funcionarioId]: presente
     }));
   };
 
-  const calcularParticipacao = (participantes: number, total: number) => {
-    return Math.round((participantes / total) * 100);
+  const handleSave = () => {
+    if (!selectedDate || !tema.trim()) {
+      alert("Por favor, preencha a data e o tema do DSS");
+      return;
+    }
+    
+    console.log("Salvando DSS:", {
+      data: selectedDate,
+      tema,
+      presencas
+    });
+    
+    // Reset form
+    setSelectedDate(undefined);
+    setTema("");
+    setPresencas({});
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Carregando DSS...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -120,43 +111,61 @@ export const DSS = () => {
           {/* Lista de presença */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Lista de Presença</h3>
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead>Código</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Setor</TableHead>
-                    <TableHead className="text-center">Presente</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {funcionariosAtivos.map((funcionario) => (
-                    <TableRow key={funcionario.id}>
-                      <TableCell className="font-medium">{funcionario.codigo}</TableCell>
-                      <TableCell>{funcionario.nome}</TableCell>
-                      <TableCell>{funcionario.setor}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center">
-                          <Switch
-                            className="switch-present"
-                            checked={presencas[funcionario.id] || false}
-                            onCheckedChange={(checked) => 
-                              handlePresencaChange(funcionario.id, checked)
-                            }
-                          />
-                        </div>
-                      </TableCell>
+            
+            {funcionarios.length > 0 ? (
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Setor</TableHead>
+                      <TableHead>Empresa</TableHead>
+                      <TableHead className="text-center">Presente</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {funcionarios.filter(f => f.ativo).map((funcionario) => (
+                      <TableRow key={funcionario.id}>
+                        <TableCell className="font-medium">{funcionario.nome}</TableCell>
+                        <TableCell>{funcionario.setor?.nome || "Não informado"}</TableCell>
+                        <TableCell>{funcionario.empresa?.nome || "Não informado"}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center">
+                            <Switch
+                              className="switch-present"
+                              checked={presencas[funcionario.id] || false}
+                              onCheckedChange={(checked) => 
+                                handlePresencaChange(funcionario.id, checked)
+                              }
+                            />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                <p>Nenhum funcionário cadastrado ainda.</p>
+                <p className="text-sm">Cadastre funcionários para realizar o DSS.</p>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
-            <Button className="gap-2">
+            <Button variant="outline" onClick={() => {
+              setSelectedDate(undefined);
+              setTema("");
+              setPresencas({});
+            }}>
+              Cancelar
+            </Button>
+            <Button 
+              className="gap-2" 
+              onClick={handleSave}
+              disabled={!selectedDate || !tema.trim() || funcionarios.length === 0}
+            >
               <Save className="h-4 w-4" />
               Salvar DSS
             </Button>
@@ -181,42 +190,9 @@ export const DSS = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Data</TableHead>
-                  <TableHead>Tema</TableHead>
-                  <TableHead>Participantes</TableHead>
-                  <TableHead>% Participação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dssRealizados.map((dss) => (
-                  <TableRow key={dss.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell>{format(dss.data, "dd/MM/yyyy", { locale: ptBR })}</TableCell>
-                    <TableCell>{dss.tema}</TableCell>
-                    <TableCell>{dss.participantes}/{dss.totalFuncionarios}</TableCell>
-                    <TableCell>
-                      <span className={cn(
-                        "font-medium",
-                        calcularParticipacao(dss.participantes, dss.totalFuncionarios) >= 80 
-                          ? "text-success" 
-                          : "text-destructive"
-                      )}>
-                        {calcularParticipacao(dss.participantes, dss.totalFuncionarios)}%
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        Ver Detalhes
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="text-center py-8 text-muted-foreground border rounded-lg">
+            <p>Nenhum DSS realizado ainda.</p>
+            <p className="text-sm">Os DSS realizados aparecerão aqui.</p>
           </div>
         </CardContent>
       </Card>

@@ -1,36 +1,75 @@
+// Página de gestão de base de premiação - conectada ao banco
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
-
-// Dados de exemplo
-const basesPremiacao = [
-  { id: 1, nome: "Produtividade" },
-  { id: 2, nome: "Qualidade" },
-  { id: 3, nome: "Segurança" },
-  { id: 4, nome: "Liderança" },
-  { id: 5, nome: "Logística" },
-  { id: 6, nome: "Eficiência" },
-  { id: 7, nome: "Inovação" },
-  { id: 8, nome: "Sustentabilidade" }
-];
+import { useBasePremiacao } from "@/hooks/useBasePremiacao";
 
 export const BasePremiacao = () => {
+  const { bases, loading, createBase, deleteBase } = useBasePremiacao();
   const [searchTerm, setSearchTerm] = useState("");
   const [nomeBase, setNomeBase] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [valorBase, setValorBase] = useState("");
+  const [tipo, setTipo] = useState("percentual");
 
-  const filteredBases = basesPremiacao.filter(base =>
+  const filteredBases = bases.filter(base =>
     base.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAddBase = async () => {
+    if (!nomeBase.trim() || !valorBase) return;
+    
+    await createBase({
+      nome: nomeBase,
+      descricao: descricao || undefined,
+      valor_base: parseFloat(valorBase),
+      tipo,
+      ativo: true
+    });
+    
+    setNomeBase("");
+    setDescricao("");
+    setValorBase("");
+    setTipo("percentual");
+  };
+
+  const handleDeleteBase = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir esta base de premiação?")) {
+      await deleteBase(id);
+    }
+  };
+
+  const formatTipo = (tipo: string) => {
+    return tipo === 'percentual' ? 'Percentual' : 'Valor Fixo';
+  };
+
+  const formatValor = (valor: number, tipo: string) => {
+    if (tipo === 'percentual') {
+      return `${valor}%`;
+    }
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Carregando bases de premiação...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -52,11 +91,58 @@ export const BasePremiacao = () => {
                 onChange={(e) => setNomeBase(e.target.value)}
               />
             </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tipo</label>
+              <Select value={tipo} onValueChange={setTipo}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percentual">Percentual</SelectItem>
+                  <SelectItem value="valor_fixo">Valor Fixo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Valor Base {tipo === 'percentual' ? '(%)' : '(R$)'}
+              </label>
+              <Input
+                type="number"
+                step={tipo === 'percentual' ? '0.1' : '0.01'}
+                placeholder={tipo === 'percentual' ? "Ex: 10" : "Ex: 100.00"}
+                value={valorBase}
+                onChange={(e) => setValorBase(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Descrição</label>
+              <Textarea
+                placeholder="Descrição opcional da base de premiação..."
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                rows={3}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
-            <Button className="gap-2">
+            <Button variant="outline" onClick={() => {
+              setNomeBase("");
+              setDescricao("");
+              setValorBase("");
+              setTipo("percentual");
+            }}>
+              Cancelar
+            </Button>
+            <Button 
+              className="gap-2" 
+              onClick={handleAddBase} 
+              disabled={!nomeBase.trim() || !valorBase}
+            >
               <Plus className="h-4 w-4" />
               Adicionar Base
             </Button>
@@ -91,30 +177,57 @@ export const BasePremiacao = () => {
           </div>
 
           {/* Grid de bases */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {filteredBases.map((base) => (
-              <Card key={base.id} className="card-elegant card-hover">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium">{base.nome}</h3>
-                    <div className="flex space-x-1">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+          {filteredBases.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredBases.map((base) => (
+                <Card key={base.id} className="card-elegant card-hover">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium">{base.nome}</h3>
+                          <p className="text-sm text-muted-foreground">{formatTipo(base.tipo)}</p>
+                        </div>
+                        <div className="flex space-x-1">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteBase(base.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="text-lg font-bold text-primary">
+                        {formatValor(base.valor_base, base.tipo)}
+                      </div>
+                      
+                      {base.descricao && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {base.descricao}
+                        </p>
+                      )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Nenhuma base de premiação cadastrada ainda.</p>
+              <p className="text-sm">Adicione bases para calcular premiações dos funcionários.</p>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div>
-              Mostrando {filteredBases.length} de {basesPremiacao.length} bases
+              Mostrando {filteredBases.length} de {bases.length} bases
             </div>
           </div>
         </CardContent>

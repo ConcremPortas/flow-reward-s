@@ -1,38 +1,44 @@
+// Página de gestão de funções - conectada ao banco
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
-
-// Dados de exemplo
-const funcoes = [
-  { id: 1, nome: "Operador" },
-  { id: 2, nome: "Analista" },
-  { id: 3, nome: "Montador" },
-  { id: 4, nome: "Expedidor" },
-  { id: 5, nome: "Supervisor" },
-  { id: 6, nome: "Encarregado" },
-  { id: 7, nome: "Técnico" },
-  { id: 8, nome: "Assistente" },
-  { id: 9, nome: "Coordenador" },
-  { id: 10, nome: "Inspetor de Qualidade" }
-];
+import { useFuncoes } from "@/hooks/useFuncoes";
 
 export const Funcoes = () => {
+  const { funcoes, loading, createFuncao, deleteFuncao } = useFuncoes();
   const [searchTerm, setSearchTerm] = useState("");
   const [nomeFuncao, setNomeFuncao] = useState("");
 
   const filteredFuncoes = funcoes.filter(funcao =>
     funcao.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAddFuncao = async () => {
+    if (!nomeFuncao.trim()) return;
+    
+    await createFuncao({
+      nome: nomeFuncao,
+      ativo: true
+    });
+    
+    setNomeFuncao("");
+  };
+
+  const handleDeleteFuncao = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir esta função?")) {
+      await deleteFuncao(id);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Carregando funções...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -57,8 +63,10 @@ export const Funcoes = () => {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
-            <Button className="gap-2">
+            <Button variant="outline" onClick={() => setNomeFuncao("")}>
+              Cancelar
+            </Button>
+            <Button className="gap-2" onClick={handleAddFuncao} disabled={!nomeFuncao.trim()}>
               <Plus className="h-4 w-4" />
               Adicionar Função
             </Button>
@@ -93,25 +101,37 @@ export const Funcoes = () => {
           </div>
 
           {/* Grid de funções */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredFuncoes.map((funcao) => (
-              <Card key={funcao.id} className="card-elegant card-hover">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium">{funcao.nome}</h3>
-                    <div className="flex space-x-1">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+          {filteredFuncoes.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredFuncoes.map((funcao) => (
+                <Card key={funcao.id} className="card-elegant card-hover">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">{funcao.nome}</h3>
+                      <div className="flex space-x-1">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteFuncao(funcao.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Nenhuma função cadastrada ainda.</p>
+              <p className="text-sm">Adicione funções para organizarmelhor seus funcionários.</p>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">

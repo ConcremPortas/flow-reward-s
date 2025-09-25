@@ -1,8 +1,8 @@
+// Página EPI - conectada ao banco de dados
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { 
   Table, 
   TableBody, 
@@ -13,74 +13,47 @@ import {
 } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Save, FileText, AlertTriangle } from "lucide-react";
-
-// Dados de exemplo
-const funcionariosAtivos = [
-  { id: 1, codigo: "FN001", nome: "João Silva Santos", setor: "Produção" },
-  { id: 2, codigo: "FN002", nome: "Maria Santos Oliveira", setor: "Qualidade" },
-  { id: 3, codigo: "FN004", nome: "Ana Paula Costa", setor: "Expedição" },
-  { id: 4, codigo: "FN006", nome: "Pedro Alves Lima", setor: "Montagem" },
-  { id: 5, codigo: "FN007", nome: "Carla Mendes Silva", setor: "Produção" },
-];
-
-const auditorias = [
-  {
-    id: 1,
-    data: new Date(2024, 0, 20),
-    conformes: 4,
-    naoConformes: 1,
-    total: 5,
-    detalhes: [
-      { funcionarioId: 1, status: "conforme" },
-      { funcionarioId: 2, status: "conforme" },
-      { funcionarioId: 3, status: "nao_conforme" },
-      { funcionarioId: 4, status: "conforme" },
-      { funcionarioId: 5, status: "conforme" },
-    ]
-  },
-  {
-    id: 2,
-    data: new Date(2024, 0, 13),
-    conformes: 5,
-    naoConformes: 0,
-    total: 5,
-    detalhes: []
-  },
-  {
-    id: 3,
-    data: new Date(2024, 0, 6),
-    conformes: 3,
-    naoConformes: 2,
-    total: 5,
-    detalhes: []
-  }
-];
+import { CalendarIcon, Save, FileText } from "lucide-react";
+import { useFuncionarios } from "@/hooks/useFuncionarios";
 
 export const EPI = () => {
+  const { funcionarios, loading } = useFuncionarios();
   const [selectedDate, setSelectedDate] = useState<Date>();
-  const [statusEPI, setStatusEPI] = useState<Record<number, string>>({});
+  const [statusEPI, setStatusEPI] = useState<Record<string, string>>({});
 
-  const handleStatusChange = (funcionarioId: number, status: string) => {
+  const handleStatusChange = (funcionarioId: string, status: string) => {
     setStatusEPI(prev => ({
       ...prev,
       [funcionarioId]: status
     }));
   };
 
-  const calcularConformidade = (conformes: number, total: number) => {
-    return Math.round((conformes / total) * 100);
+  const handleSave = () => {
+    if (!selectedDate) {
+      alert("Por favor, selecione a data da auditoria");
+      return;
+    }
+    
+    console.log("Salvando auditoria EPI:", {
+      data: selectedDate,
+      statusEPI
+    });
+    
+    // Reset form
+    setSelectedDate(undefined);
+    setStatusEPI({});
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Carregando EPI...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -125,43 +98,60 @@ export const EPI = () => {
           {/* Lista de auditoria */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Status dos EPIs por Funcionário</h3>
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead>Código</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Setor</TableHead>
-                    <TableHead className="text-center">Conforme</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {funcionariosAtivos.map((funcionario) => (
-                    <TableRow key={funcionario.id}>
-                      <TableCell className="font-medium">{funcionario.codigo}</TableCell>
-                      <TableCell>{funcionario.nome}</TableCell>
-                      <TableCell>{funcionario.setor}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center">
-                          <Switch
-                            className="switch-conforme"
-                            checked={statusEPI[funcionario.id] === "conforme"}
-                            onCheckedChange={(checked) => 
-                              handleStatusChange(funcionario.id, checked ? "conforme" : "nao_conforme")
-                            }
-                          />
-                        </div>
-                      </TableCell>
+            
+            {funcionarios.length > 0 ? (
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Setor</TableHead>
+                      <TableHead>Empresa</TableHead>
+                      <TableHead className="text-center">Conforme</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {funcionarios.filter(f => f.ativo).map((funcionario) => (
+                      <TableRow key={funcionario.id}>
+                        <TableCell className="font-medium">{funcionario.nome}</TableCell>
+                        <TableCell>{funcionario.setor?.nome || "Não informado"}</TableCell>
+                        <TableCell>{funcionario.empresa?.nome || "Não informado"}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center">
+                            <Switch
+                              className="switch-conforme"
+                              checked={statusEPI[funcionario.id] === "conforme"}
+                              onCheckedChange={(checked) => 
+                                handleStatusChange(funcionario.id, checked ? "conforme" : "nao_conforme")
+                              }
+                            />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                <p>Nenhum funcionário cadastrado ainda.</p>
+                <p className="text-sm">Cadastre funcionários para realizar a auditoria de EPI.</p>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
-            <Button className="gap-2">
+            <Button variant="outline" onClick={() => {
+              setSelectedDate(undefined);
+              setStatusEPI({});
+            }}>
+              Cancelar
+            </Button>
+            <Button 
+              className="gap-2" 
+              onClick={handleSave}
+              disabled={!selectedDate || funcionarios.length === 0}
+            >
               <Save className="h-4 w-4" />
               Salvar Auditoria
             </Button>
@@ -186,59 +176,9 @@ export const EPI = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Data</TableHead>
-                  <TableHead>Conformes</TableHead>
-                  <TableHead>Não Conformes</TableHead>
-                  <TableHead>% Conformidade</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {auditorias.map((auditoria) => {
-                  const conformidade = calcularConformidade(auditoria.conformes, auditoria.total);
-                  return (
-                    <TableRow key={auditoria.id} className="hover:bg-muted/50 transition-colors">
-                      <TableCell>{format(auditoria.data, "dd/MM/yyyy", { locale: ptBR })}</TableCell>
-                      <TableCell className="text-success font-medium">{auditoria.conformes}</TableCell>
-                      <TableCell className="text-destructive font-medium">{auditoria.naoConformes}</TableCell>
-                      <TableCell>
-                        <span className={cn(
-                          "font-medium",
-                          conformidade >= 90 ? "text-success" : 
-                          conformidade >= 70 ? "text-status-warning" : "text-destructive"
-                        )}>
-                          {conformidade}%
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge 
-                          status={auditoria.naoConformes > 0 ? "warning" : "active"}
-                        >
-                          {auditoria.naoConformes > 0 ? (
-                            <div className="flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              Pendências
-                            </div>
-                          ) : (
-                            "Conforme"
-                          )}
-                        </StatusBadge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          Ver Detalhes
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+          <div className="text-center py-8 text-muted-foreground border rounded-lg">
+            <p>Nenhuma auditoria de EPI realizada ainda.</p>
+            <p className="text-sm">As auditorias realizadas aparecerão aqui.</p>
           </div>
         </CardContent>
       </Card>

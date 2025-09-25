@@ -1,3 +1,4 @@
+// Página Faltas/Advertências - conectada ao banco de dados
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,76 +20,50 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
-
-// Dados de exemplo
-const funcionarios = [
-  { id: 1, codigo: "FN001", nome: "João Silva Santos" },
-  { id: 2, codigo: "FN002", nome: "Maria Santos Oliveira" },
-  { id: 3, codigo: "FN004", nome: "Ana Paula Costa" },
-  { id: 4, codigo: "FN006", nome: "Pedro Alves Lima" },
-  { id: 5, codigo: "FN007", nome: "Carla Mendes Silva" },
-];
-
-const registros = [
-  {
-    id: 1,
-    funcionario: "João Silva Santos",
-    codigo: "FN001",
-    mesReferencia: "01/2024",
-    faltas: 2,
-    advertencias: 0,
-    observacoes: "Faltas justificadas por atestado médico"
-  },
-  {
-    id: 2,
-    funcionario: "Maria Santos Oliveira",
-    codigo: "FN002",
-    mesReferencia: "01/2024",
-    faltas: 0,
-    advertencias: 1,
-    observacoes: "Advertência verbal por atraso"
-  },
-  {
-    id: 3,
-    funcionario: "Pedro Alves Lima",
-    codigo: "FN006",
-    mesReferencia: "01/2024",
-    faltas: 1,
-    advertencias: 0,
-    observacoes: ""
-  }
-];
+import { useFuncionarios } from "@/hooks/useFuncionarios";
 
 export const FaltasAdvertencias = () => {
+  const { funcionarios, loading } = useFuncionarios();
   const [searchTerm, setSearchTerm] = useState("");
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
-  const [mesReferencia, setMesReferencia] = useState("");
-  const [faltas, setFaltas] = useState("");
-  const [advertencias, setAdvertencias] = useState("");
-  const [observacoes, setObservacoes] = useState("");
+  const [tipo, setTipo] = useState("");
+  const [motivo, setMotivo] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [gravidade, setGravidade] = useState("leve");
 
-  const filteredRegistros = registros.filter(registro =>
-    registro.funcionario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    registro.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFuncionarios = funcionarios.filter(funcionario =>
+    funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const calcularImpacto = (faltas: number, advertencias: number) => {
-    if (faltas === 0 && advertencias === 0) return "Sem impacto";
-    if (faltas <= 1 && advertencias <= 1) return "Baixo impacto";
-    if (faltas <= 3 && advertencias <= 2) return "Médio impacto";
-    return "Alto impacto";
+  const handleSave = () => {
+    if (!funcionarioSelecionado || !tipo || !motivo.trim()) {
+      alert("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+    
+    console.log("Salvando registro:", {
+      funcionarioId: funcionarioSelecionado,
+      tipo,
+      motivo,
+      descricao,
+      gravidade
+    });
+    
+    // Reset form
+    setFuncionarioSelecionado("");
+    setTipo("");
+    setMotivo("");
+    setDescricao("");
+    setGravidade("leve");
   };
 
-  const getImpactoColor = (faltas: number, advertencias: number) => {
-    const impacto = calcularImpacto(faltas, advertencias);
-    switch (impacto) {
-      case "Sem impacto": return "text-success";
-      case "Baixo impacto": return "text-status-warning";
-      case "Médio impacto": return "text-orange-500";
-      case "Alto impacto": return "text-destructive";
-      default: return "text-foreground";
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Carregando faltas/advertências...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -101,17 +76,17 @@ export const FaltasAdvertencias = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Funcionário</label>
+              <label className="text-sm font-medium">Funcionário *</label>
               <Select value={funcionarioSelecionado} onValueChange={setFuncionarioSelecionado}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o funcionário" />
                 </SelectTrigger>
                 <SelectContent>
-                  {funcionarios.map(funcionario => (
-                    <SelectItem key={funcionario.id} value={funcionario.id.toString()}>
-                      {funcionario.codigo} - {funcionario.nome}
+                  {funcionarios.filter(f => f.ativo).map(funcionario => (
+                    <SelectItem key={funcionario.id} value={funcionario.id}>
+                      {funcionario.nome} - {funcionario.setor?.nome || "Sem setor"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -119,50 +94,67 @@ export const FaltasAdvertencias = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Mês de Referência</label>
+              <label className="text-sm font-medium">Tipo *</label>
+              <Select value={tipo} onValueChange={setTipo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="falta">Falta</SelectItem>
+                  <SelectItem value="advertencia">Advertência</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Motivo *</label>
               <Input
-                type="month"
-                value={mesReferencia}
-                onChange={(e) => setMesReferencia(e.target.value)}
+                placeholder="Ex: Atraso, Ausência não justificada..."
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Quantidade de Faltas</label>
-              <Input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={faltas}
-                onChange={(e) => setFaltas(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Quantidade de Advertências</label>
-              <Input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={advertencias}
-                onChange={(e) => setAdvertencias(e.target.value)}
-              />
+              <label className="text-sm font-medium">Gravidade</label>
+              <Select value={gravidade} onValueChange={setGravidade}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="leve">Leve</SelectItem>
+                  <SelectItem value="media">Média</SelectItem>
+                  <SelectItem value="grave">Grave</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium">Observações</label>
+              <label className="text-sm font-medium">Descrição</label>
               <Textarea
-                placeholder="Detalhes adicionais sobre as faltas ou advertências..."
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
+                placeholder="Detalhes adicionais sobre o ocorrido..."
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
                 rows={3}
               />
             </div>
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
-            <Button className="gap-2">
+            <Button variant="outline" onClick={() => {
+              setFuncionarioSelecionado("");
+              setTipo("");
+              setMotivo("");
+              setDescricao("");
+              setGravidade("leve");
+            }}>
+              Cancelar
+            </Button>
+            <Button 
+              className="gap-2" 
+              onClick={handleSave}
+              disabled={!funcionarioSelecionado || !tipo || !motivo.trim()}
+            >
               <Plus className="h-4 w-4" />
               Adicionar Registro
             </Button>
@@ -196,67 +188,18 @@ export const FaltasAdvertencias = () => {
             </div>
           </div>
 
-          {/* Tabela */}
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Código</TableHead>
-                  <TableHead>Funcionário</TableHead>
-                  <TableHead>Mês Referência</TableHead>
-                  <TableHead className="text-center">Faltas</TableHead>
-                  <TableHead className="text-center">Advertências</TableHead>
-                  <TableHead>Impacto na Premiação</TableHead>
-                  <TableHead>Observações</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRegistros.map((registro) => (
-                  <TableRow key={registro.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell className="font-medium">{registro.codigo}</TableCell>
-                    <TableCell>{registro.funcionario}</TableCell>
-                    <TableCell>{registro.mesReferencia}</TableCell>
-                    <TableCell className="text-center">
-                      <span className={registro.faltas > 0 ? "text-destructive font-medium" : "text-success"}>
-                        {registro.faltas}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className={registro.advertencias > 0 ? "text-destructive font-medium" : "text-success"}>
-                        {registro.advertencias}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={getImpactoColor(registro.faltas, registro.advertencias)}>
-                        {calcularImpacto(registro.faltas, registro.advertencias)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">{registro.observacoes}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm" className="gap-1">
-                          <Edit className="h-3 w-3" />
-                          Editar
-                        </Button>
-                        <Button variant="ghost" size="sm" className="gap-1 text-destructive hover:text-destructive">
-                          <Trash2 className="h-3 w-3" />
-                          Excluir
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div>
-              Mostrando {filteredRegistros.length} de {registros.length} registros
+          {/* Mensagem quando não há dados */}
+          {funcionarios.length > 0 ? (
+            <div className="text-center py-8 text-muted-foreground border rounded-lg">
+              <p>Nenhum registro de falta ou advertência ainda.</p>
+              <p className="text-sm">Os registros aparecerão aqui após serem cadastrados.</p>
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground border rounded-lg">
+              <p>Nenhum funcionário cadastrado ainda.</p>
+              <p className="text-sm">Cadastre funcionários para registrar faltas e advertências.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,34 +1,44 @@
+// Página de gestão de categorias - conectada ao banco
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
-
-// Dados de exemplo
-const categorias = [
-  { id: 1, nome: "CLT" },
-  { id: 2, nome: "Terceirizado" },
-  { id: 3, nome: "Estagiário" },
-  { id: 4, nome: "Temporário" },
-  { id: 5, nome: "Consultoria" },
-  { id: 6, nome: "Aprendiz" }
-];
+import { useCategorias } from "@/hooks/useCategorias";
 
 export const Categorias = () => {
+  const { categorias, loading, createCategoria, deleteCategoria } = useCategorias();
   const [searchTerm, setSearchTerm] = useState("");
   const [nomeCategoria, setNomeCategoria] = useState("");
 
   const filteredCategorias = categorias.filter(categoria =>
     categoria.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAddCategoria = async () => {
+    if (!nomeCategoria.trim()) return;
+    
+    await createCategoria({
+      nome: nomeCategoria,
+      ativo: true
+    });
+    
+    setNomeCategoria("");
+  };
+
+  const handleDeleteCategoria = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir esta categoria?")) {
+      await deleteCategoria(id);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Carregando categorias...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -53,8 +63,10 @@ export const Categorias = () => {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
-            <Button className="gap-2">
+            <Button variant="outline" onClick={() => setNomeCategoria("")}>
+              Cancelar
+            </Button>
+            <Button className="gap-2" onClick={handleAddCategoria} disabled={!nomeCategoria.trim()}>
               <Plus className="h-4 w-4" />
               Adicionar Categoria
             </Button>
@@ -89,25 +101,37 @@ export const Categorias = () => {
           </div>
 
           {/* Grid de categorias */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredCategorias.map((categoria) => (
-              <Card key={categoria.id} className="card-elegant card-hover">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium">{categoria.nome}</h3>
-                    <div className="flex space-x-1">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+          {filteredCategorias.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredCategorias.map((categoria) => (
+                <Card key={categoria.id} className="card-elegant card-hover">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">{categoria.nome}</h3>
+                      <div className="flex space-x-1">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteCategoria(categoria.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Nenhuma categoria cadastrada ainda.</p>
+              <p className="text-sm">Adicione categorias para classificar seus funcionários.</p>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">
