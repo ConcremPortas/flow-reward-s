@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Save, Calendar } from "lucide-react";
+import { Plus, Search, Save, Calendar, Edit, Trash2, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
@@ -26,8 +26,9 @@ import { useFaltasAdvertencias } from "@/hooks/useFaltasAdvertencias";
 
 export const FaltasAdvertencias = () => {
   const { funcionarios, loading } = useFuncionarios();
-  const { registros, loading: registrosLoading, createRegistro } = useFaltasAdvertencias();
+  const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro } = useFaltasAdvertencias();
   const [searchTerm, setSearchTerm] = useState("");
+  const [filtroMesCompetencia, setFiltroMesCompetencia] = useState("");
   const [mesCompetencia, setMesCompetencia] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -106,6 +107,24 @@ export const FaltasAdvertencias = () => {
     // Limpar dados após salvar
     setDadosApuracao({});
     alert("Apuração salva com sucesso!");
+  };
+
+  const handleEditarRegistro = async (registro: any) => {
+    // Aqui você pode implementar a lógica de edição
+    const novaQuantidade = prompt(`Editar quantidade de ${registro.tipo}s para ${funcionarios.find(f => f.id === registro.funcionario_id)?.nome}:`, registro.quantidade?.toString());
+    
+    if (novaQuantidade && parseInt(novaQuantidade) !== registro.quantidade) {
+      await updateRegistro(registro.id, {
+        quantidade: parseInt(novaQuantidade),
+        descricao: `${parseInt(novaQuantidade)} ${registro.tipo}(s) registrada(s) na apuração mensal`
+      });
+    }
+  };
+
+  const handleExcluirRegistro = async (id: string, funcionarioNome: string) => {
+    if (confirm(`Tem certeza que deseja excluir este registro de ${funcionarioNome}?`)) {
+      await deleteRegistro(id);
+    }
   };
 
   if (loading) {
@@ -229,6 +248,55 @@ export const FaltasAdvertencias = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Filtros */}
+          <div className="space-y-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Filtros:</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Funcionário</label>
+                <div className="relative">
+                  <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar funcionário..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Mês Competência</label>
+                <Input
+                  type="month"
+                  value={filtroMesCompetencia}
+                  onChange={(e) => setFiltroMesCompetencia(e.target.value)}
+                  placeholder="Filtrar por mês"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">&nbsp;</label>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFiltroMesCompetencia("");
+                  }}
+                  className="w-full"
+                >
+                  Limpar Filtros
+                </Button>
+              </div>
+            </div>
+          </div>
+          
           {registrosLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-lg">Carregando histórico...</div>
@@ -240,13 +308,24 @@ export const FaltasAdvertencias = () => {
                   <TableRow className="bg-muted/50">
                     <TableHead>Funcionário</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead className="text-center">Quantidade</TableHead>
+                    <TableHead>Quantidade</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Descrição</TableHead>
+                    <TableHead className="text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {registros
+                    .filter(registro => {
+                      const funcionario = funcionarios.find(f => f.id === registro.funcionario_id);
+                      const funcionarioMatch = !searchTerm || funcionario?.nome.toLowerCase().includes(searchTerm.toLowerCase());
+                      
+                      const dataRegistro = new Date(registro.data_ocorrencia);
+                      const mesRegistro = `${dataRegistro.getFullYear()}-${String(dataRegistro.getMonth() + 1).padStart(2, '0')}`;
+                      const mesMatch = !filtroMesCompetencia || mesRegistro === filtroMesCompetencia;
+                      
+                      return funcionarioMatch && mesMatch;
+                    })
                     .sort((a, b) => new Date(b.data_ocorrencia).getTime() - new Date(a.data_ocorrencia).getTime())
                     .map((registro) => {
                       const funcionario = funcionarios.find(f => f.id === registro.funcionario_id);
@@ -272,6 +351,26 @@ export const FaltasAdvertencias = () => {
                           </TableCell>
                           <TableCell className="max-w-xs">
                             {registro.descricao || registro.motivo}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditarRegistro(registro)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleExcluirRegistro(registro.id, funcionario?.nome || "Funcionário")}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
