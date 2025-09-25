@@ -1,3 +1,4 @@
+// Página de gestão de funcionários - v2.0
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import { useEmpresas } from "@/hooks/useEmpresas";
 import { useSetores } from "@/hooks/useSetores";
 
 export const Funcionarios = () => {
+  // Componente de gestão de funcionários conectado ao banco de dados
   const { funcionarios, loading, createFuncionario } = useFuncionarios();
   const { empresas } = useEmpresas();
   const { setores } = useSetores();
