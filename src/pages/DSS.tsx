@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { 
   Table, 
@@ -17,16 +18,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Save, FileText } from "lucide-react";
+import { CalendarIcon, Save, FileText, Edit, Trash2 } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useDSS } from "@/hooks/useDSS";
 
 export const DSS = () => {
   const { funcionarios, loading } = useFuncionarios();
-  const { dssRecords, loading: dssLoading, createDSS } = useDSS();
+  const { dssRecords, loading: dssLoading, createDSS, updateDSS, deleteDSS } = useDSS();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [tema, setTema] = useState("");
   const [presencas, setPresencas] = useState<Record<string, boolean>>({});
+  const [observacoes, setObservacoes] = useState("");
+  const [editingRecord, setEditingRecord] = useState<string | null>(null);
+  const [editingData, setEditingData] = useState<any>(null);
 
   const handlePresencaChange = (funcionarioId: string, presente: boolean) => {
     setPresencas(prev => ({
@@ -56,6 +60,39 @@ export const DSS = () => {
     setSelectedDate(undefined);
     setTema("");
     setPresencas({});
+    setObservacoes("");
+    setEditingRecord(null);
+    setEditingData(null);
+  };
+
+  const handleEdit = (dss: any) => {
+    setEditingRecord(dss.id);
+    setEditingData(dss);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingRecord || !editingData) return;
+
+    await updateDSS(editingRecord, {
+      titulo: editingData.titulo,
+      descricao: editingData.descricao,
+      observacoes: editingData.observacoes,
+      topics: editingData.topics
+    });
+
+    setEditingRecord(null);
+    setEditingData(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este DSS?")) {
+      await deleteDSS(id);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRecord(null);
+    setEditingData(null);
   };
 
   if (loading) {
@@ -205,27 +242,92 @@ export const DSS = () => {
             <div className="space-y-4">
               {dssRecords.map((dss) => (
                 <div key={dss.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-medium">{dss.titulo}</h4>
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(dss.data_realizacao), "dd/MM/yyyy", { locale: ptBR })}
-                    </span>
-                  </div>
-                  {dss.descricao && (
-                    <p className="text-sm text-muted-foreground mb-2">{dss.descricao}</p>
-                  )}
-                  <div className="flex gap-4 text-sm">
-                    <span>
-                      <strong>Participantes:</strong> {dss.participantes_ids?.length || 0}
-                    </span>
-                    {dss.topics && dss.topics.length > 0 && (
-                      <span>
-                        <strong>Tópicos:</strong> {dss.topics.join(", ")}
-                      </span>
-                    )}
-                  </div>
-                  {dss.observacoes && (
-                    <p className="text-sm text-muted-foreground mt-2">{dss.observacoes}</p>
+                  {editingRecord === dss.id ? (
+                    // Modo de edição
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium">Título</label>
+                          <Input
+                            value={editingData?.titulo || ""}
+                            onChange={(e) => setEditingData({...editingData, titulo: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Tópicos (separados por vírgula)</label>
+                          <Input
+                            value={editingData?.topics?.join(", ") || ""}
+                            onChange={(e) => setEditingData({...editingData, topics: e.target.value.split(",").map((t: string) => t.trim()).filter((t: string) => t)})}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium">Descrição</label>
+                          <Textarea
+                            value={editingData?.descricao || ""}
+                            onChange={(e) => setEditingData({...editingData, descricao: e.target.value})}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium">Observações</label>
+                          <Textarea
+                            value={editingData?.observacoes || ""}
+                            onChange={(e) => setEditingData({...editingData, observacoes: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={handleCancelEdit}>
+                          Cancelar
+                        </Button>
+                        <Button onClick={handleUpdate}>
+                          Salvar Alterações
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Modo de visualização
+                    <>
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{dss.titulo}</h4>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(dss.data_realizacao), "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(dss)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(dss.id)}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      {dss.descricao && (
+                        <p className="text-sm text-muted-foreground mb-2">{dss.descricao}</p>
+                      )}
+                      <div className="flex gap-4 text-sm">
+                        <span>
+                          <strong>Participantes:</strong> {dss.participantes_ids?.length || 0}
+                        </span>
+                        {dss.topics && dss.topics.length > 0 && (
+                          <span>
+                            <strong>Tópicos:</strong> {dss.topics.join(", ")}
+                          </span>
+                        )}
+                      </div>
+                      {dss.observacoes && (
+                        <p className="text-sm text-muted-foreground mt-2">{dss.observacoes}</p>
+                      )}
+                    </>
                   )}
                 </div>
               ))}

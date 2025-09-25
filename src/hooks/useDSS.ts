@@ -71,6 +71,62 @@ export const useDSS = () => {
     }
   };
 
+  const updateDSS = async (id: string, dss: Partial<Omit<DSS, 'id' | 'created_at' | 'updated_at'>>) => {
+    try {
+      const { data, error } = await supabase
+        .from('concrem_dss')
+        .update(dss)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "DSS atualizado com sucesso",
+      });
+
+      fetchDSS();
+      return data;
+    } catch (error) {
+      console.error('Erro ao atualizar DSS:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o DSS",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const deleteDSS = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('concrem_dss')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "DSS excluído com sucesso",
+      });
+
+      fetchDSS();
+      return true;
+    } catch (error) {
+      console.error('Erro ao excluir DSS:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o DSS",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchDSS();
   }, []);
@@ -79,6 +135,8 @@ export const useDSS = () => {
     dssRecords,
     loading,
     createDSS,
+    updateDSS,
+    deleteDSS,
     refetch: fetchDSS
   };
 };
