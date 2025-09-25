@@ -71,6 +71,62 @@ export const useEPI = () => {
     }
   };
 
+  const updateEPI = async (id: string, epi: Partial<Omit<EPI, 'id' | 'created_at' | 'updated_at'>>) => {
+    try {
+      const { data, error } = await supabase
+        .from('concrem_epi')
+        .update(epi)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Registro de EPI atualizado com sucesso",
+      });
+
+      fetchEPI();
+      return data;
+    } catch (error) {
+      console.error('Erro ao atualizar EPI:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o registro de EPI",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const deleteEPI = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('concrem_epi')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Registro de EPI excluído com sucesso",
+      });
+
+      fetchEPI();
+      return true;
+    } catch (error) {
+      console.error('Erro ao excluir EPI:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o registro de EPI",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchEPI();
   }, []);
@@ -79,6 +135,8 @@ export const useEPI = () => {
     epiRecords,
     loading,
     createEPI,
+    updateEPI,
+    deleteEPI,
     refetch: fetchEPI
   };
 };

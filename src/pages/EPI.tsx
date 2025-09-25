@@ -3,6 +3,15 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Table, 
   TableBody, 
@@ -16,15 +25,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Save, FileText } from "lucide-react";
+import { CalendarIcon, Save, FileText, Edit, Trash2 } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useEPI } from "@/hooks/useEPI";
 
 export const EPI = () => {
   const { funcionarios, loading } = useFuncionarios();
-  const { epiRecords, loading: epiLoading, createEPI } = useEPI();
+  const { epiRecords, loading: epiLoading, createEPI, updateEPI, deleteEPI } = useEPI();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [statusEPI, setStatusEPI] = useState<Record<string, string>>({});
+  const [editingRecord, setEditingRecord] = useState<string | null>(null);
+  const [editingData, setEditingData] = useState<any>(null);
 
   const handleStatusChange = (funcionarioId: string, status: string) => {
     setStatusEPI(prev => ({
@@ -56,6 +67,40 @@ export const EPI = () => {
     // Reset form
     setSelectedDate(undefined);
     setStatusEPI({});
+    setEditingRecord(null);
+    setEditingData(null);
+  };
+
+  const handleEdit = (epi: any) => {
+    setEditingRecord(epi.id);
+    setEditingData(epi);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingRecord || !editingData) return;
+
+    await updateEPI(editingRecord, {
+      tipo_epi: editingData.tipo_epi,
+      status: editingData.status,
+      descricao: editingData.descricao,
+      observacoes: editingData.observacoes,
+      numero_ca: editingData.numero_ca,
+      data_vencimento: editingData.data_vencimento
+    });
+
+    setEditingRecord(null);
+    setEditingData(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este registro de EPI?")) {
+      await deleteEPI(id);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRecord(null);
+    setEditingData(null);
   };
 
   if (loading) {
@@ -195,27 +240,122 @@ export const EPI = () => {
             <div className="space-y-4">
               {epiRecords.map((epi) => (
                 <div key={epi.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-medium">{epi.tipo_epi}</h4>
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(epi.data_entrega), "dd/MM/yyyy", { locale: ptBR })}
-                    </span>
-                  </div>
-                  {epi.descricao && (
-                    <p className="text-sm text-muted-foreground mb-2">{epi.descricao}</p>
-                  )}
-                  <div className="flex gap-4 text-sm">
-                    <span>
-                      <strong>Status:</strong> {epi.status === 'conforme' ? 'Conforme' : 'Não conforme'}
-                    </span>
-                    {epi.numero_ca && (
-                      <span>
-                        <strong>CA:</strong> {epi.numero_ca}
-                      </span>
-                    )}
-                  </div>
-                  {epi.observacoes && (
-                    <p className="text-sm text-muted-foreground mt-2">{epi.observacoes}</p>
+                  {editingRecord === epi.id ? (
+                    // Modo de edição
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium">Tipo de EPI</label>
+                          <Input
+                            value={editingData?.tipo_epi || ""}
+                            onChange={(e) => setEditingData({...editingData, tipo_epi: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Status</label>
+                          <Select 
+                            value={editingData?.status || ""} 
+                            onValueChange={(value) => setEditingData({...editingData, status: value})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="conforme">Conforme</SelectItem>
+                              <SelectItem value="nao_conforme">Não conforme</SelectItem>
+                              <SelectItem value="entregue">Entregue</SelectItem>
+                              <SelectItem value="vencido">Vencido</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Número CA</label>
+                          <Input
+                            value={editingData?.numero_ca || ""}
+                            onChange={(e) => setEditingData({...editingData, numero_ca: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Data de Vencimento</label>
+                          <Input
+                            type="date"
+                            value={editingData?.data_vencimento || ""}
+                            onChange={(e) => setEditingData({...editingData, data_vencimento: e.target.value})}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium">Descrição</label>
+                          <Textarea
+                            value={editingData?.descricao || ""}
+                            onChange={(e) => setEditingData({...editingData, descricao: e.target.value})}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium">Observações</label>
+                          <Textarea
+                            value={editingData?.observacoes || ""}
+                            onChange={(e) => setEditingData({...editingData, observacoes: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={handleCancelEdit}>
+                          Cancelar
+                        </Button>
+                        <Button onClick={handleUpdate}>
+                          Salvar Alterações
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Modo de visualização
+                    <>
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{epi.tipo_epi}</h4>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(epi.data_entrega), "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(epi)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(epi.id)}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      {epi.descricao && (
+                        <p className="text-sm text-muted-foreground mb-2">{epi.descricao}</p>
+                      )}
+                      <div className="flex gap-4 text-sm">
+                        <span>
+                          <strong>Status:</strong> {epi.status === 'conforme' ? 'Conforme' : 'Não conforme'}
+                        </span>
+                        {epi.numero_ca && (
+                          <span>
+                            <strong>CA:</strong> {epi.numero_ca}
+                          </span>
+                        )}
+                        {epi.data_vencimento && (
+                          <span>
+                            <strong>Vencimento:</strong> {format(new Date(epi.data_vencimento), "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
+                        )}
+                      </div>
+                      {epi.observacoes && (
+                        <p className="text-sm text-muted-foreground mt-2">{epi.observacoes}</p>
+                      )}
+                    </>
                   )}
                 </div>
               ))}
