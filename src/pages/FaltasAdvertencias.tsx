@@ -20,12 +20,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useFaltasAdvertencias } from "@/hooks/useFaltasAdvertencias";
 
 export const FaltasAdvertencias = () => {
   const { funcionarios, loading } = useFuncionarios();
-  const { createRegistro } = useFaltasAdvertencias();
+  const { registros, loading: registrosLoading, createRegistro } = useFaltasAdvertencias();
   const [searchTerm, setSearchTerm] = useState("");
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
   const [tipo, setTipo] = useState("");
@@ -185,8 +187,70 @@ export const FaltasAdvertencias = () => {
             </div>
           </div>
 
-          {/* Mensagem quando não há dados */}
-          {funcionarios.length > 0 ? (
+          {/* Lista de registros */}
+          {registrosLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-lg">Carregando registros...</div>
+            </div>
+          ) : registros.length > 0 ? (
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead>Funcionário</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Gravidade</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {registros
+                    .filter(registro => 
+                      !searchTerm || 
+                      funcionarios.find(f => f.id === registro.funcionario_id)
+                        ?.nome.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map((registro) => {
+                      const funcionario = funcionarios.find(f => f.id === registro.funcionario_id);
+                      return (
+                        <TableRow key={registro.id}>
+                          <TableCell className="font-medium">
+                            {funcionario?.nome || "Funcionário não encontrado"}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              registro.tipo === 'falta' 
+                                ? 'bg-orange-100 text-orange-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {registro.tipo === 'falta' ? 'Falta' : 'Advertência'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              registro.gravidade === 'leve' 
+                                ? 'bg-yellow-100 text-yellow-800' 
+                                : registro.gravidade === 'media'
+                                ? 'bg-orange-100 text-orange-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {registro.gravidade?.charAt(0).toUpperCase() + registro.gravidade?.slice(1)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(registro.data_ocorrencia), "dd/MM/yyyy", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {registro.descricao || registro.motivo}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : funcionarios.length > 0 ? (
             <div className="text-center py-8 text-muted-foreground border rounded-lg">
               <p>Nenhum registro de falta ou advertência ainda.</p>
               <p className="text-sm">Os registros aparecerão aqui após serem cadastrados.</p>

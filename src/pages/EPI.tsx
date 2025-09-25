@@ -22,7 +22,7 @@ import { useEPI } from "@/hooks/useEPI";
 
 export const EPI = () => {
   const { funcionarios, loading } = useFuncionarios();
-  const { createEPI } = useEPI();
+  const { epiRecords, loading: epiLoading, createEPI } = useEPI();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [statusEPI, setStatusEPI] = useState<Record<string, string>>({});
 
@@ -187,10 +187,45 @@ export const EPI = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground border rounded-lg">
-            <p>Nenhuma auditoria de EPI realizada ainda.</p>
-            <p className="text-sm">As auditorias realizadas aparecerão aqui.</p>
-          </div>
+          {epiLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-lg">Carregando histórico...</div>
+            </div>
+          ) : epiRecords.length > 0 ? (
+            <div className="space-y-4">
+              {epiRecords.map((epi) => (
+                <div key={epi.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium">{epi.tipo_epi}</h4>
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(epi.data_entrega), "dd/MM/yyyy", { locale: ptBR })}
+                    </span>
+                  </div>
+                  {epi.descricao && (
+                    <p className="text-sm text-muted-foreground mb-2">{epi.descricao}</p>
+                  )}
+                  <div className="flex gap-4 text-sm">
+                    <span>
+                      <strong>Status:</strong> {epi.status === 'conforme' ? 'Conforme' : 'Não conforme'}
+                    </span>
+                    {epi.numero_ca && (
+                      <span>
+                        <strong>CA:</strong> {epi.numero_ca}
+                      </span>
+                    )}
+                  </div>
+                  {epi.observacoes && (
+                    <p className="text-sm text-muted-foreground mt-2">{epi.observacoes}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground border rounded-lg">
+              <p>Nenhuma auditoria de EPI realizada ainda.</p>
+              <p className="text-sm">As auditorias realizadas aparecerão aqui.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
