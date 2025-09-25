@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSetores } from "@/hooks/useSetores";
 import { useTiposIndicadores } from "@/hooks/useTiposIndicadores";
+import { formatDateToBrasilia } from "@/lib/dateUtils";
 
 // Hook específico para indicadores do setor (vamos usar os dados de produção como base)
 import { useProducaoSetor } from "@/hooks/useProducaoSetor";
@@ -69,9 +70,12 @@ export const IndicadoresSetor = () => {
       return;
     }
 
+    // Ajustar data para fuso horário de Brasília
+    const dataFormatada = formatDateToBrasilia(competencia);
+
     const registro = {
       setor_id: setorSelecionado,
-      data_producao: competencia,
+      data_producao: dataFormatada,
       meta_diaria: parseFloat(metaEficiencia),
       producao_realizada: parseFloat(eficienciaRealizada),
       unidade_medida: "percentual",

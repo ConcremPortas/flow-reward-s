@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSetores } from "@/hooks/useSetores";
 import { useProducaoSetor } from "@/hooks/useProducaoSetor";
+import { formatDateToBrasilia } from "@/lib/dateUtils";
 
 export const ProducaoSetor = () => {
   const { setores, loading: setoresLoading } = useSetores();
@@ -68,9 +69,12 @@ export const ProducaoSetor = () => {
       return;
     }
 
+    // Ajustar data para fuso horário de Brasília
+    const dataFormatada = formatDateToBrasilia(dataProducao);
+
     const registro = {
       setor_id: setorSelecionado,
-      data_producao: dataProducao,
+      data_producao: dataFormatada,
       meta_diaria: parseFloat(metaDiaria),
       producao_realizada: parseFloat(producaoRealizada),
       unidade_medida: unidadeMedida,

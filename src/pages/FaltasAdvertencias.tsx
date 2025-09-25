@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useFaltasAdvertencias } from "@/hooks/useFaltasAdvertencias";
+import { formatDateToBrasilia } from "@/lib/dateUtils";
 
 export const FaltasAdvertencias = () => {
   const { funcionarios, loading } = useFuncionarios();
@@ -64,7 +65,8 @@ export const FaltasAdvertencias = () => {
     }
 
     const [ano, mes] = mesCompetencia.split('-');
-    const dataApuracao = `${ano}-${mes}-01`;
+    // Ajustar data para fuso horário de Brasília
+    const dataApuracao = formatDateToBrasilia(`${ano}-${mes}-01`);
     
     // Salvar apenas funcionários que têm faltas ou advertências
     const funcionariosComOcorrencias = Object.entries(dadosApuracao).filter(([_, dados]) => 
