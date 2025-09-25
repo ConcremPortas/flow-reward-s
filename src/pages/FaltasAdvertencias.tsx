@@ -21,9 +21,11 @@ import {
 } from "@/components/ui/select";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
+import { useFaltasAdvertencias } from "@/hooks/useFaltasAdvertencias";
 
 export const FaltasAdvertencias = () => {
   const { funcionarios, loading } = useFuncionarios();
+  const { createRegistro } = useFaltasAdvertencias();
   const [searchTerm, setSearchTerm] = useState("");
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
   const [tipo, setTipo] = useState("");
@@ -34,18 +36,25 @@ export const FaltasAdvertencias = () => {
     funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!funcionarioSelecionado || !tipo || !quantidade.trim()) {
       alert("Por favor, preencha todos os campos obrigatórios");
       return;
     }
     
-    console.log("Salvando registro:", {
-      funcionarioId: funcionarioSelecionado,
-      tipo,
-      quantidade: parseInt(quantidade),
-      gravidade
-    });
+    const quantidadeNum = parseInt(quantidade);
+    
+    // Criar múltiplos registros baseado na quantidade
+    for (let i = 0; i < quantidadeNum; i++) {
+      await createRegistro({
+        funcionario_id: funcionarioSelecionado,
+        tipo,
+        motivo: `${tipo} registrada - quantidade ${i + 1} de ${quantidadeNum}`,
+        gravidade,
+        data_ocorrencia: new Date().toISOString().split('T')[0],
+        descricao: `Registro automático de ${tipo} - ${gravidade}`
+      });
+    }
     
     // Reset form
     setFuncionarioSelecionado("");

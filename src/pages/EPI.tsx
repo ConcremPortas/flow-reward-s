@@ -18,9 +18,11 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Save, FileText } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
+import { useEPI } from "@/hooks/useEPI";
 
 export const EPI = () => {
   const { funcionarios, loading } = useFuncionarios();
+  const { createEPI } = useEPI();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [statusEPI, setStatusEPI] = useState<Record<string, string>>({});
 
@@ -31,16 +33,25 @@ export const EPI = () => {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedDate) {
       alert("Por favor, selecione a data da auditoria");
       return;
     }
     
-    console.log("Salvando auditoria EPI:", {
-      data: selectedDate,
-      statusEPI
-    });
+    // Criar registros para cada funcionário auditado
+    const funcionariosAuditados = Object.keys(statusEPI);
+    
+    for (const funcionarioId of funcionariosAuditados) {
+      await createEPI({
+        funcionario_id: funcionarioId,
+        tipo_epi: "Auditoria Geral",
+        data_entrega: selectedDate.toISOString().split('T')[0],
+        status: statusEPI[funcionarioId],
+        descricao: `Auditoria de EPI realizada em ${selectedDate.toLocaleDateString()}`,
+        observacoes: `Status: ${statusEPI[funcionarioId] === 'conforme' ? 'Conforme' : 'Não conforme'}`
+      });
+    }
     
     // Reset form
     setSelectedDate(undefined);

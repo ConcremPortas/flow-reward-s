@@ -19,9 +19,11 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Save, FileText } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
+import { useDSS } from "@/hooks/useDSS";
 
 export const DSS = () => {
   const { funcionarios, loading } = useFuncionarios();
+  const { createDSS } = useDSS();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [tema, setTema] = useState("");
   const [presencas, setPresencas] = useState<Record<string, boolean>>({});
@@ -33,16 +35,21 @@ export const DSS = () => {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedDate || !tema.trim()) {
       alert("Por favor, preencha a data e o tema do DSS");
       return;
     }
     
-    console.log("Salvando DSS:", {
-      data: selectedDate,
-      tema,
-      presencas
+    const participantesPresentes = Object.keys(presencas).filter(id => presencas[id]);
+    
+    await createDSS({
+      titulo: tema,
+      descricao: `DSS realizado sobre: ${tema}`,
+      data_realizacao: selectedDate.toISOString().split('T')[0],
+      participantes_ids: participantesPresentes,
+      topics: [tema],
+      observacoes: `${participantesPresentes.length} funcionários presentes`
     });
     
     // Reset form
