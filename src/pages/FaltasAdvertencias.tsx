@@ -27,8 +27,7 @@ export const FaltasAdvertencias = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
   const [tipo, setTipo] = useState("");
-  const [motivo, setMotivo] = useState("");
-  const [descricao, setDescricao] = useState("");
+  const [quantidade, setQuantidade] = useState("");
   const [gravidade, setGravidade] = useState("leve");
 
   const filteredFuncionarios = funcionarios.filter(funcionario =>
@@ -36,7 +35,7 @@ export const FaltasAdvertencias = () => {
   );
 
   const handleSave = () => {
-    if (!funcionarioSelecionado || !tipo || !motivo.trim()) {
+    if (!funcionarioSelecionado || !tipo || !quantidade.trim()) {
       alert("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -44,16 +43,14 @@ export const FaltasAdvertencias = () => {
     console.log("Salvando registro:", {
       funcionarioId: funcionarioSelecionado,
       tipo,
-      motivo,
-      descricao,
+      quantidade: parseInt(quantidade),
       gravidade
     });
     
     // Reset form
     setFuncionarioSelecionado("");
     setTipo("");
-    setMotivo("");
-    setDescricao("");
+    setQuantidade("");
     setGravidade("leve");
   };
 
@@ -107,11 +104,13 @@ export const FaltasAdvertencias = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Motivo *</label>
+              <label className="text-sm font-medium">Quantidade *</label>
               <Input
-                placeholder="Ex: Atraso, Ausência não justificada..."
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
+                type="number"
+                min="1"
+                placeholder="Ex: 2"
+                value={quantidade}
+                onChange={(e) => setQuantidade(e.target.value)}
               />
             </div>
 
@@ -128,24 +127,13 @@ export const FaltasAdvertencias = () => {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium">Descrição</label>
-              <Textarea
-                placeholder="Detalhes adicionais sobre o ocorrido..."
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                rows={3}
-              />
-            </div>
           </div>
 
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => {
               setFuncionarioSelecionado("");
               setTipo("");
-              setMotivo("");
-              setDescricao("");
+              setQuantidade("");
               setGravidade("leve");
             }}>
               Cancelar
@@ -153,7 +141,7 @@ export const FaltasAdvertencias = () => {
             <Button 
               className="gap-2" 
               onClick={handleSave}
-              disabled={!funcionarioSelecionado || !tipo || !motivo.trim()}
+              disabled={!funcionarioSelecionado || !tipo || !quantidade.trim()}
             >
               <Plus className="h-4 w-4" />
               Adicionar Registro
