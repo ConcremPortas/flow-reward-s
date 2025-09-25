@@ -31,25 +31,39 @@ import { Plus, Search, Eye, Edit, FileText } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { useSetores } from "@/hooks/useSetores";
+import { useFuncoes } from "@/hooks/useFuncoes";
+import { useCategorias } from "@/hooks/useCategorias";
+import { useBasePremiacao } from "@/hooks/useBasePremiacao";
 
 export const Funcionarios = () => {
   // Componente de gestão de funcionários conectado ao banco de dados
   const { funcionarios, loading, createFuncionario } = useFuncionarios();
   const { empresas } = useEmpresas();
   const { setores } = useSetores();
+  const { funcoes } = useFuncoes();
+  const { categorias } = useCategorias();
+  const { bases } = useBasePremiacao();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSetor, setSelectedSetor] = useState("Todos");
   const [selectedStatus, setSelectedStatus] = useState("Todos");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({
+    cod_funcionario: "",
     nome: "",
     email: "",
     telefone: "",
     cpf: "",
+    data_nascimento: "",
+    data_admissao: "",
     empresa_id: "",
     setor_id: "",
-    salario: ""
+    funcao_id: "",
+    categoria_id: "",
+    categoria_bonus_id: "",
+    base_premiacao_id: "",
+    salario: "",
+    valor_fixo: ""
   });
 
   const filteredFuncionarios = funcionarios.filter(funcionario => {
@@ -73,13 +87,21 @@ export const Funcionarios = () => {
 
   const handleAdd = () => {
     setFormData({
+      cod_funcionario: "",
       nome: "",
       email: "",
       telefone: "",
       cpf: "",
+      data_nascimento: "",
+      data_admissao: "",
       empresa_id: "",
       setor_id: "",
-      salario: ""
+      funcao_id: "",
+      categoria_id: "",
+      categoria_bonus_id: "",
+      base_premiacao_id: "",
+      salario: "",
+      valor_fixo: ""
     });
     setIsAddOpen(true);
   };
@@ -89,17 +111,37 @@ export const Funcionarios = () => {
     
     await createFuncionario({
       nome: formData.nome,
+      cpf: formData.cpf || undefined,
       email: formData.email || undefined,
       telefone: formData.telefone || undefined,
-      cpf: formData.cpf || undefined,
+      data_nascimento: formData.data_nascimento || undefined,
+      data_admissao: formData.data_admissao || undefined,
       empresa_id: formData.empresa_id || undefined,
       setor_id: formData.setor_id || undefined,
+      funcao_id: formData.funcao_id || undefined,
+      categoria_id: formData.categoria_id || undefined,
       salario: formData.salario ? parseFloat(formData.salario) : undefined,
       ativo: true
     });
     
     setIsAddOpen(false);
-    setFormData({ nome: "", email: "", telefone: "", cpf: "", empresa_id: "", setor_id: "", salario: "" });
+    setFormData({
+      cod_funcionario: "",
+      nome: "",
+      email: "",
+      telefone: "",
+      cpf: "",
+      data_nascimento: "",
+      data_admissao: "",
+      empresa_id: "",
+      setor_id: "",
+      funcao_id: "",
+      categoria_id: "",
+      categoria_bonus_id: "",
+      base_premiacao_id: "",
+      salario: "",
+      valor_fixo: ""
+    });
   };
 
   const setorOptions = ["Todos", ...setores.map(s => s.nome)];
@@ -137,7 +179,16 @@ export const Funcionarios = () => {
                 </DialogHeader>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="nome">Nome</Label>
+                    <Label htmlFor="cod_funcionario">COD Funcionário *</Label>
+                    <Input
+                      id="cod_funcionario"
+                      value={formData.cod_funcionario}
+                      onChange={(e) => setFormData({...formData, cod_funcionario: e.target.value})}
+                      placeholder="Código do funcionário"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Funcionário *</Label>
                     <Input
                       id="nome"
                       value={formData.nome}
@@ -145,50 +196,9 @@ export const Funcionarios = () => {
                       placeholder="Nome completo"
                     />
                   </div>
+                  
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone">Telefone</Label>
-                    <Input
-                      id="telefone"
-                      value={formData.telefone}
-                      onChange={(e) => setFormData({...formData, telefone: e.target.value})}
-                      placeholder="(11) 99999-9999"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF</Label>
-                    <Input
-                      id="cpf"
-                      value={formData.cpf}
-                      onChange={(e) => setFormData({...formData, cpf: e.target.value})}
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="empresa">Empresa</Label>
-                    <Select value={formData.empresa_id} onValueChange={(value) => setFormData({...formData, empresa_id: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar empresa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {empresas.map(empresa => (
-                          <SelectItem key={empresa.id} value={empresa.id}>
-                            {empresa.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="setor">Setor</Label>
+                    <Label htmlFor="setor">Setor *</Label>
                     <Select value={formData.setor_id} onValueChange={(value) => setFormData({...formData, setor_id: value})}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecionar setor" />
@@ -203,12 +213,151 @@ export const Funcionarios = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="funcao">Função *</Label>
+                    <Select value={formData.funcao_id} onValueChange={(value) => setFormData({...formData, funcao_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar função" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {funcoes.map(funcao => (
+                          <SelectItem key={funcao.id} value={funcao.id}>
+                            {funcao.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="categoria">Categoria *</Label>
+                    <Select value={formData.categoria_id} onValueChange={(value) => setFormData({...formData, categoria_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categorias.map(categoria => (
+                          <SelectItem key={categoria.id} value={categoria.id}>
+                            {categoria.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="categoria_bonus">Categoria Bônus *</Label>
+                    <Select value={formData.categoria_bonus_id} onValueChange={(value) => setFormData({...formData, categoria_bonus_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar categoria bônus" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categorias.map(categoria => (
+                          <SelectItem key={categoria.id} value={categoria.id}>
+                            {categoria.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="data_nascimento">Data *</Label>
+                    <Input
+                      id="data_nascimento"
+                      type="date"
+                      value={formData.data_nascimento}
+                      onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="base_premiacao">Base Premiação *</Label>
+                    <Select value={formData.base_premiacao_id} onValueChange={(value) => setFormData({...formData, base_premiacao_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar base de premiação" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bases.map(base => (
+                          <SelectItem key={base.id} value={base.id}>
+                            {base.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="empresa">Empresa *</Label>
+                    <Select value={formData.empresa_id} onValueChange={(value) => setFormData({...formData, empresa_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {empresas.map(empresa => (
+                          <SelectItem key={empresa.id} value={empresa.id}>
+                            {empresa.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="valor_fixo">Valor Fixo (R$) *</Label>
+                    <Input
+                      id="valor_fixo"
+                      value={formData.valor_fixo}
+                      onChange={(e) => setFormData({...formData, valor_fixo: e.target.value})}
+                      placeholder="0.00"
+                      type="number"
+                      step="0.01"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="cpf">CPF</Label>
+                    <Input
+                      id="cpf"
+                      value={formData.cpf}
+                      onChange={(e) => setFormData({...formData, cpf: e.target.value})}
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      placeholder="email@exemplo.com"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="telefone">Telefone</Label>
+                    <Input
+                      id="telefone"
+                      value={formData.telefone}
+                      onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                      placeholder="(11) 99999-9999"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="data_admissao">Data de Admissão</Label>
+                    <Input
+                      id="data_admissao"
+                      type="date"
+                      value={formData.data_admissao}
+                      onChange={(e) => setFormData({...formData, data_admissao: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="salario">Salário</Label>
                     <Input
                       id="salario"
                       value={formData.salario}
                       onChange={(e) => setFormData({...formData, salario: e.target.value})}
                       placeholder="0.00"
+                      type="number"
+                      step="0.01"
                     />
                   </div>
                 </div>
