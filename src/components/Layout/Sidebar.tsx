@@ -1,6 +1,8 @@
 import { useState } from "react";
 import logoImage from "@/assets/logo-concrem-new.png";
+import logoCollapsed from "@/assets/logo-concrem-collapsed.png";
 import { Link, useLocation } from "react-router-dom";
+import { useSidebar } from "./MainLayout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -101,6 +103,7 @@ const cadastrosItems = [
 
 export const Sidebar = () => {
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
+  const { isCollapsed, setIsCollapsed } = useSidebar();
   const location = useLocation();
 
   const isActive = (href: string) => {
@@ -113,13 +116,20 @@ export const Sidebar = () => {
   const isCadastrosActive = cadastrosItems.some(item => isActive(item.href));
 
   return (
-    <div className="w-64 bg-primary min-h-screen fixed left-0 top-0 z-40 flex flex-col">
+    <div className={cn(
+      "bg-primary min-h-screen fixed left-0 top-0 z-40 flex flex-col transition-all duration-300",
+      isCollapsed ? "w-16" : "w-64"
+    )}>
       {/* Logo/Header */}
       <div className="p-6 border-b border-primary-hover flex justify-center">
         <img 
-          src={logoImage} 
+          src={isCollapsed ? logoCollapsed : logoImage} 
           alt="Concrem Logo" 
-          className="h-8 w-auto object-contain"
+          className={cn(
+            "object-contain cursor-pointer transition-all duration-300",
+            isCollapsed ? "h-10 w-10" : "h-8 w-auto"
+          )}
+          onClick={() => setIsCollapsed(!isCollapsed)}
         />
       </div>
 
@@ -131,53 +141,73 @@ export const Sidebar = () => {
               variant="sidebar"
               className={cn(
                 "gap-3 text-left",
-                isActive(item.href) && "bg-primary-hover"
+                isActive(item.href) && "bg-primary-hover",
+                isCollapsed && "justify-center px-0"
               )}
+              title={isCollapsed ? item.title : undefined}
             >
               <item.icon className="h-5 w-5" />
-              {item.title}
+              {!isCollapsed && item.title}
             </Button>
           </Link>
         ))}
 
         {/* Cadastros submenu */}
-        <div>
-          <Button
-            variant="sidebar"
-            className={cn(
-              "gap-3 text-left",
-              (isCadastrosActive || cadastrosOpen) && "bg-primary-hover"
-            )}
-            onClick={() => setCadastrosOpen(!cadastrosOpen)}
-          >
-            <Settings className="h-5 w-5" />
-            Cadastros
-            {cadastrosOpen ? (
-              <ChevronDown className="h-4 w-4 ml-auto" />
-            ) : (
-              <ChevronRight className="h-4 w-4 ml-auto" />
-            )}
-          </Button>
+        {!isCollapsed && (
+          <div>
+            <Button
+              variant="sidebar"
+              className={cn(
+                "gap-3 text-left",
+                (isCadastrosActive || cadastrosOpen) && "bg-primary-hover"
+              )}
+              onClick={() => setCadastrosOpen(!cadastrosOpen)}
+            >
+              <Settings className="h-5 w-5" />
+              Cadastros
+              {cadastrosOpen ? (
+                <ChevronDown className="h-4 w-4 ml-auto" />
+              ) : (
+                <ChevronRight className="h-4 w-4 ml-auto" />
+              )}
+            </Button>
 
-          {cadastrosOpen && (
-            <div className="ml-4 mt-2 space-y-1">
-              {cadastrosItems.map((item) => (
-                <Link key={item.href} to={item.href}>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-start gap-3 text-primary-foreground hover:bg-primary-hover",
-                      isActive(item.href) && "bg-primary-hover"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.title}
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+            {cadastrosOpen && (
+              <div className="ml-4 mt-2 space-y-1">
+                {cadastrosItems.map((item) => (
+                  <Link key={item.href} to={item.href}>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-start gap-3 text-primary-foreground hover:bg-primary-hover",
+                        isActive(item.href) && "bg-primary-hover"
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.title}
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Cadastros collapsed - show individual items */}
+        {isCollapsed && cadastrosItems.map((item) => (
+          <Link key={item.href} to={item.href}>
+            <Button
+              variant="sidebar"
+              className={cn(
+                "justify-center px-0",
+                isActive(item.href) && "bg-primary-hover"
+              )}
+              title={item.title}
+            >
+              <item.icon className="h-5 w-5" />
+            </Button>
+          </Link>
+        ))}
       </nav>
     </div>
   );
