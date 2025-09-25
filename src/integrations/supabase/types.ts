@@ -272,6 +272,7 @@ export type Database = {
           id: string
           motivo: string
           observacoes: string | null
+          quantidade: number | null
           tipo: string
           updated_at: string
         }
@@ -285,6 +286,7 @@ export type Database = {
           id?: string
           motivo: string
           observacoes?: string | null
+          quantidade?: number | null
           tipo: string
           updated_at?: string
         }
@@ -298,6 +300,7 @@ export type Database = {
           id?: string
           motivo?: string
           observacoes?: string | null
+          quantidade?: number | null
           tipo?: string
           updated_at?: string
         }

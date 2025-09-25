@@ -9,6 +9,7 @@ export interface FaltaAdvertencia {
   motivo: string;
   descricao?: string;
   gravidade?: string;
+  quantidade?: number;
   data_ocorrencia: string;
   aplicado_por?: string;
   observacoes?: string;

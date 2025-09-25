@@ -46,17 +46,16 @@ export const FaltasAdvertencias = () => {
     
     const quantidadeNum = parseInt(quantidade);
     
-    // Criar múltiplos registros baseado na quantidade
-    for (let i = 0; i < quantidadeNum; i++) {
-      await createRegistro({
-        funcionario_id: funcionarioSelecionado,
-        tipo,
-        motivo: `${tipo} registrada - quantidade ${i + 1} de ${quantidadeNum}`,
-        gravidade,
-        data_ocorrencia: new Date().toISOString().split('T')[0],
-        descricao: `Registro automático de ${tipo} - ${gravidade}`
-      });
-    }
+    // Criar apenas um registro com a quantidade total
+    await createRegistro({
+      funcionario_id: funcionarioSelecionado,
+      tipo,
+      motivo: `${tipo} - ${quantidadeNum} ocorrência(s)`,
+      gravidade,
+      quantidade: quantidadeNum,
+      data_ocorrencia: new Date().toISOString().split('T')[0],
+      descricao: `${quantidadeNum} ${tipo}(s) registrada(s) - ${gravidade}`
+    });
     
     // Reset form
     setFuncionarioSelecionado("");
@@ -199,6 +198,7 @@ export const FaltasAdvertencias = () => {
                   <TableRow className="bg-muted/50">
                     <TableHead>Funcionário</TableHead>
                     <TableHead>Tipo</TableHead>
+                    <TableHead>Quantidade</TableHead>
                     <TableHead>Gravidade</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Descrição</TableHead>
@@ -226,6 +226,9 @@ export const FaltasAdvertencias = () => {
                             }`}>
                               {registro.tipo === 'falta' ? 'Falta' : 'Advertência'}
                             </span>
+                          </TableCell>
+                          <TableCell className="text-center font-medium">
+                            {registro.quantidade || 1}
                           </TableCell>
                           <TableCell>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
