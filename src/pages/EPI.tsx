@@ -36,10 +36,17 @@ export const EPI = () => {
   const [statusEPI, setStatusEPI] = useState<Record<string, string>>({});
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<any>(null);
-  const [editSelectedFuncionario, setEditSelectedFuncionario] = useState<string>("");
+  const [editStatusEPI, setEditStatusEPI] = useState<Record<string, string>>({});
 
   const handleStatusChange = (funcionarioId: string, status: string) => {
     setStatusEPI(prev => ({
+      ...prev,
+      [funcionarioId]: status
+    }));
+  };
+
+  const handleEditStatusChange = (funcionarioId: string, status: string) => {
+    setEditStatusEPI(prev => ({
       ...prev,
       [funcionarioId]: status
     }));
@@ -80,15 +87,15 @@ export const EPI = () => {
     if (epi.funcionario_id) {
       editStatus[epi.funcionario_id] = epi.status || "nao_conforme";
     }
-    setStatusEPI(editStatus);
+    setEditStatusEPI(editStatus);
   };
 
   const handleUpdate = async () => {
     if (!editingRecord || !editingData) return;
 
-    // Get the funcionario_id and their status from statusEPI
-    const funcionarioId = Object.keys(statusEPI)[0];
-    const status = statusEPI[funcionarioId] || "nao_conforme";
+    // Get the funcionario_id and their status from editStatusEPI
+    const funcionarioId = Object.keys(editStatusEPI)[0];
+    const status = editStatusEPI[funcionarioId] || "nao_conforme";
 
     await updateEPI(editingRecord, {
       funcionario_id: funcionarioId,
@@ -102,7 +109,7 @@ export const EPI = () => {
 
     setEditingRecord(null);
     setEditingData(null);
-    setStatusEPI({});
+    setEditStatusEPI({});
   };
 
   const handleDelete = async (id: string) => {
@@ -114,7 +121,7 @@ export const EPI = () => {
   const handleCancelEdit = () => {
     setEditingRecord(null);
     setEditingData(null);
-    setStatusEPI({});
+    setEditStatusEPI({});
   };
 
   if (loading) {
@@ -331,9 +338,9 @@ export const EPI = () => {
                                       <div className="flex items-center justify-center">
                                         <Switch
                                           className="switch-conforme"
-                                          checked={statusEPI[funcionario.id] === "conforme"}
+                                          checked={editStatusEPI[funcionario.id] === "conforme"}
                                           onCheckedChange={(checked) => 
-                                            handleStatusChange(funcionario.id, checked ? "conforme" : "nao_conforme")
+                                            handleEditStatusChange(funcionario.id, checked ? "conforme" : "nao_conforme")
                                           }
                                         />
                                       </div>
