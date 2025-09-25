@@ -36,6 +36,7 @@ export const EPI = () => {
   const [statusEPI, setStatusEPI] = useState<Record<string, string>>({});
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<any>(null);
+  const [editSelectedFuncionario, setEditSelectedFuncionario] = useState<string>("");
 
   const handleStatusChange = (funcionarioId: string, status: string) => {
     setStatusEPI(prev => ({
@@ -74,12 +75,14 @@ export const EPI = () => {
   const handleEdit = (epi: any) => {
     setEditingRecord(epi.id);
     setEditingData(epi);
+    setEditSelectedFuncionario(epi.funcionario_id || "");
   };
 
   const handleUpdate = async () => {
     if (!editingRecord || !editingData) return;
 
     await updateEPI(editingRecord, {
+      funcionario_id: editSelectedFuncionario,
       tipo_epi: editingData.tipo_epi,
       status: editingData.status,
       descricao: editingData.descricao,
@@ -90,6 +93,7 @@ export const EPI = () => {
 
     setEditingRecord(null);
     setEditingData(null);
+    setEditSelectedFuncionario("");
   };
 
   const handleDelete = async (id: string) => {
@@ -101,6 +105,7 @@ export const EPI = () => {
   const handleCancelEdit = () => {
     setEditingRecord(null);
     setEditingData(null);
+    setEditSelectedFuncionario("");
   };
 
   if (loading) {
@@ -290,14 +295,51 @@ export const EPI = () => {
                             onChange={(e) => setEditingData({...editingData, descricao: e.target.value})}
                           />
                         </div>
-                        <div className="md:col-span-2">
-                          <label className="text-sm font-medium">Observações</label>
-                          <Textarea
-                            value={editingData?.observacoes || ""}
-                            onChange={(e) => setEditingData({...editingData, observacoes: e.target.value})}
-                          />
-                        </div>
                       </div>
+
+                      {/* Lista de funcionários para seleção */}
+                      <div className="space-y-4">
+                        <h4 className="text-lg font-medium">Selecionar Funcionário</h4>
+                        
+                        {funcionarios.length > 0 ? (
+                          <div className="border rounded-lg overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                  <TableHead>Nome</TableHead>
+                                  <TableHead>Setor</TableHead>
+                                  <TableHead>Empresa</TableHead>
+                                  <TableHead className="text-center">Selecionado</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {funcionarios.filter(f => f.ativo).map((funcionario) => (
+                                  <TableRow key={funcionario.id}>
+                                    <TableCell className="font-medium">{funcionario.nome}</TableCell>
+                                    <TableCell>{funcionario.setor?.nome || "Não informado"}</TableCell>
+                                    <TableCell>{funcionario.empresa?.nome || "Não informado"}</TableCell>
+                                    <TableCell className="text-center">
+                                      <div className="flex items-center justify-center">
+                                        <Switch
+                                          checked={editSelectedFuncionario === funcionario.id}
+                                          onCheckedChange={(checked) => 
+                                            setEditSelectedFuncionario(checked ? funcionario.id : "")
+                                          }
+                                        />
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                            <p>Nenhum funcionário cadastrado ainda.</p>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={handleCancelEdit}>
                           Cancelar
