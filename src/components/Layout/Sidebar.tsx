@@ -115,7 +115,7 @@ export const Sidebar = () => {
   return (
     <div className="w-64 bg-primary min-h-screen fixed left-0 top-0 z-40 flex flex-col">
       {/* Logo/Header */}
-      <div className="p-6 border-b border-primary-hover">
+      <div className="p-6 border-b border-primary-hover flex justify-center">
         <img 
           src={logoImage} 
           alt="Concrem Logo" 
