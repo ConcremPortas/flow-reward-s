@@ -18,6 +18,7 @@ import { Funcoes } from "./pages/cadastros/Funcoes";
 import { Categorias } from "./pages/cadastros/Categorias";
 import { BasePremiacao } from "./pages/cadastros/BasePremiacao";
 import { Empresas } from "./pages/cadastros/Empresas";
+import { TiposIndicadores } from "./pages/cadastros/TiposIndicadores";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/cadastros/categorias" element={<MainLayout><Categorias /></MainLayout>} />
           <Route path="/cadastros/base-premiacao" element={<MainLayout><BasePremiacao /></MainLayout>} />
           <Route path="/cadastros/empresas" element={<MainLayout><Empresas /></MainLayout>} />
+          <Route path="/cadastros/tipos-indicadores" element={<MainLayout><TiposIndicadores /></MainLayout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

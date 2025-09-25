@@ -22,7 +22,8 @@ import {
   UserCog,
   Tag,
   Target,
-  Factory
+  Factory,
+  BarChart4
 } from "lucide-react";
 
 const menuItems = [
@@ -98,6 +99,11 @@ const cadastrosItems = [
     title: "Empresas",
     href: "/cadastros/empresas",
     icon: Factory,
+  },
+  {
+    title: "Tipos de Indicadores",
+    href: "/cadastros/tipos-indicadores",
+    icon: BarChart4,
   },
 ];
 
