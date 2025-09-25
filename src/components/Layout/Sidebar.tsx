@@ -1,6 +1,6 @@
 import { useState } from "react";
 import logoImage from "@/assets/logo-concrem-new.png";
-import logoCollapsed from "@/assets/logo-concrem-collapsed.png";
+import logoCollapsed from "@/assets/logo-concrem-collapsed-new.png";
 import { Link, useLocation } from "react-router-dom";
 import { useSidebar } from "./MainLayout";
 import { Button } from "@/components/ui/button";
