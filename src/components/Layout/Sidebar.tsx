@@ -127,7 +127,7 @@ export const Sidebar = () => {
           alt="Concrem Logo" 
           className={cn(
             "object-contain cursor-pointer transition-all duration-300",
-            isCollapsed ? "h-10 w-10" : "h-8 w-auto"
+            isCollapsed ? "h-14 w-14" : "h-8 w-auto"
           )}
           onClick={() => setIsCollapsed(!isCollapsed)}
         />
