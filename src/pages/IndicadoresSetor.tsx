@@ -23,19 +23,21 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useSetores } from "@/hooks/useSetores";
+import { useTiposIndicadores } from "@/hooks/useTiposIndicadores";
 
 // Hook específico para indicadores do setor (vamos usar os dados de produção como base)
 import { useProducaoSetor } from "@/hooks/useProducaoSetor";
 
 export const IndicadoresSetor = () => {
   const { setores, loading: setoresLoading } = useSetores();
+  const { tiposIndicadores, loading: tiposLoading } = useTiposIndicadores();
   const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro } = useProducaoSetor();
   const [searchTerm, setSearchTerm] = useState("");
   const [setorSelecionado, setSetorSelecionado] = useState("");
   const [competencia, setCompetencia] = useState("");
   const [metaEficiencia, setMetaEficiencia] = useState("");
   const [eficienciaRealizada, setEficienciaRealizada] = useState("");
-  const [tipoIndicador, setTipoIndicador] = useState("eficiencia");
+  const [tipoIndicador, setTipoIndicador] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
 
@@ -62,7 +64,7 @@ export const IndicadoresSetor = () => {
   };
 
   const handleSave = async () => {
-    if (!setorSelecionado || !competencia || !metaEficiencia || !eficienciaRealizada) {
+    if (!setorSelecionado || !competencia || !metaEficiencia || !eficienciaRealizada || !tipoIndicador) {
       alert("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -73,7 +75,7 @@ export const IndicadoresSetor = () => {
       meta_diaria: parseFloat(metaEficiencia),
       producao_realizada: parseFloat(eficienciaRealizada),
       unidade_medida: "percentual",
-      observacoes: `Indicador de ${tipoIndicador} - ${observacoes || "Sem observações"}`
+      observacoes: `Indicador: ${tiposIndicadores.find(t => t.id === tipoIndicador)?.nome} (${tiposIndicadores.find(t => t.id === tipoIndicador)?.codigo}) - ${observacoes || "Sem observações"}`
     };
 
     if (editingRecord) {
@@ -87,7 +89,7 @@ export const IndicadoresSetor = () => {
     setCompetencia("");
     setMetaEficiencia("");
     setEficienciaRealizada("");
-    setTipoIndicador("eficiencia");
+    setTipoIndicador("");
     setObservacoes("");
     setEditingRecord(null);
   };
@@ -97,7 +99,12 @@ export const IndicadoresSetor = () => {
     setCompetencia(registro.data_producao);
     setMetaEficiencia(registro.meta_diaria.toString());
     setEficienciaRealizada(registro.producao_realizada.toString());
-    setObservacoes(registro.observacoes || "");
+    // Extrair tipo do indicador das observações
+    const tipoFromObs = registro.observacoes?.includes("Indicador:") ? 
+      registro.observacoes.split("(")[1]?.split(")")[0] : "";
+    const tipoEncontrado = tiposIndicadores.find(t => t.codigo === tipoFromObs);
+    setTipoIndicador(tipoEncontrado?.id || "");
+    setObservacoes(registro.observacoes?.split(" - ")[1] || "");
     setEditingRecord(registro.id);
   };
 
@@ -112,12 +119,12 @@ export const IndicadoresSetor = () => {
     setCompetencia("");
     setMetaEficiencia("");
     setEficienciaRealizada("");
-    setTipoIndicador("eficiencia");
+    setTipoIndicador("");
     setObservacoes("");
     setEditingRecord(null);
   };
 
-  if (setoresLoading || registrosLoading) {
+  if (setoresLoading || registrosLoading || tiposLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-lg">Carregando dados...</div>
@@ -163,16 +170,17 @@ export const IndicadoresSetor = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo de Indicador</label>
+              <label className="text-sm font-medium">Tipo de Indicador *</label>
               <Select value={tipoIndicador} onValueChange={setTipoIndicador}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Selecione o tipo de indicador" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="eficiencia">Eficiência (%)</SelectItem>
-                  <SelectItem value="qualidade">Qualidade (%)</SelectItem>
-                  <SelectItem value="produtividade">Produtividade (%)</SelectItem>
-                  <SelectItem value="disponibilidade">Disponibilidade (%)</SelectItem>
+                  {tiposIndicadores.map(tipo => (
+                    <SelectItem key={tipo.id} value={tipo.id}>
+                      {tipo.nome} ({tipo.codigo})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -242,7 +250,7 @@ export const IndicadoresSetor = () => {
             <Button 
               className="gap-2" 
               onClick={handleSave}
-              disabled={!setorSelecionado || !competencia || !metaEficiencia || !eficienciaRealizada}
+              disabled={!setorSelecionado || !competencia || !metaEficiencia || !eficienciaRealizada || !tipoIndicador}
             >
               <Plus className="h-4 w-4" />
               {editingRecord ? "Atualizar" : "Adicionar"} Registro
@@ -295,8 +303,10 @@ export const IndicadoresSetor = () => {
               <TableBody>
                 {filteredIndicadores.map((item) => {
                   const eficiencia = calcularEficiencia(item.producao_realizada, item.meta_diaria);
-                  const tipoIndicadorFromObs = item.observacoes?.includes("Indicador de") ? 
-                    item.observacoes.split("Indicador de ")[1]?.split(" -")[0] || "eficiencia" : "eficiencia";
+                  // Extrair tipo do indicador das observações
+                  const tipoFromObs = item.observacoes?.includes("Indicador:") ? 
+                    item.observacoes.split("(")[1]?.split(")")[0] : "";
+                  const tipoIndicadorInfo = tiposIndicadores.find(t => t.codigo === tipoFromObs);
                   
                   return (
                     <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
@@ -334,8 +344,15 @@ export const IndicadoresSetor = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground capitalize">
-                        {tipoIndicadorFromObs}
+                      <TableCell className="text-sm text-muted-foreground">
+                        {tipoIndicadorInfo ? (
+                          <div>
+                            <span className="font-medium">{tipoIndicadorInfo.codigo}</span>
+                            <div className="text-xs">{tipoIndicadorInfo.nome}</div>
+                          </div>
+                        ) : (
+                          "N/A"
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
