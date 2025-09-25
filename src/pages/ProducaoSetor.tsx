@@ -156,7 +156,7 @@ export const ProducaoSetor = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Data da Produção *</label>
+              <label className="text-sm font-medium">Competência *</label>
               <Input
                 type="date"
                 value={dataProducao}
@@ -283,7 +283,7 @@ export const ProducaoSetor = () => {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead>Setor</TableHead>
-                  <TableHead>Data</TableHead>
+                  <TableHead>Competência</TableHead>
                   <TableHead className="text-right">Meta</TableHead>
                   <TableHead className="text-right">Realizado</TableHead>
                   <TableHead>Percentual</TableHead>
