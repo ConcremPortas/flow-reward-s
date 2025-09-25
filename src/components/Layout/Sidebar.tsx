@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logoImage from "@/assets/logo-concrem.png";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -115,9 +116,11 @@ export const Sidebar = () => {
     <div className="w-64 bg-primary min-h-screen fixed left-0 top-0 z-40 flex flex-col">
       {/* Logo/Header */}
       <div className="p-6 border-b border-primary-hover">
-        <h1 className="text-primary-foreground text-xl font-bold">
-          Sistema de Remuneração
-        </h1>
+        <img 
+          src={logoImage} 
+          alt="Concrem Logo" 
+          className="h-8 w-auto object-contain"
+        />
       </div>
 
       {/* Navigation */}
