@@ -23,7 +23,7 @@ import { useDSS } from "@/hooks/useDSS";
 
 export const DSS = () => {
   const { funcionarios, loading } = useFuncionarios();
-  const { createDSS } = useDSS();
+  const { dssRecords, loading: dssLoading, createDSS } = useDSS();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [tema, setTema] = useState("");
   const [presencas, setPresencas] = useState<Record<string, boolean>>({});
@@ -197,10 +197,45 @@ export const DSS = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground border rounded-lg">
-            <p>Nenhum DSS realizado ainda.</p>
-            <p className="text-sm">Os DSS realizados aparecerão aqui.</p>
-          </div>
+          {dssLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-lg">Carregando histórico...</div>
+            </div>
+          ) : dssRecords.length > 0 ? (
+            <div className="space-y-4">
+              {dssRecords.map((dss) => (
+                <div key={dss.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium">{dss.titulo}</h4>
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(dss.data_realizacao), "dd/MM/yyyy", { locale: ptBR })}
+                    </span>
+                  </div>
+                  {dss.descricao && (
+                    <p className="text-sm text-muted-foreground mb-2">{dss.descricao}</p>
+                  )}
+                  <div className="flex gap-4 text-sm">
+                    <span>
+                      <strong>Participantes:</strong> {dss.participantes_ids?.length || 0}
+                    </span>
+                    {dss.topics && dss.topics.length > 0 && (
+                      <span>
+                        <strong>Tópicos:</strong> {dss.topics.join(", ")}
+                      </span>
+                    )}
+                  </div>
+                  {dss.observacoes && (
+                    <p className="text-sm text-muted-foreground mt-2">{dss.observacoes}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground border rounded-lg">
+              <p>Nenhum DSS realizado ainda.</p>
+              <p className="text-sm">Os DSS realizados aparecerão aqui.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
