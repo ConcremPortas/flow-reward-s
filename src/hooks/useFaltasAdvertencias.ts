@@ -72,6 +72,62 @@ export const useFaltasAdvertencias = () => {
     }
   };
 
+  const updateRegistro = async (id: string, registro: Partial<Omit<FaltaAdvertencia, 'id' | 'created_at' | 'updated_at'>>) => {
+    try {
+      const { data, error } = await supabase
+        .from('concrem_faltas_advertencias')
+        .update(registro)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Registro atualizado com sucesso",
+      });
+
+      fetchRegistros();
+      return data;
+    } catch (error) {
+      console.error('Erro ao atualizar registro:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o registro",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const deleteRegistro = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('concrem_faltas_advertencias')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Registro excluído com sucesso",
+      });
+
+      fetchRegistros();
+      return true;
+    } catch (error) {
+      console.error('Erro ao excluir registro:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o registro",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchRegistros();
   }, []);
@@ -80,6 +136,8 @@ export const useFaltasAdvertencias = () => {
     registros,
     loading,
     createRegistro,
+    updateRegistro,
+    deleteRegistro,
     refetch: fetchRegistros
   };
 };

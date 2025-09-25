@@ -27,12 +27,13 @@ import { useFaltasAdvertencias } from "@/hooks/useFaltasAdvertencias";
 
 export const FaltasAdvertencias = () => {
   const { funcionarios, loading } = useFuncionarios();
-  const { registros, loading: registrosLoading, createRegistro } = useFaltasAdvertencias();
+  const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro } = useFaltasAdvertencias();
   const [searchTerm, setSearchTerm] = useState("");
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
   const [tipo, setTipo] = useState("");
   const [quantidade, setQuantidade] = useState("");
   const [gravidade, setGravidade] = useState("leve");
+  const [editingRecord, setEditingRecord] = useState<string | null>(null);
 
   const filteredFuncionarios = funcionarios.filter(funcionario =>
     funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase())
@@ -62,6 +63,54 @@ export const FaltasAdvertencias = () => {
     setTipo("");
     setQuantidade("");
     setGravidade("leve");
+    setEditingRecord(null);
+  };
+
+  const handleEdit = (registro: any) => {
+    setFuncionarioSelecionado(registro.funcionario_id);
+    setTipo(registro.tipo);
+    setQuantidade(registro.quantidade?.toString() || "1");
+    setGravidade(registro.gravidade);
+    setEditingRecord(registro.id);
+  };
+
+  const handleUpdate = async () => {
+    if (!funcionarioSelecionado || !tipo || !quantidade.trim() || !editingRecord) {
+      alert("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+    
+    const quantidadeNum = parseInt(quantidade);
+    
+    await updateRegistro(editingRecord, {
+      funcionario_id: funcionarioSelecionado,
+      tipo,
+      motivo: `${tipo} - ${quantidadeNum} ocorrência(s)`,
+      gravidade,
+      quantidade: quantidadeNum,
+      descricao: `${quantidadeNum} ${tipo}(s) registrada(s) - ${gravidade}`
+    });
+    
+    // Reset form
+    setFuncionarioSelecionado("");
+    setTipo("");
+    setQuantidade("");
+    setGravidade("leve");
+    setEditingRecord(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este registro?")) {
+      await deleteRegistro(id);
+    }
+  };
+
+  const handleCancel = () => {
+    setFuncionarioSelecionado("");
+    setTipo("");
+    setQuantidade("");
+    setGravidade("leve");
+    setEditingRecord(null);
   };
 
   if (loading) {
@@ -74,12 +123,12 @@ export const FaltasAdvertencias = () => {
 
   return (
     <div className="space-y-6">
-      {/* Novo Registro */}
+      {/* Novo/Editar Registro */}
       <Card className="card-elegant">
         <CardHeader>
-          <CardTitle>Novo Registro de Faltas/Advertências</CardTitle>
+          <CardTitle>{editingRecord ? "Editar" : "Novo"} Registro de Faltas/Advertências</CardTitle>
           <CardDescription>
-            Registre faltas e advertências de funcionários
+            {editingRecord ? "Edite o registro selecionado" : "Registre faltas e advertências de funcionários"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -140,21 +189,16 @@ export const FaltasAdvertencias = () => {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => {
-              setFuncionarioSelecionado("");
-              setTipo("");
-              setQuantidade("");
-              setGravidade("leve");
-            }}>
+            <Button variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
             <Button 
               className="gap-2" 
-              onClick={handleSave}
+              onClick={editingRecord ? handleUpdate : handleSave}
               disabled={!funcionarioSelecionado || !tipo || !quantidade.trim()}
             >
               <Plus className="h-4 w-4" />
-              Adicionar Registro
+              {editingRecord ? "Atualizar" : "Adicionar"} Registro
             </Button>
           </div>
         </CardContent>
@@ -202,6 +246,7 @@ export const FaltasAdvertencias = () => {
                     <TableHead>Gravidade</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Descrição</TableHead>
+                    <TableHead className="text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -246,6 +291,26 @@ export const FaltasAdvertencias = () => {
                           </TableCell>
                           <TableCell className="max-w-xs truncate">
                             {registro.descricao || registro.motivo}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(registro)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(registro.id)}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
