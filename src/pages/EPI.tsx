@@ -58,19 +58,25 @@ export const EPI = () => {
       return;
     }
     
-    // Criar registros para cada funcionário auditado
+    // Criar apenas uma auditoria geral contendo todos os funcionários
     const funcionariosAuditados = Object.keys(statusEPI);
+    const funcionariosInfo = funcionariosAuditados.map(funcionarioId => {
+      const funcionario = funcionarios.find(f => f.id === funcionarioId);
+      const status = statusEPI[funcionarioId];
+      return `${funcionario?.nome}: ${status === 'conforme' ? 'Conforme' : 'Não conforme'}`;
+    }).join('\n');
+
+    const conformes = funcionariosAuditados.filter(id => statusEPI[id] === 'conforme').length;
+    const naoConformes = funcionariosAuditados.filter(id => statusEPI[id] === 'nao_conforme').length;
     
-    for (const funcionarioId of funcionariosAuditados) {
-      await createEPI({
-        funcionario_id: funcionarioId,
-        tipo_epi: "Auditoria Geral",
-        data_entrega: selectedDate.toISOString().split('T')[0],
-        status: statusEPI[funcionarioId],
-        descricao: `Auditoria de EPI realizada em ${selectedDate.toLocaleDateString()}`,
-        observacoes: `Status: ${statusEPI[funcionarioId] === 'conforme' ? 'Conforme' : 'Não conforme'}`
-      });
-    }
+    await createEPI({
+      funcionario_id: null, // Não é específico de um funcionário
+      tipo_epi: "Auditoria Geral de EPI",
+      data_entrega: selectedDate.toISOString().split('T')[0],
+      status: conformes > naoConformes ? "conforme" : "nao_conforme",
+      descricao: `Auditoria de EPI realizada em ${selectedDate.toLocaleDateString()} - ${funcionariosAuditados.length} funcionários auditados`,
+      observacoes: `Resumo: ${conformes} conformes, ${naoConformes} não conformes\n\nDetalhes:\n${funcionariosInfo}`
+    });
     
     // Reset form
     setSelectedDate(undefined);
