@@ -34,6 +34,7 @@ import { useSetores } from "@/hooks/useSetores";
 import { useFuncoes } from "@/hooks/useFuncoes";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useBasePremiacao } from "@/hooks/useBasePremiacao";
+import { useFaixas } from "@/hooks/useFaixas";
 
 export const Funcionarios = () => {
   // Componente de gestão de funcionários conectado ao banco de dados
@@ -43,6 +44,7 @@ export const Funcionarios = () => {
   const { funcoes } = useFuncoes();
   const { categorias } = useCategorias();
   const { bases } = useBasePremiacao();
+  const { faixas } = useFaixas();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSetor, setSelectedSetor] = useState("Todos");
@@ -250,9 +252,9 @@ export const Funcionarios = () => {
                         <SelectValue placeholder="Selecionar categoria bônus" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categorias.map(categoria => (
-                          <SelectItem key={categoria.id} value={categoria.id}>
-                            {categoria.nome}
+                        {faixas.map(faixa => (
+                          <SelectItem key={faixa.id} value={faixa.id}>
+                            {faixa.nome}
                           </SelectItem>
                         ))}
                       </SelectContent>
