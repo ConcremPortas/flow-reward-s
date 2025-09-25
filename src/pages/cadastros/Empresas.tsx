@@ -12,52 +12,45 @@ import {
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Plus, Edit, Trash2, Search, Building } from "lucide-react";
-
-// Dados de exemplo
-const empresas = [
-  {
-    id: 1,
-    nome: "Empresa Principal",
-    cnpj: "12.345.678/0001-90",
-    status: "active" as const,
-    funcionarios: 85
-  },
-  {
-    id: 2,
-    nome: "Empresa Secundária",
-    cnpj: "98.765.432/0001-10",
-    status: "active" as const,
-    funcionarios: 42
-  },
-  {
-    id: 3,
-    nome: "Filial Norte",
-    cnpj: "11.222.333/0001-44",
-    status: "active" as const,
-    funcionarios: 28
-  },
-  {
-    id: 4,
-    nome: "Empresa Terceirizada",
-    cnpj: "55.666.777/0001-88",
-    status: "inactive" as const,
-    funcionarios: 0
-  }
-];
+import { useEmpresas } from "@/hooks/useEmpresas";
 
 export const Empresas = () => {
+  const { empresas, loading, createEmpresa, deleteEmpresa } = useEmpresas();
   const [searchTerm, setSearchTerm] = useState("");
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [cnpj, setCnpj] = useState("");
 
   const filteredEmpresas = empresas.filter(empresa =>
     empresa.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    empresa.cnpj.includes(searchTerm)
+    (empresa.cnpj && empresa.cnpj.includes(searchTerm))
   );
 
-  const formatCNPJ = (cnpj: string) => {
-    return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  const handleAddEmpresa = async () => {
+    if (!nomeEmpresa.trim()) return;
+    
+    await createEmpresa({
+      nome: nomeEmpresa,
+      cnpj: cnpj || undefined,
+      ativo: true
+    });
+    
+    setNomeEmpresa("");
+    setCnpj("");
   };
+
+  const handleDeleteEmpresa = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir esta empresa?")) {
+      await deleteEmpresa(id);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Carregando empresas...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -91,8 +84,10 @@ export const Empresas = () => {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
-            <Button className="gap-2">
+            <Button variant="outline" onClick={() => { setNomeEmpresa(""); setCnpj(""); }}>
+              Cancelar
+            </Button>
+            <Button className="gap-2" onClick={handleAddEmpresa} disabled={!nomeEmpresa.trim()}>
               <Plus className="h-4 w-4" />
               Adicionar Empresa
             </Button>
@@ -134,7 +129,6 @@ export const Empresas = () => {
                   <TableHead>Nome da Empresa</TableHead>
                   <TableHead>CNPJ</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Funcionários</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -147,14 +141,11 @@ export const Empresas = () => {
                         <span className="font-medium">{empresa.nome}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{empresa.cnpj}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={empresa.status} />
+                    <TableCell className="font-mono text-sm">
+                      {empresa.cnpj || "Não informado"}
                     </TableCell>
-                    <TableCell className="text-center">
-                      <span className={empresa.funcionarios > 0 ? "font-medium" : "text-muted-foreground"}>
-                        {empresa.funcionarios}
-                      </span>
+                    <TableCell>
+                      <StatusBadge status={empresa.ativo ? "active" : "inactive"} />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
@@ -162,7 +153,12 @@ export const Empresas = () => {
                           <Edit className="h-3 w-3" />
                           Editar
                         </Button>
-                        <Button variant="ghost" size="sm" className="gap-1 text-destructive hover:text-destructive">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="gap-1 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteEmpresa(empresa.id)}
+                        >
                           <Trash2 className="h-3 w-3" />
                           Excluir
                         </Button>
@@ -175,14 +171,12 @@ export const Empresas = () => {
           </div>
 
           {/* Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
             <div className="text-center p-4 bg-accent/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{empresas.filter(e => e.status === 'active').length}</div>
+              <div className="text-2xl font-bold text-primary">
+                {empresas.filter(e => e.ativo).length}
+              </div>
               <div className="text-sm text-muted-foreground">Empresas Ativas</div>
-            </div>
-            <div className="text-center p-4 bg-accent/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{empresas.reduce((acc, e) => acc + e.funcionarios, 0)}</div>
-              <div className="text-sm text-muted-foreground">Total de Funcionários</div>
             </div>
             <div className="text-center p-4 bg-accent/50 rounded-lg">
               <div className="text-2xl font-bold text-primary">{empresas.length}</div>

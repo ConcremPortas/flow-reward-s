@@ -1,0 +1,157 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+export interface Funcionario {
+  id: string;
+  nome: string;
+  cpf?: string;
+  email?: string;
+  telefone?: string;
+  data_nascimento?: string;
+  data_admissao?: string;
+  data_demissao?: string;
+  salario?: number;
+  empresa_id?: string;
+  setor_id?: string;
+  funcao_id?: string;
+  categoria_id?: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+  // Dados relacionados
+  empresa?: { nome: string };
+  setor?: { nome: string };
+  funcao?: { nome: string };
+  categoria?: { nome: string };
+}
+
+export const useFuncionarios = () => {
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchFuncionarios = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('concrem_funcionarios')
+        .select(`
+          *,
+          empresa:concrem_empresas(nome),
+          setor:concrem_setores(nome),
+          funcao:concrem_funcoes(nome),
+          categoria:concrem_categorias(nome)
+        `)
+        .eq('ativo', true)
+        .order('nome');
+
+      if (error) throw error;
+      setFuncionarios(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar funcionários:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os funcionários",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createFuncionario = async (funcionario: Omit<Funcionario, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('concrem_funcionarios')
+        .insert([funcionario])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Funcionário criado com sucesso",
+      });
+
+      fetchFuncionarios();
+      return data;
+    } catch (error) {
+      console.error('Erro ao criar funcionário:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o funcionário",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const updateFuncionario = async (id: string, funcionario: Partial<Funcionario>) => {
+    try {
+      const { data, error } = await supabase
+        .from('concrem_funcionarios')
+        .update(funcionario)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Funcionário atualizado com sucesso",
+      });
+
+      fetchFuncionarios();
+      return data;
+    } catch (error) {
+      console.error('Erro ao atualizar funcionário:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o funcionário",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const deleteFuncionario = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('concrem_funcionarios')
+        .update({ ativo: false })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Funcionário removido com sucesso",
+      });
+
+      fetchFuncionarios();
+    } catch (error) {
+      console.error('Erro ao remover funcionário:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o funcionário",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchFuncionarios();
+  }, []);
+
+  return {
+    funcionarios,
+    loading,
+    createFuncionario,
+    updateFuncionario,
+    deleteFuncionario,
+    refetch: fetchFuncionarios
+  };
+};

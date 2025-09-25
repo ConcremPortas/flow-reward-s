@@ -19,106 +19,68 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
-
-// Dados de exemplo
-const setores = [
-  {
-    id: 1,
-    nome: "Produção",
-    encarregado: {
-      matricula: "E001",
-      nome: "Pedro Silva"
-    },
-    supervisor: {
-      matricula: "S001", 
-      nome: "Marcos Santos"
-    }
-  },
-  {
-    id: 2,
-    nome: "Qualidade",
-    encarregado: {
-      matricula: "E002",
-      nome: "Ana Costa"
-    },
-    supervisor: {
-      matricula: "S002",
-      nome: "João Oliveira"
-    }
-  },
-  {
-    id: 3,
-    nome: "Montagem",
-    encarregado: {
-      matricula: "E003",
-      nome: "Carlos Lima"
-    },
-    supervisor: {
-      matricula: "S001",
-      nome: "Marcos Santos"
-    }
-  },
-  {
-    id: 4,
-    nome: "Expedição",
-    encarregado: {
-      matricula: "E004",
-      nome: "Maria Souza"
-    },
-    supervisor: {
-      matricula: "S003",
-      nome: "Roberto Alves"
-    }
-  }
-];
+import { useSetores } from "@/hooks/useSetores";
+import { useEmpresas } from "@/hooks/useEmpresas";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Setores = () => {
+  const { setores, loading, createSetor, deleteSetor } = useSetores();
+  const { empresas } = useEmpresas();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedSetor, setSelectedSetor] = useState<any>(null);
   const [formData, setFormData] = useState({
     nome: "",
-    matriculaEncarregado: "",
-    nomeEncarregado: "",
-    matriculaSupervisor: "",
-    nomeSupervisor: ""
+    descricao: "",
+    empresa_id: ""
   });
 
   const filteredSetores = setores.filter(setor =>
     setor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    setor.encarregado.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    setor.supervisor.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    (setor.descricao && setor.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleAdd = () => {
     setFormData({
       nome: "",
-      matriculaEncarregado: "",
-      nomeEncarregado: "",
-      matriculaSupervisor: "",
-      nomeSupervisor: ""
+      descricao: "",
+      empresa_id: ""
     });
     setIsAddOpen(true);
   };
 
-  const handleEdit = (setor: any) => {
-    setSelectedSetor(setor);
-    setFormData({
-      nome: setor.nome,
-      matriculaEncarregado: setor.encarregado.matricula,
-      nomeEncarregado: setor.encarregado.nome,
-      matriculaSupervisor: setor.supervisor.matricula,
-      nomeSupervisor: setor.supervisor.nome
+  const handleSave = async () => {
+    if (!formData.nome.trim()) return;
+    
+    await createSetor({
+      nome: formData.nome,
+      descricao: formData.descricao || undefined,
+      empresa_id: formData.empresa_id || undefined,
+      ativo: true
     });
-    setIsEditOpen(true);
+    
+    setIsAddOpen(false);
+    setFormData({ nome: "", descricao: "", empresa_id: "" });
   };
 
-  const handleSave = () => {
-    console.log("Salvando setor:", formData);
-    setIsAddOpen(false);
-    setIsEditOpen(false);
+  const handleDeleteSetor = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este setor?")) {
+      await deleteSetor(id);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Carregando setores...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -142,7 +104,7 @@ export const Setores = () => {
                 <DialogHeader>
                   <DialogTitle>Novo Setor</DialogTitle>
                 </DialogHeader>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                <div className="grid grid-cols-1 gap-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="nome">Nome do Setor</Label>
                     <Input
@@ -153,47 +115,35 @@ export const Setores = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="matriculaEncarregado">Matrícula do Encarregado</Label>
+                    <Label htmlFor="descricao">Descrição</Label>
                     <Input
-                      id="matriculaEncarregado"
-                      value={formData.matriculaEncarregado}
-                      onChange={(e) => setFormData({...formData, matriculaEncarregado: e.target.value})}
-                      placeholder="Ex: E001"
+                      id="descricao"
+                      value={formData.descricao}
+                      onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                      placeholder="Ex: Setor responsável pela produção"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="nomeEncarregado">Nome do Encarregado</Label>
-                    <Input
-                      id="nomeEncarregado"
-                      value={formData.nomeEncarregado}
-                      onChange={(e) => setFormData({...formData, nomeEncarregado: e.target.value})}
-                      placeholder="Ex: João Silva"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="matriculaSupervisor">Matrícula do Supervisor</Label>
-                    <Input
-                      id="matriculaSupervisor"
-                      value={formData.matriculaSupervisor}
-                      onChange={(e) => setFormData({...formData, matriculaSupervisor: e.target.value})}
-                      placeholder="Ex: S001"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nomeSupervisor">Nome do Supervisor</Label>
-                    <Input
-                      id="nomeSupervisor"
-                      value={formData.nomeSupervisor}
-                      onChange={(e) => setFormData({...formData, nomeSupervisor: e.target.value})}
-                      placeholder="Ex: Maria Santos"
-                    />
+                    <Label htmlFor="empresa">Empresa</Label>
+                    <Select value={formData.empresa_id} onValueChange={(value) => setFormData({...formData, empresa_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {empresas.map(empresa => (
+                          <SelectItem key={empresa.id} value={empresa.id}>
+                            {empresa.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setIsAddOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button onClick={handleSave}>
+                  <Button onClick={handleSave} disabled={!formData.nome.trim()}>
                     Salvar
                   </Button>
                 </div>
@@ -222,10 +172,8 @@ export const Setores = () => {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead>Nome do Setor</TableHead>
-                  <TableHead>Encarregado</TableHead>
-                  <TableHead>Matrícula Encarregado</TableHead>
-                  <TableHead>Supervisor</TableHead>
-                  <TableHead>Matrícula Supervisor</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Empresa</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -233,22 +181,20 @@ export const Setores = () => {
                 {filteredSetores.map((setor) => (
                   <TableRow key={setor.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{setor.nome}</TableCell>
-                    <TableCell>{setor.encarregado.nome}</TableCell>
-                    <TableCell>{setor.encarregado.matricula}</TableCell>
-                    <TableCell>{setor.supervisor.nome}</TableCell>
-                    <TableCell>{setor.supervisor.matricula}</TableCell>
+                    <TableCell>{setor.descricao || "Sem descrição"}</TableCell>
+                    <TableCell>{setor.empresa?.nome || "Não vinculado"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="gap-1"
-                          onClick={() => handleEdit(setor)}
-                        >
+                        <Button variant="ghost" size="sm" className="gap-1">
                           <Edit className="h-3 w-3" />
                           Editar
                         </Button>
-                        <Button variant="ghost" size="sm" className="gap-1 text-destructive hover:text-destructive">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="gap-1 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteSetor(setor.id)}
+                        >
                           <Trash2 className="h-3 w-3" />
                           Excluir
                         </Button>
@@ -268,65 +214,6 @@ export const Setores = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Dialog de Edição */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar Setor</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-nome">Nome do Setor</Label>
-              <Input
-                id="edit-nome"
-                value={formData.nome}
-                onChange={(e) => setFormData({...formData, nome: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-matriculaEncarregado">Matrícula do Encarregado</Label>
-              <Input
-                id="edit-matriculaEncarregado"
-                value={formData.matriculaEncarregado}
-                onChange={(e) => setFormData({...formData, matriculaEncarregado: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-nomeEncarregado">Nome do Encarregado</Label>
-              <Input
-                id="edit-nomeEncarregado"
-                value={formData.nomeEncarregado}
-                onChange={(e) => setFormData({...formData, nomeEncarregado: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-matriculaSupervisor">Matrícula do Supervisor</Label>
-              <Input
-                id="edit-matriculaSupervisor"
-                value={formData.matriculaSupervisor}
-                onChange={(e) => setFormData({...formData, matriculaSupervisor: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-nomeSupervisor">Nome do Supervisor</Label>
-              <Input
-                id="edit-nomeSupervisor"
-                value={formData.nomeSupervisor}
-                onChange={(e) => setFormData({...formData, nomeSupervisor: e.target.value})}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave}>
-              Salvar Alterações
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
