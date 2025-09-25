@@ -68,20 +68,33 @@ export const DSS = () => {
   const handleEdit = (dss: any) => {
     setEditingRecord(dss.id);
     setEditingData(dss);
+    
+    // Set up presences based on participantes_ids
+    const editPresences: Record<string, boolean> = {};
+    if (dss.participantes_ids && Array.isArray(dss.participantes_ids)) {
+      dss.participantes_ids.forEach((id: string) => {
+        editPresences[id] = true;
+      });
+    }
+    setPresencas(editPresences);
   };
 
   const handleUpdate = async () => {
     if (!editingRecord || !editingData) return;
 
+    const participantesPresentes = Object.keys(presencas).filter(id => presencas[id]);
+
     await updateDSS(editingRecord, {
       titulo: editingData.titulo,
       descricao: editingData.descricao,
-      observacoes: editingData.observacoes,
-      topics: editingData.topics
+      observacoes: `${participantesPresentes.length} funcionários presentes`,
+      topics: editingData.topics,
+      participantes_ids: participantesPresentes
     });
 
     setEditingRecord(null);
     setEditingData(null);
+    setPresencas({});
   };
 
   const handleDelete = async (id: string) => {
@@ -93,6 +106,7 @@ export const DSS = () => {
   const handleCancelEdit = () => {
     setEditingRecord(null);
     setEditingData(null);
+    setPresencas({});
   };
 
   if (loading) {
@@ -267,14 +281,52 @@ export const DSS = () => {
                             onChange={(e) => setEditingData({...editingData, descricao: e.target.value})}
                           />
                         </div>
-                        <div className="md:col-span-2">
-                          <label className="text-sm font-medium">Observações</label>
-                          <Textarea
-                            value={editingData?.observacoes || ""}
-                            onChange={(e) => setEditingData({...editingData, observacoes: e.target.value})}
-                          />
-                        </div>
                       </div>
+
+                      {/* Lista de presença para edição */}
+                      <div className="space-y-4">
+                        <h4 className="text-lg font-medium">Lista de Presença</h4>
+                        
+                        {funcionarios.length > 0 ? (
+                          <div className="border rounded-lg overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                  <TableHead>Nome</TableHead>
+                                  <TableHead>Setor</TableHead>
+                                  <TableHead>Empresa</TableHead>
+                                  <TableHead className="text-center">Presente</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {funcionarios.filter(f => f.ativo).map((funcionario) => (
+                                  <TableRow key={funcionario.id}>
+                                    <TableCell className="font-medium">{funcionario.nome}</TableCell>
+                                    <TableCell>{funcionario.setor?.nome || "Não informado"}</TableCell>
+                                    <TableCell>{funcionario.empresa?.nome || "Não informado"}</TableCell>
+                                    <TableCell className="text-center">
+                                      <div className="flex items-center justify-center">
+                                        <Switch
+                                          className="switch-present"
+                                          checked={presencas[funcionario.id] || false}
+                                          onCheckedChange={(checked) => 
+                                            handlePresencaChange(funcionario.id, checked)
+                                          }
+                                        />
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                            <p>Nenhum funcionário cadastrado ainda.</p>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={handleCancelEdit}>
                           Cancelar
