@@ -18,13 +18,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Award } from "lucide-react";
+import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Award, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Dados de exemplo
 const tiposIndicador = ["Produtividade", "Qualidade", "Segurança", "Eficiência", "Logística"];
 
-const indicadoresGerais = [
+const indicadoresGeraisInitial = [
   {
     id: 1,
     nome: "Produtividade Geral",
@@ -73,11 +72,14 @@ const indicadoresGerais = [
 ];
 
 export const IndicadoresGerais = () => {
+  const [indicadoresGerais, setIndicadoresGerais] = useState(indicadoresGeraisInitial);
   const [searchTerm, setSearchTerm] = useState("");
   const [nomeIndicador, setNomeIndicador] = useState("");
   const [tipoSelecionado, setTipoSelecionado] = useState("");
   const [meta, setMeta] = useState("");
   const [realizado, setRealizado] = useState("");
+  const [impactoPremiacao, setImpactoPremiacao] = useState("");
+  const [editingRecord, setEditingRecord] = useState<number | null>(null);
 
   const filteredIndicadores = indicadoresGerais.filter(item =>
     item.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -114,20 +116,85 @@ export const IndicadoresGerais = () => {
     return null;
   };
 
+  const handleSave = () => {
+    if (!nomeIndicador || !tipoSelecionado || !meta || !realizado || !impactoPremiacao) {
+      alert("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    const percentual = calcularPercentual(Number(realizado), Number(meta));
+    
+    if (editingRecord) {
+      // Atualizar registro existente
+      setIndicadoresGerais(prev => prev.map(item => 
+        item.id === editingRecord 
+          ? {
+              ...item,
+              nome: nomeIndicador,
+              tipo: tipoSelecionado,
+              meta: Number(meta),
+              realizado: Number(realizado),
+              percentual,
+              impactoPremiacao
+            }
+          : item
+      ));
+    } else {
+      // Criar novo registro
+      const novoIndicador = {
+        id: Math.max(...indicadoresGerais.map(i => i.id)) + 1,
+        nome: nomeIndicador,
+        tipo: tipoSelecionado,
+        meta: Number(meta),
+        realizado: Number(realizado),
+        percentual,
+        impactoPremiacao
+      };
+      setIndicadoresGerais(prev => [...prev, novoIndicador]);
+    }
+
+    // Reset form
+    handleCancel();
+  };
+
+  const handleEdit = (indicador: any) => {
+    setNomeIndicador(indicador.nome);
+    setTipoSelecionado(indicador.tipo);
+    setMeta(indicador.meta.toString());
+    setRealizado(indicador.realizado.toString());
+    setImpactoPremiacao(indicador.impactoPremiacao);
+    setEditingRecord(indicador.id);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Tem certeza que deseja excluir este indicador?")) {
+      setIndicadoresGerais(prev => prev.filter(item => item.id !== id));
+    }
+  };
+
+  const handleCancel = () => {
+    setNomeIndicador("");
+    setTipoSelecionado("");
+    setMeta("");
+    setRealizado("");
+    setImpactoPremiacao("");
+    setEditingRecord(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Novo Indicador */}
       <Card className="card-elegant">
         <CardHeader>
-          <CardTitle>Registrar Indicador Geral</CardTitle>
+          <CardTitle>{editingRecord ? "Editar" : "Registrar"} Indicador Geral</CardTitle>
           <CardDescription>
-            Registre indicadores gerais que impactam na premiação dos funcionários
+            {editingRecord ? "Edite o indicador selecionado" : "Registre indicadores gerais que impactam na premiação dos funcionários"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nome do Indicador</label>
+              <label className="text-sm font-medium">Nome do Indicador *</label>
               <Input
                 placeholder="Ex: Produtividade Geral"
                 value={nomeIndicador}
@@ -136,7 +203,7 @@ export const IndicadoresGerais = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo</label>
+              <label className="text-sm font-medium">Tipo *</label>
               <Select value={tipoSelecionado} onValueChange={setTipoSelecionado}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo" />
@@ -150,7 +217,7 @@ export const IndicadoresGerais = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Meta</label>
+              <label className="text-sm font-medium">Meta *</label>
               <Input
                 type="number"
                 placeholder="Ex: 95"
@@ -160,13 +227,27 @@ export const IndicadoresGerais = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Realizado</label>
+              <label className="text-sm font-medium">Realizado *</label>
               <Input
                 type="number"
                 placeholder="Ex: 98"
                 value={realizado}
                 onChange={(e) => setRealizado(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Impacto Premiação *</label>
+              <Select value={impactoPremiacao} onValueChange={setImpactoPremiacao}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o impacto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Alto">Alto</SelectItem>
+                  <SelectItem value="Médio">Médio</SelectItem>
+                  <SelectItem value="Baixo">Baixo</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -193,10 +274,16 @@ export const IndicadoresGerais = () => {
           )}
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
-            <Button className="gap-2">
+            <Button variant="outline" onClick={handleCancel}>
+              Cancelar
+            </Button>
+            <Button 
+              className="gap-2" 
+              onClick={handleSave}
+              disabled={!nomeIndicador || !tipoSelecionado || !meta || !realizado || !impactoPremiacao}
+            >
               <Plus className="h-4 w-4" />
-              Adicionar Indicador
+              {editingRecord ? "Atualizar" : "Adicionar"} Indicador
             </Button>
           </div>
         </CardContent>
@@ -280,10 +367,24 @@ export const IndicadoresGerais = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="gap-1">
-                        <Edit className="h-3 w-3" />
-                        Editar
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
