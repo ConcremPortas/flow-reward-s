@@ -20,11 +20,9 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { useSetores } from "@/hooks/useSetores";
 import { useTiposIndicadores } from "@/hooks/useTiposIndicadores";
-import { formatDateToBrasilia } from "@/lib/dateUtils";
+import { formatDateToBrasilia, formatDateToBrazilian, formatDateToInput } from "@/lib/dateUtils";
 
 // Hook específico para indicadores do setor (vamos usar os dados de produção como base)
 import { useProducaoSetor } from "@/hooks/useProducaoSetor";
@@ -42,11 +40,13 @@ export const IndicadoresSetor = () => {
   const [observacoes, setObservacoes] = useState("");
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
 
-  // Filtrar registros e calcular indicadores baseados na produção
-  const filteredIndicadores = registros.filter(item =>
-    item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    format(new Date(item.data_producao), "MM/yyyy", { locale: ptBR }).includes(searchTerm)
-  );
+  const filteredIndicadores = registros.filter(item => {
+    const monthYear = item.data_producao ? `${item.data_producao.slice(5,7)}/${item.data_producao.slice(0,4)}` : '';
+    return (
+      item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      monthYear.includes(searchTerm)
+    );
+  });
 
   const calcularEficiencia = (realizado: number, meta: number) => {
     return Math.round((realizado / meta) * 100);
@@ -100,7 +100,7 @@ export const IndicadoresSetor = () => {
 
   const handleEdit = (registro: any) => {
     setSetorSelecionado(registro.setor_id);
-    setCompetencia(registro.data_producao);
+    setCompetencia(formatDateToInput(registro.data_producao));
     setMetaEficiencia(registro.meta_diaria.toString());
     setEficienciaRealizada(registro.producao_realizada.toString());
     // Extrair tipo do indicador das observações
@@ -323,7 +323,7 @@ export const IndicadoresSetor = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {format(new Date(item.data_producao), "dd/MM/yyyy", { locale: ptBR })}
+                        {formatDateToBrazilian(item.data_producao)}
                       </TableCell>
                       <TableCell className="text-center">{item.meta_diaria}%</TableCell>
                       <TableCell className="text-center">{item.producao_realizada}%</TableCell>

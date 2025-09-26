@@ -20,11 +20,9 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { useSetores } from "@/hooks/useSetores";
 import { useProducaoSetor } from "@/hooks/useProducaoSetor";
-import { formatDateToBrasilia } from "@/lib/dateUtils";
+import { formatDateToBrasilia, formatDateToBrazilian, formatDateToInput } from "@/lib/dateUtils";
 
 export const ProducaoSetor = () => {
   const { setores, loading: setoresLoading } = useSetores();
@@ -38,10 +36,13 @@ export const ProducaoSetor = () => {
   const [observacoes, setObservacoes] = useState("");
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
 
-  const filteredRegistros = registros.filter(item =>
-    item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    format(new Date(item.data_producao), "MM/yyyy", { locale: ptBR }).includes(searchTerm)
-  );
+  const filteredRegistros = registros.filter(item => {
+    const monthYear = item.data_producao ? `${item.data_producao.slice(5,7)}/${item.data_producao.slice(0,4)}` : '';
+    return (
+      item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      monthYear.includes(searchTerm)
+    );
+  });
 
   const calcularPercentual = (realizado: number, meta: number) => {
     return Math.round((realizado / meta) * 100);
@@ -99,7 +100,7 @@ export const ProducaoSetor = () => {
 
   const handleEdit = (registro: any) => {
     setSetorSelecionado(registro.setor_id);
-    setDataProducao(registro.data_producao);
+    setDataProducao(formatDateToInput(registro.data_producao));
     setMetaDiaria(registro.meta_diaria.toString());
     setProducaoRealizada(registro.producao_realizada.toString());
     setUnidadeMedida(registro.unidade_medida);
@@ -310,7 +311,7 @@ export const ProducaoSetor = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {format(new Date(item.data_producao), "dd/MM/yyyy", { locale: ptBR })}
+                        {formatDateToBrazilian(item.data_producao)}
                       </TableCell>
                       <TableCell className="text-right">{formatNumber(item.meta_diaria)}</TableCell>
                       <TableCell className="text-right">{formatNumber(item.producao_realizada)}</TableCell>
