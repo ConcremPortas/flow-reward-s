@@ -28,6 +28,7 @@ const indicadoresGeraisInitial = [
     id: 1,
     nome: "Produtividade Geral",
     tipo: "Produtividade",
+    competencia: "2025-01-01",
     meta: 95,
     realizado: 98,
     percentual: 103,
@@ -37,6 +38,7 @@ const indicadoresGeraisInitial = [
     id: 2,
     nome: "Índice de Qualidade",
     tipo: "Qualidade",
+    competencia: "2025-01-01",
     meta: 99,
     realizado: 97,
     percentual: 98,
@@ -46,6 +48,7 @@ const indicadoresGeraisInitial = [
     id: 3,
     nome: "Indicador de Segurança",
     tipo: "Segurança",
+    competencia: "2025-01-01",
     meta: 100,
     realizado: 100,
     percentual: 100,
@@ -55,6 +58,7 @@ const indicadoresGeraisInitial = [
     id: 4,
     nome: "Eficiência Operacional",
     tipo: "Eficiência",
+    competencia: "2025-01-01",
     meta: 85,
     realizado: 89,
     percentual: 105,
@@ -64,6 +68,7 @@ const indicadoresGeraisInitial = [
     id: 5,
     nome: "Performance Logística",
     tipo: "Logística",
+    competencia: "2025-01-01",
     meta: 90,
     realizado: 87,
     percentual: 97,
@@ -76,15 +81,20 @@ export const IndicadoresGerais = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [nomeIndicador, setNomeIndicador] = useState("");
   const [tipoSelecionado, setTipoSelecionado] = useState("");
+  const [competencia, setCompetencia] = useState("");
   const [meta, setMeta] = useState("");
   const [realizado, setRealizado] = useState("");
   const [impactoPremiacao, setImpactoPremiacao] = useState("");
   const [editingRecord, setEditingRecord] = useState<number | null>(null);
 
-  const filteredIndicadores = indicadoresGerais.filter(item =>
-    item.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.tipo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredIndicadores = indicadoresGerais.filter(item => {
+    const monthYear = item.competencia ? `${item.competencia.slice(5,7)}/${item.competencia.slice(0,4)}` : '';
+    return (
+      item.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      monthYear.includes(searchTerm)
+    );
+  });
 
   const calcularPercentual = (realizado: number, meta: number) => {
     return Math.round((realizado / meta) * 100);
@@ -117,7 +127,7 @@ export const IndicadoresGerais = () => {
   };
 
   const handleSave = () => {
-    if (!nomeIndicador || !tipoSelecionado || !meta || !realizado || !impactoPremiacao) {
+    if (!nomeIndicador || !tipoSelecionado || !competencia || !meta || !realizado || !impactoPremiacao) {
       alert("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -132,6 +142,7 @@ export const IndicadoresGerais = () => {
               ...item,
               nome: nomeIndicador,
               tipo: tipoSelecionado,
+              competencia,
               meta: Number(meta),
               realizado: Number(realizado),
               percentual,
@@ -145,6 +156,7 @@ export const IndicadoresGerais = () => {
         id: Math.max(...indicadoresGerais.map(i => i.id)) + 1,
         nome: nomeIndicador,
         tipo: tipoSelecionado,
+        competencia,
         meta: Number(meta),
         realizado: Number(realizado),
         percentual,
@@ -160,6 +172,7 @@ export const IndicadoresGerais = () => {
   const handleEdit = (indicador: any) => {
     setNomeIndicador(indicador.nome);
     setTipoSelecionado(indicador.tipo);
+    setCompetencia(indicador.competencia);
     setMeta(indicador.meta.toString());
     setRealizado(indicador.realizado.toString());
     setImpactoPremiacao(indicador.impactoPremiacao);
@@ -175,6 +188,7 @@ export const IndicadoresGerais = () => {
   const handleCancel = () => {
     setNomeIndicador("");
     setTipoSelecionado("");
+    setCompetencia("");
     setMeta("");
     setRealizado("");
     setImpactoPremiacao("");
@@ -192,13 +206,22 @@ export const IndicadoresGerais = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Nome do Indicador *</label>
               <Input
                 placeholder="Ex: Produtividade Geral"
                 value={nomeIndicador}
                 onChange={(e) => setNomeIndicador(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Competência *</label>
+              <Input
+                type="date"
+                value={competencia}
+                onChange={(e) => setCompetencia(e.target.value)}
               />
             </div>
 
@@ -280,7 +303,7 @@ export const IndicadoresGerais = () => {
             <Button 
               className="gap-2" 
               onClick={handleSave}
-              disabled={!nomeIndicador || !tipoSelecionado || !meta || !realizado || !impactoPremiacao}
+              disabled={!nomeIndicador || !tipoSelecionado || !competencia || !meta || !realizado || !impactoPremiacao}
             >
               <Plus className="h-4 w-4" />
               {editingRecord ? "Atualizar" : "Adicionar"} Indicador
@@ -307,7 +330,7 @@ export const IndicadoresGerais = () => {
             <div className="relative flex-1 max-w-sm">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
-                placeholder="Buscar indicadores..."
+                placeholder="Buscar indicadores, tipo ou período..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -322,6 +345,7 @@ export const IndicadoresGerais = () => {
                 <TableRow className="bg-muted/50">
                   <TableHead>Nome do Indicador</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Competência</TableHead>
                   <TableHead className="text-center">Meta</TableHead>
                   <TableHead className="text-center">Realizado</TableHead>
                   <TableHead>Atingimento</TableHead>
@@ -335,6 +359,9 @@ export const IndicadoresGerais = () => {
                   <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{item.nome}</TableCell>
                     <TableCell>{item.tipo}</TableCell>
+                    <TableCell>
+                      {item.competencia ? new Date(item.competencia).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' }) : '-'}
+                    </TableCell>
                     <TableCell className="text-center">{item.meta}%</TableCell>
                     <TableCell className="text-center">{item.realizado}%</TableCell>
                     <TableCell>
