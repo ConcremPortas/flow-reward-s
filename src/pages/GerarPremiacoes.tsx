@@ -388,9 +388,9 @@ const GerarPremiacoes = () => {
                     <TableHead>Função</TableHead>
                     {isProducao && <TableHead>Faixa</TableHead>}
                     {isProducao && <TableHead>Resultado Produção %</TableHead>}
+                    {isProducao && <TableHead>Nota DSS</TableHead>}
                     {isKits && <TableHead>Valor Kits</TableHead>}
                     <TableHead>Nota EPI</TableHead>
-                    {isKits && <TableHead>Nota DSS</TableHead>}
                     <TableHead>Nota Faltas</TableHead>
                     <TableHead>Nota Advertências</TableHead>
                     <TableHead>Nota Geral</TableHead>
@@ -407,9 +407,9 @@ const GerarPremiacoes = () => {
                       <TableCell>{premiacao.funcao}</TableCell>
                       {isProducao && <TableCell>{premiacao.faixa}</TableCell>}
                       {isProducao && <TableCell>{formatPercentage(premiacao.nota_producao || 0)}</TableCell>}
+                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_dss)}</TableCell>}
                       {isKits && <TableCell>{formatCurrency(premiacao.valor_kits || 0)}</TableCell>}
                       <TableCell>{formatPercentage(premiacao.nota_epi)}</TableCell>
-                      {isKits && <TableCell>{formatPercentage(premiacao.nota_dss)}</TableCell>}
                       <TableCell>{formatPercentage(premiacao.nota_faltas)}</TableCell>
                       <TableCell>{formatPercentage(premiacao.nota_advertencias)}</TableCell>
                       <TableCell className="font-bold">{formatPercentage(premiacao.nota_geral)}</TableCell>
