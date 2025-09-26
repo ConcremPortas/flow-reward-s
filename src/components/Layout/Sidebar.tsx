@@ -23,7 +23,8 @@ import {
   Tag,
   Target,
   Factory,
-  BarChart4
+  BarChart4,
+  Gift
 } from "lucide-react";
 
 const menuItems = [
@@ -66,6 +67,11 @@ const menuItems = [
     title: "Indicadores Gerais",
     href: "/indicadores-gerais",
     icon: PieChart,
+  },
+  {
+    title: "Gerar Premiações",
+    href: "/gerar-premiacoes",
+    icon: Gift,
   },
 ];
 
