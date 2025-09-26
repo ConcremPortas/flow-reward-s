@@ -60,7 +60,7 @@ const GerarPremiacoes = () => {
   const { bases } = useBasePremiacao();
   const { funcionarios } = useFuncionarios();
   const { formulas } = useFormulasCalculo();
-  const { salvarResultados, verificarResultadosExistentes } = useResultadosPremiacao();
+  const { salvarResultados, verificarResultadosExistentes, resultados } = useResultadosPremiacao();
   
   const [baseId, setBaseId] = useState('');
   const [competencia, setCompetencia] = useState('');
@@ -77,6 +77,50 @@ const GerarPremiacoes = () => {
     premiacao.setor.toLowerCase().includes(searchTerm.toLowerCase()) ||
     premiacao.cod_funcionario.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Carregar resultados salvos quando mudar base/competência
+  const carregarResultadosSalvos = () => {
+    if (!baseId || !competencia) {
+      setPremiacoes([]);
+      return;
+    }
+
+    const mesCompetencia = competencia + '-01';
+    const resultadosFiltrados = resultados.filter(r => 
+      r.mes_competencia === mesCompetencia && 
+      r.base_premiacao_id === baseId
+    );
+
+    if (resultadosFiltrados.length > 0) {
+      const premiacoesCarregadas: FuncionarioPremiacao[] = resultadosFiltrados.map(r => ({
+        id: r.funcionario_id || r.id,
+        cod_funcionario: r.cod_funcionario || '',
+        nome: r.nome,
+        setor: r.setor || 'N/A',
+        funcao: r.funcao || 'N/A',
+        faixa: r.faixa || 'N/A',
+        categoria: r.categoria || 'N/A',
+        valor_faixa: r.valor_faixa || 0,
+        nota_producao: r.nota_producao || undefined,
+        nota_epi: r.nota_epi,
+        nota_faltas: r.nota_faltas,
+        nota_advertencias: r.nota_advertencias,
+        nota_dss: r.nota_dss,
+        valor_kits: r.valor_kits || undefined,
+        nota_geral: r.nota_geral,
+        bonus_possivel: r.bonus_possivel,
+        bonus_alcancado: r.bonus_alcancado
+      }));
+      setPremiacoes(premiacoesCarregadas);
+    } else {
+      setPremiacoes([]);
+    }
+  };
+
+  // Carregar resultados salvos quando base/competência mudar
+  React.useEffect(() => {
+    carregarResultadosSalvos();
+  }, [baseId, competencia, resultados]);
 
   const gerarPremiacoes = async () => {
     if (!baseId || !competencia) return;
@@ -97,8 +141,16 @@ const GerarPremiacoes = () => {
         }
       }
 
-      // Simular cálculos (aqui você faria as consultas reais ao banco)
-      const funcionariosAtivos = funcionarios.filter(f => f.ativo);
+      // Filtrar apenas funcionários com a base de premiação selecionada
+      const funcionariosAtivos = funcionarios.filter(f => 
+        f.ativo && f.base_premiacao_id === baseId
+      );
+
+      if (funcionariosAtivos.length === 0) {
+        alert('Nenhum funcionário encontrado com a base de premiação selecionada.');
+        setIsCalculating(false);
+        return;
+      }
       
       const premiacoesCalculadas: FuncionarioPremiacao[] = funcionariosAtivos.map(funcionario => {
         // Buscar fórmula para a categoria do funcionário
@@ -277,10 +329,19 @@ const GerarPremiacoes = () => {
               </Button>
             </div>
           </div>
+          
+          {/* Informação sobre funcionários elegíveis */}
+          {baseId && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-sm text-blue-800">
+                <strong>Funcionários elegíveis:</strong> {funcionarios.filter(f => f.ativo && f.base_premiacao_id === baseId).length} funcionário(s) com base de premiação {baseSelecionada?.nome}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Busca */}
+      {/* Busca e Status */}
       {premiacoes.length > 0 && (
         <Card>
           <CardContent className="pt-6">
@@ -294,10 +355,15 @@ const GerarPremiacoes = () => {
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Exportar
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-muted-foreground">
+                  Resultados salvos para {competencia && format(new Date(competencia + '-01'), 'MM/yyyy')}
+                </div>
+                <Button variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
