@@ -9,6 +9,7 @@ import { Search, Download, Calculator } from 'lucide-react';
 import { useBasePremiacao } from '@/hooks/useBasePremiacao';
 import { useFuncionarios } from '@/hooks/useFuncionarios';
 import { useFormulasCalculo } from '@/hooks/useFormulasCalculo';
+import { useResultadosPremiacao } from '@/hooks/useResultadosPremiacao';
 import { format } from 'date-fns';
 
 // Função para calcular comissão de Kits
@@ -59,6 +60,7 @@ const GerarPremiacoes = () => {
   const { bases } = useBasePremiacao();
   const { funcionarios } = useFuncionarios();
   const { formulas } = useFormulasCalculo();
+  const { salvarResultados, verificarResultadosExistentes } = useResultadosPremiacao();
   
   const [baseId, setBaseId] = useState('');
   const [competencia, setCompetencia] = useState('');
@@ -82,6 +84,19 @@ const GerarPremiacoes = () => {
     setIsCalculating(true);
     
     try {
+      // Verificar se já existem resultados para este mês/base
+      const existem = await verificarResultadosExistentes(competencia, baseId);
+      
+      if (existem) {
+        const confirmar = window.confirm(
+          `Já existem resultados salvos para ${competencia}. Deseja sobrescrever os dados existentes?`
+        );
+        if (!confirmar) {
+          setIsCalculating(false);
+          return;
+        }
+      }
+
       // Simular cálculos (aqui você faria as consultas reais ao banco)
       const funcionariosAtivos = funcionarios.filter(f => f.ativo);
       
@@ -167,7 +182,13 @@ const GerarPremiacoes = () => {
         };
       });
       
-      setPremiacoes(premiacoesCalculadas);
+      // Salvar resultados na tabela
+      const salvoComSucesso = await salvarResultados(competencia, baseId, premiacoesCalculadas);
+      
+      if (salvoComSucesso) {
+        setPremiacoes(premiacoesCalculadas);
+      }
+      
     } catch (error) {
       console.error('Erro ao gerar premiações:', error);
     } finally {
@@ -191,6 +212,24 @@ const GerarPremiacoes = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Gerar Premiações</h1>
       </div>
+
+      {/* Card Informativo */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <Calculator className="h-4 w-4 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-blue-900 mb-1">Salvamento Automático</h3>
+              <p className="text-sm text-blue-700">
+                Os resultados das premiações são salvos automaticamente. Se já existir um cálculo 
+                para o mesmo mês e base de premiação, o sistema perguntará se deseja sobrescrever.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filtros */}
       <Card>

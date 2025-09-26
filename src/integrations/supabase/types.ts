@@ -598,6 +598,96 @@ export type Database = {
           },
         ]
       }
+      concrem_resultados_premiacao: {
+        Row: {
+          base_premiacao_id: string | null
+          bonus_alcancado: number
+          bonus_possivel: number
+          categoria: string | null
+          cod_funcionario: string | null
+          created_at: string
+          faixa: string | null
+          funcao: string | null
+          funcionario_id: string | null
+          id: string
+          mes_competencia: string
+          nome: string
+          nota_advertencias: number
+          nota_dss: number
+          nota_epi: number
+          nota_faltas: number
+          nota_geral: number
+          nota_producao: number | null
+          setor: string | null
+          updated_at: string
+          valor_faixa: number | null
+          valor_kits: number | null
+        }
+        Insert: {
+          base_premiacao_id?: string | null
+          bonus_alcancado: number
+          bonus_possivel: number
+          categoria?: string | null
+          cod_funcionario?: string | null
+          created_at?: string
+          faixa?: string | null
+          funcao?: string | null
+          funcionario_id?: string | null
+          id?: string
+          mes_competencia: string
+          nome: string
+          nota_advertencias?: number
+          nota_dss?: number
+          nota_epi?: number
+          nota_faltas?: number
+          nota_geral: number
+          nota_producao?: number | null
+          setor?: string | null
+          updated_at?: string
+          valor_faixa?: number | null
+          valor_kits?: number | null
+        }
+        Update: {
+          base_premiacao_id?: string | null
+          bonus_alcancado?: number
+          bonus_possivel?: number
+          categoria?: string | null
+          cod_funcionario?: string | null
+          created_at?: string
+          faixa?: string | null
+          funcao?: string | null
+          funcionario_id?: string | null
+          id?: string
+          mes_competencia?: string
+          nome?: string
+          nota_advertencias?: number
+          nota_dss?: number
+          nota_epi?: number
+          nota_faltas?: number
+          nota_geral?: number
+          nota_producao?: number | null
+          setor?: string | null
+          updated_at?: string
+          valor_faixa?: number | null
+          valor_kits?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concrem_resultados_premiacao_base_premiacao_id_fkey"
+            columns: ["base_premiacao_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_base_premiacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_resultados_premiacao_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concrem_setores: {
         Row: {
           ativo: boolean
