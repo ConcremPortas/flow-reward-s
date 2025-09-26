@@ -786,6 +786,642 @@ export type Database = {
         }
         Relationships: []
       }
+      remuneracaoconrem_base_premiacao: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          tipo: string | null
+          updated_at: string
+          valor_base: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          tipo?: string | null
+          updated_at?: string
+          valor_base: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tipo?: string | null
+          updated_at?: string
+          valor_base?: number
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_categorias: {
+        Row: {
+          ativo: boolean
+          cor: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_dss: {
+        Row: {
+          created_at: string
+          data_realizacao: string
+          descricao: string | null
+          id: string
+          observacoes: string | null
+          participantes_ids: string[] | null
+          responsavel_id: string | null
+          setor_id: string | null
+          titulo: string
+          topics: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_realizacao: string
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          participantes_ids?: string[] | null
+          responsavel_id?: string | null
+          setor_id?: string | null
+          titulo: string
+          topics?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_realizacao?: string
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          participantes_ids?: string[] | null
+          responsavel_id?: string | null
+          setor_id?: string | null
+          titulo?: string
+          topics?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_empresas: {
+        Row: {
+          ativo: boolean
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_epi: {
+        Row: {
+          created_at: string
+          data_entrega: string
+          data_vencimento: string | null
+          descricao: string | null
+          funcionario_id: string | null
+          id: string
+          numero_ca: string | null
+          observacoes: string | null
+          status: string | null
+          tipo_epi: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_entrega: string
+          data_vencimento?: string | null
+          descricao?: string | null
+          funcionario_id?: string | null
+          id?: string
+          numero_ca?: string | null
+          observacoes?: string | null
+          status?: string | null
+          tipo_epi: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_entrega?: string
+          data_vencimento?: string | null
+          descricao?: string | null
+          funcionario_id?: string | null
+          id?: string
+          numero_ca?: string | null
+          observacoes?: string | null
+          status?: string | null
+          tipo_epi?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_faixas: {
+        Row: {
+          ativo: boolean
+          categoria_id: string | null
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+          valor_maximo: number | null
+          valor_minimo: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_id?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+          valor_maximo?: number | null
+          valor_minimo?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          categoria_id?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          valor_maximo?: number | null
+          valor_minimo?: number | null
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_faltas_advertencias: {
+        Row: {
+          aplicado_por: string | null
+          created_at: string
+          data_ocorrencia: string
+          descricao: string | null
+          funcionario_id: string | null
+          gravidade: string | null
+          id: string
+          motivo: string
+          observacoes: string | null
+          quantidade: number | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          aplicado_por?: string | null
+          created_at?: string
+          data_ocorrencia: string
+          descricao?: string | null
+          funcionario_id?: string | null
+          gravidade?: string | null
+          id?: string
+          motivo: string
+          observacoes?: string | null
+          quantidade?: number | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          aplicado_por?: string | null
+          created_at?: string
+          data_ocorrencia?: string
+          descricao?: string | null
+          funcionario_id?: string | null
+          gravidade?: string | null
+          id?: string
+          motivo?: string
+          observacoes?: string | null
+          quantidade?: number | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_formulas_calculo: {
+        Row: {
+          ativo: boolean
+          base_premiacao_id: string | null
+          categoria_id: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          peso_advertencias: number | null
+          peso_dss: number | null
+          peso_epi: number | null
+          peso_faltas: number | null
+          peso_producao_setor: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_premiacao_id?: string | null
+          categoria_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          peso_advertencias?: number | null
+          peso_dss?: number | null
+          peso_epi?: number | null
+          peso_faltas?: number | null
+          peso_producao_setor?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          base_premiacao_id?: string | null
+          categoria_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          peso_advertencias?: number | null
+          peso_dss?: number | null
+          peso_epi?: number | null
+          peso_faltas?: number | null
+          peso_producao_setor?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_funcionarios: {
+        Row: {
+          ativo: boolean
+          base_premiacao_id: string | null
+          categoria_id: string | null
+          cpf: string | null
+          created_at: string
+          data_admissao: string | null
+          data_demissao: string | null
+          data_nascimento: string | null
+          email: string | null
+          empresa_id: string | null
+          funcao_id: string | null
+          id: string
+          nome: string
+          salario: number | null
+          setor_id: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          base_premiacao_id?: string | null
+          categoria_id?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_admissao?: string | null
+          data_demissao?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          empresa_id?: string | null
+          funcao_id?: string | null
+          id?: string
+          nome: string
+          salario?: number | null
+          setor_id?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          base_premiacao_id?: string | null
+          categoria_id?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_admissao?: string | null
+          data_demissao?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          empresa_id?: string | null
+          funcao_id?: string | null
+          id?: string
+          nome?: string
+          salario?: number | null
+          setor_id?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_funcoes: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nivel_hierarquico: number | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nivel_hierarquico?: number | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nivel_hierarquico?: number | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_indicadores_gerais: {
+        Row: {
+          competencia: string
+          created_at: string
+          id: string
+          meta: number
+          percentual: number
+          realizado: number
+          tipo_indicador_id: string
+          updated_at: string
+        }
+        Insert: {
+          competencia: string
+          created_at?: string
+          id?: string
+          meta: number
+          percentual: number
+          realizado: number
+          tipo_indicador_id: string
+          updated_at?: string
+        }
+        Update: {
+          competencia?: string
+          created_at?: string
+          id?: string
+          meta?: number
+          percentual?: number
+          realizado?: number
+          tipo_indicador_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_producao_setor: {
+        Row: {
+          created_at: string
+          data_producao: string
+          id: string
+          meta_diaria: number | null
+          observacoes: string | null
+          producao_realizada: number | null
+          setor_id: string | null
+          unidade_medida: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_producao: string
+          id?: string
+          meta_diaria?: number | null
+          observacoes?: string | null
+          producao_realizada?: number | null
+          setor_id?: string | null
+          unidade_medida?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_producao?: string
+          id?: string
+          meta_diaria?: number | null
+          observacoes?: string | null
+          producao_realizada?: number | null
+          setor_id?: string | null
+          unidade_medida?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_resultados_premiacao: {
+        Row: {
+          base_premiacao_id: string | null
+          bonus_alcancado: number
+          bonus_possivel: number
+          categoria: string | null
+          cod_funcionario: string | null
+          created_at: string
+          faixa: string | null
+          funcao: string | null
+          funcionario_id: string | null
+          id: string
+          mes_competencia: string
+          nome: string
+          nota_advertencias: number
+          nota_dss: number
+          nota_epi: number
+          nota_faltas: number
+          nota_geral: number
+          nota_producao: number | null
+          setor: string | null
+          updated_at: string
+          valor_faixa: number | null
+          valor_kits: number | null
+        }
+        Insert: {
+          base_premiacao_id?: string | null
+          bonus_alcancado: number
+          bonus_possivel: number
+          categoria?: string | null
+          cod_funcionario?: string | null
+          created_at?: string
+          faixa?: string | null
+          funcao?: string | null
+          funcionario_id?: string | null
+          id?: string
+          mes_competencia: string
+          nome: string
+          nota_advertencias?: number
+          nota_dss?: number
+          nota_epi?: number
+          nota_faltas?: number
+          nota_geral: number
+          nota_producao?: number | null
+          setor?: string | null
+          updated_at?: string
+          valor_faixa?: number | null
+          valor_kits?: number | null
+        }
+        Update: {
+          base_premiacao_id?: string | null
+          bonus_alcancado?: number
+          bonus_possivel?: number
+          categoria?: string | null
+          cod_funcionario?: string | null
+          created_at?: string
+          faixa?: string | null
+          funcao?: string | null
+          funcionario_id?: string | null
+          id?: string
+          mes_competencia?: string
+          nome?: string
+          nota_advertencias?: number
+          nota_dss?: number
+          nota_epi?: number
+          nota_faltas?: number
+          nota_geral?: number
+          nota_producao?: number | null
+          setor?: string | null
+          updated_at?: string
+          valor_faixa?: number | null
+          valor_kits?: number | null
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_setores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          empresa_id: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_tipos_indicadores: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      remuneracaoconrem_tipos_indicadores_gerais: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
