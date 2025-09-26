@@ -18,80 +18,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Award, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const tiposIndicador = ["Produtividade", "Qualidade", "Segurança", "Eficiência", "Logística"];
-
-const indicadoresGeraisInitial = [
-  {
-    id: 1,
-    nome: "Produtividade Geral",
-    tipo: "Produtividade",
-    competencia: "2025-01-01",
-    meta: 95,
-    realizado: 98,
-    percentual: 103,
-    impactoPremiacao: "Alto"
-  },
-  {
-    id: 2,
-    nome: "Índice de Qualidade",
-    tipo: "Qualidade",
-    competencia: "2025-01-01",
-    meta: 99,
-    realizado: 97,
-    percentual: 98,
-    impactoPremiacao: "Alto"
-  },
-  {
-    id: 3,
-    nome: "Indicador de Segurança",
-    tipo: "Segurança",
-    competencia: "2025-01-01",
-    meta: 100,
-    realizado: 100,
-    percentual: 100,
-    impactoPremiacao: "Médio"
-  },
-  {
-    id: 4,
-    nome: "Eficiência Operacional",
-    tipo: "Eficiência",
-    competencia: "2025-01-01",
-    meta: 85,
-    realizado: 89,
-    percentual: 105,
-    impactoPremiacao: "Médio"
-  },
-  {
-    id: 5,
-    nome: "Performance Logística",
-    tipo: "Logística",
-    competencia: "2025-01-01",
-    meta: 90,
-    realizado: 87,
-    percentual: 97,
-    impactoPremiacao: "Baixo"
-  }
-];
+import { useTiposIndicadoresGerais } from "@/hooks/useTiposIndicadoresGerais";
+import { useIndicadoresGerais } from "@/hooks/useIndicadoresGerais";
+import { formatDateToBrasilia, formatDateToBrazilian, formatDateToInput } from "@/lib/dateUtils";
 
 export const IndicadoresGerais = () => {
-  const [indicadoresGerais, setIndicadoresGerais] = useState(indicadoresGeraisInitial);
+  const { tiposIndicadores, loading: tiposLoading } = useTiposIndicadoresGerais();
+  const { indicadores, loading: indicadoresLoading, createIndicador, updateIndicador, deleteIndicador } = useIndicadoresGerais();
   const [searchTerm, setSearchTerm] = useState("");
-  const [nomeIndicador, setNomeIndicador] = useState("");
-  const [tipoSelecionado, setTipoSelecionado] = useState("");
+  const [tipoIndicadorSelecionado, setTipoIndicadorSelecionado] = useState("");
   const [competencia, setCompetencia] = useState("");
   const [meta, setMeta] = useState("");
   const [realizado, setRealizado] = useState("");
-  const [impactoPremiacao, setImpactoPremiacao] = useState("");
-  const [editingRecord, setEditingRecord] = useState<number | null>(null);
+  const [editingRecord, setEditingRecord] = useState<string | null>(null);
 
-  const filteredIndicadores = indicadoresGerais.filter(item => {
+  const filteredIndicadores = indicadores.filter(item => {
     const monthYear = item.competencia ? `${item.competencia.slice(5,7)}/${item.competencia.slice(0,4)}` : '';
     return (
-      item.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.tipo_indicador?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.tipo_indicador?.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       monthYear.includes(searchTerm)
     );
   });
@@ -112,108 +59,89 @@ export const IndicadoresGerais = () => {
     return "text-destructive";
   };
 
-  const getImpactoColor = (impacto: string) => {
-    switch (impacto) {
-      case "Alto": return "text-primary font-medium";
-      case "Médio": return "text-status-warning";
-      case "Baixo": return "text-muted-foreground";
-      default: return "text-foreground";
-    }
-  };
-
-  const getImpactoIcon = (impacto: string) => {
-    if (impacto === "Alto") return <Award className="h-3 w-3" />;
-    return null;
-  };
-
-  const handleSave = () => {
-    if (!nomeIndicador || !tipoSelecionado || !competencia || !meta || !realizado || !impactoPremiacao) {
+  const handleSave = async () => {
+    if (!tipoIndicadorSelecionado || !competencia || !meta || !realizado) {
       alert("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
-    const percentual = calcularPercentual(Number(realizado), Number(meta));
+    const dataFormatada = formatDateToBrasilia(competencia);
     
+    const data = {
+      tipo_indicador_id: tipoIndicadorSelecionado,
+      competencia: dataFormatada,
+      meta: parseFloat(meta),
+      realizado: parseFloat(realizado)
+    };
+
     if (editingRecord) {
-      // Atualizar registro existente
-      setIndicadoresGerais(prev => prev.map(item => 
-        item.id === editingRecord 
-          ? {
-              ...item,
-              nome: nomeIndicador,
-              tipo: tipoSelecionado,
-              competencia,
-              meta: Number(meta),
-              realizado: Number(realizado),
-              percentual,
-              impactoPremiacao
-            }
-          : item
-      ));
+      await updateIndicador(editingRecord, data);
     } else {
-      // Criar novo registro
-      const novoIndicador = {
-        id: Math.max(...indicadoresGerais.map(i => i.id)) + 1,
-        nome: nomeIndicador,
-        tipo: tipoSelecionado,
-        competencia,
-        meta: Number(meta),
-        realizado: Number(realizado),
-        percentual,
-        impactoPremiacao
-      };
-      setIndicadoresGerais(prev => [...prev, novoIndicador]);
+      await createIndicador(data);
     }
 
-    // Reset form
     handleCancel();
   };
 
   const handleEdit = (indicador: any) => {
-    setNomeIndicador(indicador.nome);
-    setTipoSelecionado(indicador.tipo);
-    setCompetencia(indicador.competencia);
+    setTipoIndicadorSelecionado(indicador.tipo_indicador_id);
+    setCompetencia(formatDateToInput(indicador.competencia));
     setMeta(indicador.meta.toString());
     setRealizado(indicador.realizado.toString());
-    setImpactoPremiacao(indicador.impactoPremiacao);
     setEditingRecord(indicador.id);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Tem certeza que deseja excluir este indicador?")) {
-      setIndicadoresGerais(prev => prev.filter(item => item.id !== id));
+      await deleteIndicador(id);
     }
   };
 
   const handleCancel = () => {
-    setNomeIndicador("");
-    setTipoSelecionado("");
+    setTipoIndicadorSelecionado("");
     setCompetencia("");
     setMeta("");
     setRealizado("");
-    setImpactoPremiacao("");
     setEditingRecord(null);
   };
 
+  if (tiposLoading || indicadoresLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-lg">Carregando dados...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Novo Indicador */}
+      {/* Formulário */}
       <Card className="card-elegant">
         <CardHeader>
-          <CardTitle>{editingRecord ? "Editar" : "Registrar"} Indicador Geral</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <PieChart className="h-5 w-5" />
+            {editingRecord ? "Editar" : "Registrar"} Indicador Geral
+          </CardTitle>
           <CardDescription>
-            {editingRecord ? "Edite o indicador selecionado" : "Registre indicadores gerais que impactam na premiação dos funcionários"}
+            {editingRecord ? "Edite o indicador selecionado" : "Registre indicadores gerais com suas metas e realizações"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nome do Indicador *</label>
-              <Input
-                placeholder="Ex: Produtividade Geral"
-                value={nomeIndicador}
-                onChange={(e) => setNomeIndicador(e.target.value)}
-              />
+              <label className="text-sm font-medium">Indicador Geral *</label>
+              <Select value={tipoIndicadorSelecionado} onValueChange={setTipoIndicadorSelecionado}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o indicador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tiposIndicadores.filter(t => t.ativo).map(tipo => (
+                    <SelectItem key={tipo.id} value={tipo.id}>
+                      {tipo.nome} ({tipo.codigo})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -226,24 +154,11 @@ export const IndicadoresGerais = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo *</label>
-              <Select value={tipoSelecionado} onValueChange={setTipoSelecionado}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tiposIndicador.map(tipo => (
-                    <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
               <label className="text-sm font-medium">Meta *</label>
               <Input
                 type="number"
-                placeholder="Ex: 95"
+                step="0.01"
+                placeholder="Ex: 1000000"
                 value={meta}
                 onChange={(e) => setMeta(e.target.value)}
               />
@@ -253,24 +168,11 @@ export const IndicadoresGerais = () => {
               <label className="text-sm font-medium">Realizado *</label>
               <Input
                 type="number"
-                placeholder="Ex: 98"
+                step="0.01"
+                placeholder="Ex: 1050000"
                 value={realizado}
                 onChange={(e) => setRealizado(e.target.value)}
               />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Impacto Premiação *</label>
-              <Select value={impactoPremiacao} onValueChange={setImpactoPremiacao}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o impacto" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Alto">Alto</SelectItem>
-                  <SelectItem value="Médio">Médio</SelectItem>
-                  <SelectItem value="Baixo">Baixo</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
@@ -303,7 +205,7 @@ export const IndicadoresGerais = () => {
             <Button 
               className="gap-2" 
               onClick={handleSave}
-              disabled={!nomeIndicador || !tipoSelecionado || !competencia || !meta || !realizado || !impactoPremiacao}
+              disabled={!tipoIndicadorSelecionado || !competencia || !meta || !realizado}
             >
               <Plus className="h-4 w-4" />
               {editingRecord ? "Atualizar" : "Adicionar"} Indicador
@@ -319,7 +221,7 @@ export const IndicadoresGerais = () => {
             <div>
               <CardTitle>Indicadores Gerais</CardTitle>
               <CardDescription>
-                Indicadores que impactam na premiação geral dos funcionários
+                Acompanhe a performance dos indicadores gerais da empresa
               </CardDescription>
             </div>
           </div>
@@ -330,7 +232,7 @@ export const IndicadoresGerais = () => {
             <div className="relative flex-1 max-w-sm">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
-                placeholder="Buscar indicadores, tipo ou período..."
+                placeholder="Buscar por indicador ou período..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -343,13 +245,11 @@ export const IndicadoresGerais = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead>Nome do Indicador</TableHead>
-                  <TableHead>Tipo</TableHead>
+                  <TableHead>Indicador</TableHead>
                   <TableHead>Competência</TableHead>
                   <TableHead className="text-center">Meta</TableHead>
                   <TableHead className="text-center">Realizado</TableHead>
                   <TableHead>Atingimento</TableHead>
-                  <TableHead>Impacto Premiação</TableHead>
                   <TableHead>Performance</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -357,26 +257,28 @@ export const IndicadoresGerais = () => {
               <TableBody>
                 {filteredIndicadores.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell className="font-medium">{item.nome}</TableCell>
-                    <TableCell>{item.tipo}</TableCell>
-                    <TableCell>
-                      {item.competencia ? new Date(item.competencia).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' }) : '-'}
+                    <TableCell className="font-medium">
+                      <div>
+                        <span>{item.tipo_indicador?.nome}</span>
+                        <div className="text-xs text-muted-foreground">
+                          {item.tipo_indicador?.codigo}
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell className="text-center">{item.meta}%</TableCell>
-                    <TableCell className="text-center">{item.realizado}%</TableCell>
+                    <TableCell>
+                      {formatDateToBrazilian(item.competencia)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {new Intl.NumberFormat('pt-BR').format(item.meta)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {new Intl.NumberFormat('pt-BR').format(item.realizado)}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(item.percentual)}
                         <span className={cn("font-medium", getStatusColor(item.percentual))}>
                           {item.percentual}%
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        {getImpactoIcon(item.impactoPremiacao)}
-                        <span className={getImpactoColor(item.impactoPremiacao)}>
-                          {item.impactoPremiacao}
                         </span>
                       </div>
                     </TableCell>
@@ -420,32 +322,42 @@ export const IndicadoresGerais = () => {
           </div>
 
           {/* Resumo por Tipo */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 pt-4 border-t">
-            {tiposIndicador.map((tipo) => {
-              const indicadoresTipo = indicadoresGerais.filter(ind => ind.tipo === tipo);
-              const mediaAtingimento = indicadoresTipo.length > 0 
-                ? Math.round(indicadoresTipo.reduce((acc, ind) => acc + ind.percentual, 0) / indicadoresTipo.length)
-                : 0;
-              
-              return (
-                <Card key={tipo} className="card-elegant">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-sm">{tipo}</h4>
-                      {mediaAtingimento >= 100 && <Award className="h-4 w-4 text-primary" />}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-lg font-bold text-primary">{mediaAtingimento}%</div>
-                      <div className="text-xs text-muted-foreground">
-                        {indicadoresTipo.length} indicador(es)
+          {tiposIndicadores.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+              {tiposIndicadores.filter(t => t.ativo).map((tipo) => {
+                const indicadoresTipo = indicadores.filter(ind => ind.tipo_indicador_id === tipo.id);
+                const ultimoIndicador = indicadoresTipo[0]; // Já vem ordenado por data desc
+                
+                return (
+                  <Card key={tipo.id} className="card-elegant">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-sm">{tipo.nome}</h4>
+                        {ultimoIndicador && getStatusIcon(ultimoIndicador.percentual)}
                       </div>
-                      <Progress value={Math.min(mediaAtingimento, 100)} className="h-2" />
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                      <div className="space-y-2">
+                        {ultimoIndicador ? (
+                          <>
+                            <div className="text-lg font-bold text-primary">
+                              {ultimoIndicador.percentual}%
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatDateToBrazilian(ultimoIndicador.competencia)}
+                            </div>
+                            <Progress value={Math.min(ultimoIndicador.percentual, 100)} className="h-2" />
+                          </>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            Nenhum registro encontrado
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

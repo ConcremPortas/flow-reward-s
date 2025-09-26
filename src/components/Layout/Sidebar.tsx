@@ -105,6 +105,11 @@ const cadastrosItems = [
     href: "/cadastros/tipos-indicadores",
     icon: BarChart4,
   },
+  {
+    title: "Tipos Indicadores Gerais",
+    href: "/cadastros/tipos-indicadores-gerais",
+    icon: PieChart,
+  },
 ];
 
 export const Sidebar = () => {

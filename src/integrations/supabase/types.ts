@@ -440,6 +440,47 @@ export type Database = {
         }
         Relationships: []
       }
+      concrem_indicadores_gerais: {
+        Row: {
+          competencia: string
+          created_at: string
+          id: string
+          meta: number
+          percentual: number
+          realizado: number
+          tipo_indicador_id: string
+          updated_at: string
+        }
+        Insert: {
+          competencia: string
+          created_at?: string
+          id?: string
+          meta: number
+          percentual: number
+          realizado: number
+          tipo_indicador_id: string
+          updated_at?: string
+        }
+        Update: {
+          competencia?: string
+          created_at?: string
+          id?: string
+          meta?: number
+          percentual?: number
+          realizado?: number
+          tipo_indicador_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concrem_indicadores_gerais_tipo_indicador_id_fkey"
+            columns: ["tipo_indicador_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_tipos_indicadores_gerais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concrem_producao_setor: {
         Row: {
           created_at: string
@@ -523,6 +564,36 @@ export type Database = {
         ]
       }
       concrem_tipos_indicadores: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      concrem_tipos_indicadores_gerais: {
         Row: {
           ativo: boolean
           codigo: string
