@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Eye, Edit, FileText } from "lucide-react";
+import { Plus, Search, Eye, Edit, FileText, Users } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { useSetores } from "@/hooks/useSetores";
@@ -183,6 +183,24 @@ export const Funcionarios = () => {
 
   return (
     <div className="space-y-6">
+      {/* Card Informativo */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Users className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground mb-1">Vinculação de Setor</h3>
+              <p className="text-sm text-muted-foreground">
+                O setor do funcionário é fundamental para o cálculo da premiação. Para funcionários auxiliares, 
+                a meta de produção do setor será utilizada como base para calcular a nota geral da premiação.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="card-elegant">
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -443,6 +461,10 @@ export const Funcionarios = () => {
                 <p className="text-sm">{selectedFuncionario.nome}</p>
               </div>
               <div className="space-y-2">
+                <Label className="font-semibold">Código Funcionário</Label>
+                <p className="text-sm">{selectedFuncionario.cpf || "Não informado"}</p>
+              </div>
+              <div className="space-y-2">
                 <Label className="font-semibold">Data de Admissão</Label>
                 <p className="text-sm">
                   {selectedFuncionario.data_admissao 
@@ -452,24 +474,36 @@ export const Funcionarios = () => {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label className="font-semibold">Empresa</Label>
-                <p className="text-sm">{selectedFuncionario.empresa?.nome || "Não informado"}</p>
-              </div>
-              <div className="space-y-2">
-                <Label className="font-semibold">Setor</Label>
-                <p className="text-sm">{selectedFuncionario.setor?.nome || "Não informado"}</p>
-              </div>
-              <div className="space-y-2">
-                <Label className="font-semibold">Função</Label>
-                <p className="text-sm">{selectedFuncionario.funcao?.nome || "Não informado"}</p>
-              </div>
-              <div className="space-y-2">
-                <Label className="font-semibold">Categoria</Label>
-                <p className="text-sm">{selectedFuncionario.categoria?.nome || "Não informado"}</p>
-              </div>
-              <div className="space-y-2">
                 <Label className="font-semibold">Status</Label>
                 <StatusBadge status={selectedFuncionario.ativo ? "active" : "inactive"} />
+              </div>
+              
+              {/* Seção de Vinculação Organizacional */}
+              <div className="md:col-span-2 border-t pt-4 mt-4">
+                <h4 className="font-semibold text-lg mb-3">Vinculação Organizacional</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Empresa</Label>
+                    <p className="text-sm">{selectedFuncionario.empresa?.nome || "Não informado"}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-semibold text-primary">Setor</Label>
+                    <p className="text-sm font-medium">{selectedFuncionario.setor?.nome || "Não informado"}</p>
+                    <p className="text-xs text-muted-foreground">Base para cálculo da meta de produção</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Função</Label>
+                    <p className="text-sm">{selectedFuncionario.funcao?.nome || "Não informado"}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Categoria</Label>
+                    <p className="text-sm">{selectedFuncionario.categoria?.nome || "Não informado"}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Base Premiação</Label>
+                    <p className="text-sm">{selectedFuncionario.base_premiacao?.nome || "Não informado"}</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
