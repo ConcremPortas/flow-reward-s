@@ -54,11 +54,13 @@ export const Funcionarios = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedFuncionario, setSelectedFuncionario] = useState<any>(null);
   const [formData, setFormData] = useState({
+    cod_funcionario: "",
     nome: "",
     empresa_id: "",
     setor_id: "",
     funcao_id: "",
     categoria_id: "",
+    base_premiacao_id: "",
     data_admissao: ""
   });
 
@@ -82,11 +84,13 @@ export const Funcionarios = () => {
 
   const handleAdd = () => {
     setFormData({
+      cod_funcionario: "",
       nome: "",
       empresa_id: "",
       setor_id: "",
       funcao_id: "",
       categoria_id: "",
+      base_premiacao_id: "",
       data_admissao: ""
     });
     setIsAddOpen(true);
@@ -97,6 +101,7 @@ export const Funcionarios = () => {
     
     const funcionarioData = {
       nome: formData.nome,
+      cpf: formData.cod_funcionario || undefined, // Usando cod_funcionario como CPF
       data_admissao: formData.data_admissao || undefined,
       empresa_id: formData.empresa_id || undefined,
       setor_id: formData.setor_id || undefined,
@@ -111,11 +116,13 @@ export const Funcionarios = () => {
     
     setIsAddOpen(false);
     setFormData({
+      cod_funcionario: "",
       nome: "",
       empresa_id: "",
       setor_id: "",
       funcao_id: "",
       categoria_id: "",
+      base_premiacao_id: "",
       data_admissao: ""
     });
   };
@@ -128,12 +135,14 @@ export const Funcionarios = () => {
   const handleEdit = (funcionario: any) => {
     setSelectedFuncionario(funcionario);
     setFormData({
+      cod_funcionario: funcionario.cpf || "",
       nome: funcionario.nome,
       data_admissao: funcionario.data_admissao || "",
       empresa_id: funcionario.empresa_id || "",
       setor_id: funcionario.setor_id || "",
       funcao_id: funcionario.funcao_id || "",
-      categoria_id: funcionario.categoria_id || ""
+      categoria_id: funcionario.categoria_id || "",
+      base_premiacao_id: ""
     });
     setIsEditOpen(true);
   };
@@ -143,6 +152,7 @@ export const Funcionarios = () => {
     
     const updateData = {
       nome: formData.nome,
+      cpf: formData.cod_funcionario || undefined,
       data_admissao: formData.data_admissao || undefined,
       empresa_id: formData.empresa_id || undefined,
       setor_id: formData.setor_id || undefined,
@@ -192,6 +202,16 @@ export const Funcionarios = () => {
                   <DialogTitle>Novo Funcionário</DialogTitle>
                 </DialogHeader>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cod_funcionario">Cód. Funcionário *</Label>
+                    <Input
+                      id="cod_funcionario"
+                      value={formData.cod_funcionario}
+                      onChange={(e) => setFormData({...formData, cod_funcionario: e.target.value})}
+                      placeholder="Código do funcionário"
+                    />
+                  </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="nome">Nome do Funcionário *</Label>
                     <Input
@@ -275,12 +295,28 @@ export const Funcionarios = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="base_premiacao">Base Premiação *</Label>
+                    <Select value={formData.base_premiacao_id} onValueChange={(value) => setFormData({...formData, base_premiacao_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar base de premiação" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bases.map(base => (
+                          <SelectItem key={base.id} value={base.id}>
+                            {base.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setIsAddOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button onClick={handleSave} disabled={!formData.nome.trim()}>
+                  <Button onClick={handleSave} disabled={!formData.nome.trim() || !formData.cod_funcionario.trim()}>
                     Salvar
                   </Button>
                 </div>
@@ -451,6 +487,15 @@ export const Funcionarios = () => {
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
+              <Label htmlFor="edit_cod_funcionario">Cód. Funcionário *</Label>
+              <Input
+                id="edit_cod_funcionario"
+                value={formData.cod_funcionario}
+                onChange={(e) => setFormData({...formData, cod_funcionario: e.target.value})}
+                placeholder="Código do funcionário"
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="edit_nome">Nome *</Label>
               <Input
                 id="edit_nome"
@@ -528,12 +573,27 @@ export const Funcionarios = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_base_premiacao">Base Premiação</Label>
+              <Select value={formData.base_premiacao_id} onValueChange={(value) => setFormData({...formData, base_premiacao_id: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar base de premiação" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bases.map(base => (
+                    <SelectItem key={base.id} value={base.id}>
+                      {base.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleUpdate} disabled={!formData.nome.trim()}>
+            <Button onClick={handleUpdate} disabled={!formData.nome.trim() || !formData.cod_funcionario.trim()}>
               Atualizar
             </Button>
           </div>
