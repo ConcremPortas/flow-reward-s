@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSetores } from "@/hooks/useSetores";
 import { useTiposIndicadores } from "@/hooks/useTiposIndicadores";
@@ -40,6 +41,12 @@ export const IndicadoresSetor = () => {
   const [observacoes, setObservacoes] = useState("");
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
 
+  // Estados para cadastro em lote
+  const [loteSetor, setLoteSetor] = useState("");
+  const [loteCompetencia, setLoteCompetencia] = useState("");
+  const [loteIndicadores, setLoteIndicadores] = useState<Record<string, { meta: string; realizado: string }>>({});
+
+  // Filtrar registros e calcular indicadores baseados na produção
   const filteredIndicadores = registros.filter(item => {
     const monthYear = item.data_producao ? `${item.data_producao.slice(5,7)}/${item.data_producao.slice(0,4)}` : '';
     return (
@@ -128,6 +135,68 @@ export const IndicadoresSetor = () => {
     setEditingRecord(null);
   };
 
+  const handleLoteIndicadorChange = (tipoId: string, field: 'meta' | 'realizado', value: string) => {
+    setLoteIndicadores(prev => ({
+      ...prev,
+      [tipoId]: {
+        ...prev[tipoId],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSaveLote = async () => {
+    if (!loteSetor || !loteCompetencia) {
+      alert("Por favor, selecione o setor e a competência");
+      return;
+    }
+
+    const indicadoresPreenchidos = Object.entries(loteIndicadores).filter(
+      ([_, dados]) => dados.meta && dados.realizado
+    );
+
+    if (indicadoresPreenchidos.length === 0) {
+      alert("Por favor, preencha pelo menos um indicador com meta e realizado");
+      return;
+    }
+
+    const dataFormatada = formatDateToBrasilia(loteCompetencia);
+
+    try {
+      // Salvar todos os indicadores preenchidos
+      for (const [tipoId, dados] of indicadoresPreenchidos) {
+        const tipoIndicador = tiposIndicadores.find(t => t.id === tipoId);
+        
+        const registro = {
+          setor_id: loteSetor,
+          data_producao: dataFormatada,
+          meta_diaria: parseFloat(dados.meta),
+          producao_realizada: parseFloat(dados.realizado),
+          unidade_medida: "percentual",
+          observacoes: `Indicador: ${tipoIndicador?.nome} (${tipoIndicador?.codigo}) - Cadastro em lote`
+        };
+
+        await createRegistro(registro);
+      }
+
+      // Reset form
+      setLoteSetor("");
+      setLoteCompetencia("");
+      setLoteIndicadores({});
+      
+      alert(`${indicadoresPreenchidos.length} indicadores salvos com sucesso!`);
+    } catch (error) {
+      console.error("Erro ao salvar indicadores:", error);
+      alert("Erro ao salvar os indicadores. Tente novamente.");
+    }
+  };
+
+  const handleCancelLote = () => {
+    setLoteSetor("");
+    setLoteCompetencia("");
+    setLoteIndicadores({});
+  };
+
   if (setoresLoading || registrosLoading || tiposLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -138,130 +207,270 @@ export const IndicadoresSetor = () => {
 
   return (
     <div className="space-y-6">
-      {/* Novo Registro */}
-      <Card className="card-elegant">
-        <CardHeader>
-          <CardTitle>{editingRecord ? "Editar" : "Registrar"} Indicador por Setor</CardTitle>
-          <CardDescription>
-            {editingRecord ? "Edite o indicador selecionado" : "Registre metas e realizações de indicadores específicos por setor"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Setor *</label>
-              <Select value={setorSelecionado} onValueChange={setSetorSelecionado}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {setores.filter(s => s.ativo).map(setor => (
-                    <SelectItem key={setor.id} value={setor.id}>
-                      {setor.nome} {setor.empresa && `- ${setor.empresa.nome}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <Tabs defaultValue="individual" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="individual">Cadastro Individual</TabsTrigger>
+          <TabsTrigger value="lote">Cadastro em Lote</TabsTrigger>
+        </TabsList>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Competência *</label>
-              <Input
-                type="date"
-                value={competencia}
-                onChange={(e) => setCompetencia(e.target.value)}
-              />
-            </div>
+        <TabsContent value="individual" className="space-y-6">
+          {/* Novo Registro */}
+          <Card className="card-elegant">
+            <CardHeader>
+              <CardTitle>{editingRecord ? "Editar" : "Registrar"} Indicador por Setor</CardTitle>
+              <CardDescription>
+                {editingRecord ? "Edite o indicador selecionado" : "Registre metas e realizações de indicadores específicos por setor"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Setor *</label>
+                  <Select value={setorSelecionado} onValueChange={setSetorSelecionado}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o setor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {setores.filter(s => s.ativo).map(setor => (
+                        <SelectItem key={setor.id} value={setor.id}>
+                          {setor.nome} {setor.empresa && `- ${setor.empresa.nome}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo de Indicador *</label>
-              <Select value={tipoIndicador} onValueChange={setTipoIndicador}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo de indicador" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tiposIndicadores.map(tipo => (
-                    <SelectItem key={tipo.id} value={tipo.id}>
-                      {tipo.nome} ({tipo.codigo})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Competência *</label>
+                  <Input
+                    type="date"
+                    value={competencia}
+                    onChange={(e) => setCompetencia(e.target.value)}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Meta (%)</label>
-              <Input
-                type="number"
-                step="0.1"
-                placeholder="Ex: 95.0"
-                min="0"
-                max="100"
-                value={metaEficiencia}
-                onChange={(e) => setMetaEficiencia(e.target.value)}
-              />
-            </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tipo de Indicador *</label>
+                  <Select value={tipoIndicador} onValueChange={setTipoIndicador}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo de indicador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tiposIndicadores.map(tipo => (
+                        <SelectItem key={tipo.id} value={tipo.id}>
+                          {tipo.nome} ({tipo.codigo})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Realizado (%)</label>
-              <Input
-                type="number"
-                step="0.1"
-                placeholder="Ex: 98.5"
-                min="0"
-                max="100"
-                value={eficienciaRealizada}
-                onChange={(e) => setEficienciaRealizada(e.target.value)}
-              />
-            </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Meta (%)</label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="Ex: 95.0"
+                    min="0"
+                    max="100"
+                    value={metaEficiencia}
+                    onChange={(e) => setMetaEficiencia(e.target.value)}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Observações</label>
-              <Input
-                placeholder="Observações opcionais..."
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
-              />
-            </div>
-          </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Realizado (%)</label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="Ex: 98.5"
+                    min="0"
+                    max="100"
+                    value={eficienciaRealizada}
+                    onChange={(e) => setEficienciaRealizada(e.target.value)}
+                  />
+                </div>
 
-          {/* Prévia do cálculo */}
-          {metaEficiencia && eficienciaRealizada && (
-            <div className="p-4 bg-accent/50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Atingimento da Meta:</span>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia)))}
-                  <span className={cn(
-                    "text-lg font-bold",
-                    getStatusColor(calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia)))
-                  )}>
-                    {calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia))}%
-                  </span>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Observações</label>
+                  <Input
+                    placeholder="Observações opcionais..."
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                  />
                 </div>
               </div>
-              <Progress 
-                value={Math.min(calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia)), 100)} 
-                className="mt-2"
-              />
-            </div>
-          )}
 
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancelar
-            </Button>
-            <Button 
-              className="gap-2" 
-              onClick={handleSave}
-              disabled={!setorSelecionado || !competencia || !metaEficiencia || !eficienciaRealizada || !tipoIndicador}
-            >
-              <Plus className="h-4 w-4" />
-              {editingRecord ? "Atualizar" : "Adicionar"} Registro
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              {/* Prévia do cálculo */}
+              {metaEficiencia && eficienciaRealizada && (
+                <div className="p-4 bg-accent/50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Atingimento da Meta:</span>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia)))}
+                      <span className={cn(
+                        "text-lg font-bold",
+                        getStatusColor(calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia)))
+                      )}>
+                        {calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia))}%
+                      </span>
+                    </div>
+                  </div>
+                  <Progress 
+                    value={Math.min(calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia)), 100)} 
+                    className="mt-2"
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={handleCancel}>
+                  Cancelar
+                </Button>
+                <Button 
+                  className="gap-2" 
+                  onClick={handleSave}
+                  disabled={!setorSelecionado || !competencia || !metaEficiencia || !eficienciaRealizada || !tipoIndicador}
+                >
+                  <Plus className="h-4 w-4" />
+                  {editingRecord ? "Atualizar" : "Adicionar"} Registro
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="lote" className="space-y-6">
+          {/* Cadastro em Lote */}
+          <Card className="card-elegant">
+            <CardHeader>
+              <CardTitle>Cadastro em Lote de Indicadores</CardTitle>
+              <CardDescription>
+                Cadastre todos os indicadores de um setor para uma competência específica
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Setor *</label>
+                  <Select value={loteSetor} onValueChange={setLoteSetor}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o setor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {setores.filter(s => s.ativo).map(setor => (
+                        <SelectItem key={setor.id} value={setor.id}>
+                          {setor.nome} {setor.empresa && `- ${setor.empresa.nome}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Competência *</label>
+                  <Input
+                    type="date"
+                    value={loteCompetencia}
+                    onChange={(e) => setLoteCompetencia(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Lista de Indicadores */}
+              {loteSetor && loteCompetencia && (
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium">Indicadores do Setor</h4>
+                  <div className="grid gap-4">
+                    {tiposIndicadores.map(tipo => (
+                      <Card key={tipo.id} className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Target className="h-4 w-4 text-primary" />
+                              <span className="font-medium">{tipo.nome}</span>
+                              <span className="text-sm text-muted-foreground">({tipo.codigo})</span>
+                            </div>
+                            {tipo.descricao && (
+                              <p className="text-sm text-muted-foreground mt-1">{tipo.descricao}</p>
+                            )}
+                          </div>
+                          
+                          <div className="flex gap-4">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium">Meta (%)</label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder="0.0"
+                                min="0"
+                                max="100"
+                                className="w-24"
+                                value={loteIndicadores[tipo.id]?.meta || ""}
+                                onChange={(e) => handleLoteIndicadorChange(tipo.id, 'meta', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium">Realizado (%)</label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder="0.0"
+                                min="0"
+                                max="100"
+                                className="w-24"
+                                value={loteIndicadores[tipo.id]?.realizado || ""}
+                                onChange={(e) => handleLoteIndicadorChange(tipo.id, 'realizado', e.target.value)}
+                              />
+                            </div>
+
+                            {/* Prévia do cálculo para este indicador */}
+                            {loteIndicadores[tipo.id]?.meta && loteIndicadores[tipo.id]?.realizado && (
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(calcularEficiencia(
+                                  Number(loteIndicadores[tipo.id].realizado), 
+                                  Number(loteIndicadores[tipo.id].meta)
+                                ))}
+                                <span className={cn(
+                                  "text-sm font-medium",
+                                  getStatusColor(calcularEficiencia(
+                                    Number(loteIndicadores[tipo.id].realizado), 
+                                    Number(loteIndicadores[tipo.id].meta)
+                                  ))
+                                )}>
+                                  {calcularEficiencia(
+                                    Number(loteIndicadores[tipo.id].realizado), 
+                                    Number(loteIndicadores[tipo.id].meta)
+                                  )}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={handleCancelLote}>
+                  Cancelar
+                </Button>
+                <Button 
+                  className="gap-2" 
+                  onClick={handleSaveLote}
+                  disabled={!loteSetor || !loteCompetencia || Object.keys(loteIndicadores).length === 0}
+                >
+                  <Plus className="h-4 w-4" />
+                  Salvar Indicadores
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Dados de Indicadores */}
       <Card className="card-elegant">
