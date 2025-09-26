@@ -110,6 +110,11 @@ const cadastrosItems = [
     href: "/cadastros/tipos-indicadores-gerais",
     icon: PieChart,
   },
+  {
+    title: "Fórmulas de Cálculo",
+    href: "/cadastros/formulas-calculo",
+    icon: Settings,
+  },
 ];
 
 export const Sidebar = () => {

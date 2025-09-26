@@ -321,6 +321,69 @@ export type Database = {
           },
         ]
       }
+      concrem_formulas_calculo: {
+        Row: {
+          ativo: boolean
+          base_premiacao_id: string | null
+          categoria_id: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          peso_advertencias: number | null
+          peso_dss: number | null
+          peso_epi: number | null
+          peso_faltas: number | null
+          peso_producao_setor: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_premiacao_id?: string | null
+          categoria_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          peso_advertencias?: number | null
+          peso_dss?: number | null
+          peso_epi?: number | null
+          peso_faltas?: number | null
+          peso_producao_setor?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          base_premiacao_id?: string | null
+          categoria_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          peso_advertencias?: number | null
+          peso_dss?: number | null
+          peso_epi?: number | null
+          peso_faltas?: number | null
+          peso_producao_setor?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concrem_formulas_calculo_base_premiacao_id_fkey"
+            columns: ["base_premiacao_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_base_premiacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_formulas_calculo_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concrem_funcionarios: {
         Row: {
           ativo: boolean
