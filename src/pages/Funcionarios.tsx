@@ -107,6 +107,7 @@ export const Funcionarios = () => {
       setor_id: formData.setor_id || undefined,
       funcao_id: formData.funcao_id || undefined,
       categoria_id: formData.categoria_id || undefined,
+      base_premiacao_id: formData.base_premiacao_id || undefined,
       ativo: true
     };
 
@@ -142,7 +143,7 @@ export const Funcionarios = () => {
       setor_id: funcionario.setor_id || "",
       funcao_id: funcionario.funcao_id || "",
       categoria_id: funcionario.categoria_id || "",
-      base_premiacao_id: ""
+      base_premiacao_id: funcionario.base_premiacao_id || ""
     });
     setIsEditOpen(true);
   };
@@ -158,6 +159,7 @@ export const Funcionarios = () => {
       setor_id: formData.setor_id || undefined,
       funcao_id: formData.funcao_id || undefined,
       categoria_id: formData.categoria_id || undefined,
+      base_premiacao_id: formData.base_premiacao_id || undefined,
     };
 
     console.log('Dados sendo atualizados:', updateData);

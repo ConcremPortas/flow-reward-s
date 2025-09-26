@@ -387,6 +387,7 @@ export type Database = {
       concrem_funcionarios: {
         Row: {
           ativo: boolean
+          base_premiacao_id: string | null
           categoria_id: string | null
           cpf: string | null
           created_at: string
@@ -406,6 +407,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          base_premiacao_id?: string | null
           categoria_id?: string | null
           cpf?: string | null
           created_at?: string
@@ -425,6 +427,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          base_premiacao_id?: string | null
           categoria_id?: string | null
           cpf?: string | null
           created_at?: string
@@ -443,6 +446,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "concrem_funcionarios_base_premiacao_id_fkey"
+            columns: ["base_premiacao_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_base_premiacao"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "concrem_funcionarios_categoria_id_fkey"
             columns: ["categoria_id"]
