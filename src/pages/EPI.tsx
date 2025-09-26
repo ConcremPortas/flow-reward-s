@@ -86,6 +86,7 @@ export const EPI = () => {
   };
 
   const handleEdit = (epi: any) => {
+    console.log('Editando EPI:', epi);
     setEditingRecord(epi.id);
     setEditingData(epi);
     // Set up the status for the specific funcionario from the EPI record
@@ -94,10 +95,16 @@ export const EPI = () => {
       editStatus[epi.funcionario_id] = epi.status || "nao_conforme";
     }
     setEditStatusEPI(editStatus);
+    console.log('Dados para edição:', { editingData: epi, editStatus });
   };
 
   const handleUpdate = async () => {
     if (!editingRecord || !editingData) return;
+
+    console.log('Atualizando EPI:', {
+      id: editingRecord,
+      dados: editingData
+    });
 
     await updateEPI(editingRecord, {
       funcionario_id: editingData.funcionario_id,

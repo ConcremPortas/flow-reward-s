@@ -73,12 +73,16 @@ export const useEPI = () => {
 
   const updateEPI = async (id: string, epi: Partial<Omit<EPI, 'id' | 'created_at' | 'updated_at'>>) => {
     try {
+      console.log('Hook updateEPI - dados recebidos:', { id, epi });
+      
       const { data, error } = await supabase
         .from('concrem_epi')
         .update(epi)
         .eq('id', id)
         .select()
         .single();
+
+      console.log('Hook updateEPI - resposta do banco:', { data, error });
 
       if (error) throw error;
 
