@@ -54,26 +54,16 @@ export const Funcionarios = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedFuncionario, setSelectedFuncionario] = useState<any>(null);
   const [formData, setFormData] = useState({
-    cod_funcionario: "",
     nome: "",
-    email: "",
-    telefone: "",
-    cpf: "",
-    data_nascimento: "",
-    data_admissao: "",
     empresa_id: "",
     setor_id: "",
     funcao_id: "",
     categoria_id: "",
-    categoria_bonus_id: "",
-    base_premiacao_id: "",
-    salario: "",
-    valor_fixo: ""
+    data_admissao: ""
   });
 
   const filteredFuncionarios = funcionarios.filter(funcionario => {
-    const matchesSearch = funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (funcionario.email && funcionario.email.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSetor = selectedSetor === "Todos" || funcionario.setor?.nome === selectedSetor;
     const matchesStatus = selectedStatus === "Todos" || 
                          (selectedStatus === "Ativo" && funcionario.ativo) ||
@@ -92,21 +82,12 @@ export const Funcionarios = () => {
 
   const handleAdd = () => {
     setFormData({
-      cod_funcionario: "",
       nome: "",
-      email: "",
-      telefone: "",
-      cpf: "",
-      data_nascimento: "",
-      data_admissao: "",
       empresa_id: "",
       setor_id: "",
       funcao_id: "",
       categoria_id: "",
-      categoria_bonus_id: "",
-      base_premiacao_id: "",
-      salario: "",
-      valor_fixo: ""
+      data_admissao: ""
     });
     setIsAddOpen(true);
   };
@@ -114,38 +95,28 @@ export const Funcionarios = () => {
   const handleSave = async () => {
     if (!formData.nome.trim()) return;
     
-    await createFuncionario({
+    const funcionarioData = {
       nome: formData.nome,
-      cpf: formData.cpf || undefined,
-      email: formData.email || undefined,
-      telefone: formData.telefone || undefined,
-      data_nascimento: formData.data_nascimento || undefined,
       data_admissao: formData.data_admissao || undefined,
       empresa_id: formData.empresa_id || undefined,
       setor_id: formData.setor_id || undefined,
       funcao_id: formData.funcao_id || undefined,
       categoria_id: formData.categoria_id || undefined,
-      salario: formData.salario ? parseFloat(formData.salario) : undefined,
       ativo: true
-    });
+    };
+
+    console.log('Dados sendo enviados:', funcionarioData);
+    
+    await createFuncionario(funcionarioData);
     
     setIsAddOpen(false);
     setFormData({
-      cod_funcionario: "",
       nome: "",
-      email: "",
-      telefone: "",
-      cpf: "",
-      data_nascimento: "",
-      data_admissao: "",
       empresa_id: "",
       setor_id: "",
       funcao_id: "",
       categoria_id: "",
-      categoria_bonus_id: "",
-      base_premiacao_id: "",
-      salario: "",
-      valor_fixo: ""
+      data_admissao: ""
     });
   };
 
@@ -157,21 +128,12 @@ export const Funcionarios = () => {
   const handleEdit = (funcionario: any) => {
     setSelectedFuncionario(funcionario);
     setFormData({
-      cod_funcionario: funcionario.cpf || "",
       nome: funcionario.nome,
-      email: funcionario.email || "",
-      telefone: funcionario.telefone || "",
-      cpf: funcionario.cpf || "",
-      data_nascimento: funcionario.data_nascimento || "",
       data_admissao: funcionario.data_admissao || "",
       empresa_id: funcionario.empresa_id || "",
       setor_id: funcionario.setor_id || "",
       funcao_id: funcionario.funcao_id || "",
-      categoria_id: funcionario.categoria_id || "",
-      categoria_bonus_id: "",
-      base_premiacao_id: "",
-      salario: funcionario.salario?.toString() || "",
-      valor_fixo: ""
+      categoria_id: funcionario.categoria_id || ""
     });
     setIsEditOpen(true);
   };
@@ -179,19 +141,18 @@ export const Funcionarios = () => {
   const handleUpdate = async () => {
     if (!formData.nome.trim() || !selectedFuncionario) return;
     
-    await updateFuncionario(selectedFuncionario.id, {
+    const updateData = {
       nome: formData.nome,
-      cpf: formData.cpf || undefined,
-      email: formData.email || undefined,
-      telefone: formData.telefone || undefined,
-      data_nascimento: formData.data_nascimento || undefined,
       data_admissao: formData.data_admissao || undefined,
       empresa_id: formData.empresa_id || undefined,
       setor_id: formData.setor_id || undefined,
       funcao_id: formData.funcao_id || undefined,
       categoria_id: formData.categoria_id || undefined,
-      salario: formData.salario ? parseFloat(formData.salario) : undefined,
-    });
+    };
+
+    console.log('Dados sendo atualizados:', updateData);
+    
+    await updateFuncionario(selectedFuncionario.id, updateData);
     
     setIsEditOpen(false);
     setSelectedFuncionario(null);
@@ -232,22 +193,39 @@ export const Funcionarios = () => {
                 </DialogHeader>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="cod_funcionario">COD Funcionário *</Label>
-                    <Input
-                      id="cod_funcionario"
-                      value={formData.cod_funcionario}
-                      onChange={(e) => setFormData({...formData, cod_funcionario: e.target.value})}
-                      placeholder="Código do funcionário"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Funcionário *</Label>
+                    <Label htmlFor="nome">Nome do Funcionário *</Label>
                     <Input
                       id="nome"
                       value={formData.nome}
                       onChange={(e) => setFormData({...formData, nome: e.target.value})}
                       placeholder="Nome completo"
                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="data_admissao">Data de Admissão</Label>
+                    <Input
+                      id="data_admissao"
+                      type="date"
+                      value={formData.data_admissao}
+                      onChange={(e) => setFormData({...formData, data_admissao: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="empresa">Empresa *</Label>
+                    <Select value={formData.empresa_id} onValueChange={(value) => setFormData({...formData, empresa_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {empresas.map(empresa => (
+                          <SelectItem key={empresa.id} value={empresa.id}>
+                            {empresa.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="space-y-2">
@@ -265,6 +243,7 @@ export const Funcionarios = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="funcao">Função *</Label>
                     <Select value={formData.funcao_id} onValueChange={(value) => setFormData({...formData, funcao_id: value})}>
@@ -296,123 +275,6 @@ export const Funcionarios = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="categoria_bonus">Categoria Bônus *</Label>
-                    <Select value={formData.categoria_bonus_id} onValueChange={(value) => setFormData({...formData, categoria_bonus_id: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar categoria bônus" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {faixas.map(faixa => (
-                          <SelectItem key={faixa.id} value={faixa.id}>
-                            {faixa.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="data_nascimento">Data *</Label>
-                    <Input
-                      id="data_nascimento"
-                      type="date"
-                      value={formData.data_nascimento}
-                      onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="base_premiacao">Base Premiação *</Label>
-                    <Select value={formData.base_premiacao_id} onValueChange={(value) => setFormData({...formData, base_premiacao_id: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar base de premiação" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {bases.map(base => (
-                          <SelectItem key={base.id} value={base.id}>
-                            {base.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="empresa">Empresa *</Label>
-                    <Select value={formData.empresa_id} onValueChange={(value) => setFormData({...formData, empresa_id: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar empresa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {empresas.map(empresa => (
-                          <SelectItem key={empresa.id} value={empresa.id}>
-                            {empresa.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="valor_fixo">Valor Fixo (R$) *</Label>
-                    <Input
-                      id="valor_fixo"
-                      value={formData.valor_fixo}
-                      onChange={(e) => setFormData({...formData, valor_fixo: e.target.value})}
-                      placeholder="0.00"
-                      type="number"
-                      step="0.01"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF</Label>
-                    <Input
-                      id="cpf"
-                      value={formData.cpf}
-                      onChange={(e) => setFormData({...formData, cpf: e.target.value})}
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone">Telefone</Label>
-                    <Input
-                      id="telefone"
-                      value={formData.telefone}
-                      onChange={(e) => setFormData({...formData, telefone: e.target.value})}
-                      placeholder="(11) 99999-9999"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="data_admissao">Data de Admissão</Label>
-                    <Input
-                      id="data_admissao"
-                      type="date"
-                      value={formData.data_admissao}
-                      onChange={(e) => setFormData({...formData, data_admissao: e.target.value})}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="salario">Salário</Label>
-                    <Input
-                      id="salario"
-                      value={formData.salario}
-                      onChange={(e) => setFormData({...formData, salario: e.target.value})}
-                      placeholder="0.00"
-                      type="number"
-                      step="0.01"
-                    />
-                  </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setIsAddOpen(false)}>
@@ -433,7 +295,7 @@ export const Funcionarios = () => {
             <div className="relative">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome ou email..."
+                placeholder="Buscar por nome..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -474,11 +336,11 @@ export const Funcionarios = () => {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
                   <TableHead>Setor</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead>Categoria</TableHead>
                   <TableHead>Empresa</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Salário</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -486,13 +348,13 @@ export const Funcionarios = () => {
                 {filteredFuncionarios.map((funcionario) => (
                   <TableRow key={funcionario.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{funcionario.nome}</TableCell>
-                    <TableCell>{funcionario.email || "Não informado"}</TableCell>
                     <TableCell>{funcionario.setor?.nome || "Não informado"}</TableCell>
+                    <TableCell>{funcionario.funcao?.nome || "Não informado"}</TableCell>
+                    <TableCell>{funcionario.categoria?.nome || "Não informado"}</TableCell>
                     <TableCell>{funcionario.empresa?.nome || "Não informado"}</TableCell>
                     <TableCell>
                       <StatusBadge status={funcionario.ativo ? "active" : "inactive"} />
                     </TableCell>
-                    <TableCell>{formatCurrency(funcionario.salario)}</TableCell>
                     <TableCell className="text-right">
                        <div className="flex justify-end space-x-2">
                          <Button 
@@ -543,27 +405,6 @@ export const Funcionarios = () => {
                 <p className="text-sm">{selectedFuncionario.nome}</p>
               </div>
               <div className="space-y-2">
-                <Label className="font-semibold">CPF</Label>
-                <p className="text-sm">{selectedFuncionario.cpf || "Não informado"}</p>
-              </div>
-              <div className="space-y-2">
-                <Label className="font-semibold">Email</Label>
-                <p className="text-sm">{selectedFuncionario.email || "Não informado"}</p>
-              </div>
-              <div className="space-y-2">
-                <Label className="font-semibold">Telefone</Label>
-                <p className="text-sm">{selectedFuncionario.telefone || "Não informado"}</p>
-              </div>
-              <div className="space-y-2">
-                <Label className="font-semibold">Data de Nascimento</Label>
-                <p className="text-sm">
-                  {selectedFuncionario.data_nascimento 
-                    ? new Date(selectedFuncionario.data_nascimento).toLocaleDateString('pt-BR')
-                    : "Não informado"
-                  }
-                </p>
-              </div>
-              <div className="space-y-2">
                 <Label className="font-semibold">Data de Admissão</Label>
                 <p className="text-sm">
                   {selectedFuncionario.data_admissao 
@@ -589,10 +430,6 @@ export const Funcionarios = () => {
                 <p className="text-sm">{selectedFuncionario.categoria?.nome || "Não informado"}</p>
               </div>
               <div className="space-y-2">
-                <Label className="font-semibold">Salário</Label>
-                <p className="text-sm">{formatCurrency(selectedFuncionario.salario)}</p>
-              </div>
-              <div className="space-y-2">
                 <Label className="font-semibold">Status</Label>
                 <StatusBadge status={selectedFuncionario.ativo ? "active" : "inactive"} />
               </div>
@@ -614,48 +451,12 @@ export const Funcionarios = () => {
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit_nome">Funcionário *</Label>
+              <Label htmlFor="edit_nome">Nome *</Label>
               <Input
                 id="edit_nome"
                 value={formData.nome}
                 onChange={(e) => setFormData({...formData, nome: e.target.value})}
                 placeholder="Nome completo"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_cpf">CPF</Label>
-              <Input
-                id="edit_cpf"
-                value={formData.cpf}
-                onChange={(e) => setFormData({...formData, cpf: e.target.value})}
-                placeholder="000.000.000-00"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_email">Email</Label>
-              <Input
-                id="edit_email"
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                placeholder="email@exemplo.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_telefone">Telefone</Label>
-              <Input
-                id="edit_telefone"
-                value={formData.telefone}
-                onChange={(e) => setFormData({...formData, telefone: e.target.value})}
-                placeholder="(11) 99999-9999"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_data_nascimento">Data de Nascimento</Label>
-              <Input
-                id="edit_data_nascimento"
-                type="date"
-                value={formData.data_nascimento}
-                onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
               />
             </div>
             <div className="space-y-2">
@@ -726,17 +527,6 @@ export const Funcionarios = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="edit_salario">Salário</Label>
-              <Input
-                id="edit_salario"
-                value={formData.salario}
-                onChange={(e) => setFormData({...formData, salario: e.target.value})}
-                placeholder="0.00"
-                type="number"
-                step="0.01"
-              />
             </div>
           </div>
           <div className="flex justify-end space-x-2">
