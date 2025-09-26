@@ -38,7 +38,7 @@ import { useFaixas } from "@/hooks/useFaixas";
 
 export const Funcionarios = () => {
   // Componente de gestão de funcionários conectado ao banco de dados
-  const { funcionarios, loading, createFuncionario } = useFuncionarios();
+  const { funcionarios, loading, createFuncionario, updateFuncionario, deleteFuncionario } = useFuncionarios();
   const { empresas } = useEmpresas();
   const { setores } = useSetores();
   const { funcoes } = useFuncoes();
@@ -50,6 +50,9 @@ export const Funcionarios = () => {
   const [selectedSetor, setSelectedSetor] = useState("Todos");
   const [selectedStatus, setSelectedStatus] = useState("Todos");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedFuncionario, setSelectedFuncionario] = useState<any>(null);
   const [formData, setFormData] = useState({
     cod_funcionario: "",
     nome: "",
@@ -144,6 +147,54 @@ export const Funcionarios = () => {
       salario: "",
       valor_fixo: ""
     });
+  };
+
+  const handleView = (funcionario: any) => {
+    setSelectedFuncionario(funcionario);
+    setIsViewOpen(true);
+  };
+
+  const handleEdit = (funcionario: any) => {
+    setSelectedFuncionario(funcionario);
+    setFormData({
+      cod_funcionario: funcionario.cpf || "",
+      nome: funcionario.nome,
+      email: funcionario.email || "",
+      telefone: funcionario.telefone || "",
+      cpf: funcionario.cpf || "",
+      data_nascimento: funcionario.data_nascimento || "",
+      data_admissao: funcionario.data_admissao || "",
+      empresa_id: funcionario.empresa_id || "",
+      setor_id: funcionario.setor_id || "",
+      funcao_id: funcionario.funcao_id || "",
+      categoria_id: funcionario.categoria_id || "",
+      categoria_bonus_id: "",
+      base_premiacao_id: "",
+      salario: funcionario.salario?.toString() || "",
+      valor_fixo: ""
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!formData.nome.trim() || !selectedFuncionario) return;
+    
+    await updateFuncionario(selectedFuncionario.id, {
+      nome: formData.nome,
+      cpf: formData.cpf || undefined,
+      email: formData.email || undefined,
+      telefone: formData.telefone || undefined,
+      data_nascimento: formData.data_nascimento || undefined,
+      data_admissao: formData.data_admissao || undefined,
+      empresa_id: formData.empresa_id || undefined,
+      setor_id: formData.setor_id || undefined,
+      funcao_id: formData.funcao_id || undefined,
+      categoria_id: formData.categoria_id || undefined,
+      salario: formData.salario ? parseFloat(formData.salario) : undefined,
+    });
+    
+    setIsEditOpen(false);
+    setSelectedFuncionario(null);
   };
 
   const setorOptions = ["Todos", ...setores.map(s => s.nome)];
@@ -443,24 +494,26 @@ export const Funcionarios = () => {
                     </TableCell>
                     <TableCell>{formatCurrency(funcionario.salario)}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="gap-1"
-                        >
-                          <Eye className="h-3 w-3" />
-                          Ver
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="gap-1"
-                        >
-                          <Edit className="h-3 w-3" />
-                          Editar
-                        </Button>
-                      </div>
+                       <div className="flex justify-end space-x-2">
+                         <Button 
+                           variant="ghost" 
+                           size="sm" 
+                           className="gap-1"
+                           onClick={() => handleView(funcionario)}
+                         >
+                           <Eye className="h-3 w-3" />
+                           Ver
+                         </Button>
+                         <Button 
+                           variant="ghost" 
+                           size="sm" 
+                           className="gap-1"
+                           onClick={() => handleEdit(funcionario)}
+                         >
+                           <Edit className="h-3 w-3" />
+                           Editar
+                         </Button>
+                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -476,6 +529,226 @@ export const Funcionarios = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Visualização */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Funcionário</DialogTitle>
+          </DialogHeader>
+          {selectedFuncionario && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label className="font-semibold">Nome</Label>
+                <p className="text-sm">{selectedFuncionario.nome}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">CPF</Label>
+                <p className="text-sm">{selectedFuncionario.cpf || "Não informado"}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Email</Label>
+                <p className="text-sm">{selectedFuncionario.email || "Não informado"}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Telefone</Label>
+                <p className="text-sm">{selectedFuncionario.telefone || "Não informado"}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Data de Nascimento</Label>
+                <p className="text-sm">
+                  {selectedFuncionario.data_nascimento 
+                    ? new Date(selectedFuncionario.data_nascimento).toLocaleDateString('pt-BR')
+                    : "Não informado"
+                  }
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Data de Admissão</Label>
+                <p className="text-sm">
+                  {selectedFuncionario.data_admissao 
+                    ? new Date(selectedFuncionario.data_admissao).toLocaleDateString('pt-BR')
+                    : "Não informado"
+                  }
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Empresa</Label>
+                <p className="text-sm">{selectedFuncionario.empresa?.nome || "Não informado"}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Setor</Label>
+                <p className="text-sm">{selectedFuncionario.setor?.nome || "Não informado"}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Função</Label>
+                <p className="text-sm">{selectedFuncionario.funcao?.nome || "Não informado"}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Categoria</Label>
+                <p className="text-sm">{selectedFuncionario.categoria?.nome || "Não informado"}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Salário</Label>
+                <p className="text-sm">{formatCurrency(selectedFuncionario.salario)}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">Status</Label>
+                <StatusBadge status={selectedFuncionario.ativo ? "active" : "inactive"} />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setIsViewOpen(false)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Edição */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Funcionário</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit_nome">Funcionário *</Label>
+              <Input
+                id="edit_nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                placeholder="Nome completo"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_cpf">CPF</Label>
+              <Input
+                id="edit_cpf"
+                value={formData.cpf}
+                onChange={(e) => setFormData({...formData, cpf: e.target.value})}
+                placeholder="000.000.000-00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_email">Email</Label>
+              <Input
+                id="edit_email"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_telefone">Telefone</Label>
+              <Input
+                id="edit_telefone"
+                value={formData.telefone}
+                onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                placeholder="(11) 99999-9999"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_data_nascimento">Data de Nascimento</Label>
+              <Input
+                id="edit_data_nascimento"
+                type="date"
+                value={formData.data_nascimento}
+                onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_data_admissao">Data de Admissão</Label>
+              <Input
+                id="edit_data_admissao"
+                type="date"
+                value={formData.data_admissao}
+                onChange={(e) => setFormData({...formData, data_admissao: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_empresa">Empresa</Label>
+              <Select value={formData.empresa_id} onValueChange={(value) => setFormData({...formData, empresa_id: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {empresas.map(empresa => (
+                    <SelectItem key={empresa.id} value={empresa.id}>
+                      {empresa.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_setor">Setor</Label>
+              <Select value={formData.setor_id} onValueChange={(value) => setFormData({...formData, setor_id: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {setores.map(setor => (
+                    <SelectItem key={setor.id} value={setor.id}>
+                      {setor.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_funcao">Função</Label>
+              <Select value={formData.funcao_id} onValueChange={(value) => setFormData({...formData, funcao_id: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar função" />
+                </SelectTrigger>
+                <SelectContent>
+                  {funcoes.map(funcao => (
+                    <SelectItem key={funcao.id} value={funcao.id}>
+                      {funcao.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_categoria">Categoria</Label>
+              <Select value={formData.categoria_id} onValueChange={(value) => setFormData({...formData, categoria_id: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categorias.map(categoria => (
+                    <SelectItem key={categoria.id} value={categoria.id}>
+                      {categoria.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit_salario">Salário</Label>
+              <Input
+                id="edit_salario"
+                value={formData.salario}
+                onChange={(e) => setFormData({...formData, salario: e.target.value})}
+                placeholder="0.00"
+                type="number"
+                step="0.01"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdate} disabled={!formData.nome.trim()}>
+              Atualizar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
