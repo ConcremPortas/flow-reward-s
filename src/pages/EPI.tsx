@@ -99,16 +99,12 @@ export const EPI = () => {
   const handleUpdate = async () => {
     if (!editingRecord || !editingData) return;
 
-    // Get the funcionario_id and their status from editStatusEPI
-    const funcionarioId = Object.keys(editStatusEPI)[0];
-    const status = editStatusEPI[funcionarioId] || "nao_conforme";
-
     await updateEPI(editingRecord, {
-      funcionario_id: funcionarioId,
+      funcionario_id: editingData.funcionario_id,
       tipo_epi: editingData.tipo_epi,
-      status: status,
+      status: editingData.status,
       descricao: editingData.descricao,
-      observacoes: `Status: ${status === 'conforme' ? 'Conforme' : 'Não conforme'}`,
+      observacoes: editingData.observacoes,
       numero_ca: editingData.numero_ca,
       data_vencimento: editingData.data_vencimento
     });
@@ -282,7 +278,9 @@ export const EPI = () => {
                           <label className="text-sm font-medium">Status</label>
                           <Select 
                             value={editingData?.status || ""} 
-                            onValueChange={(value) => setEditingData({...editingData, status: value})}
+                            onValueChange={(value) => {
+                              setEditingData({...editingData, status: value});
+                            }}
                           >
                             <SelectTrigger>
                               <SelectValue />
