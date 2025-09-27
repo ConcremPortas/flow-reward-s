@@ -39,6 +39,7 @@ export const ProducaoSetor = () => {
   const { setores, loading: setoresLoading } = useSetores();
   const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro } = useProducaoSetor();
   const [searchTerm, setSearchTerm] = useState("");
+  const [competenciaFilter, setCompetenciaFilter] = useState("");
   const [setorSelecionado, setSetorSelecionado] = useState("");
   const [dataProducao, setDataProducao] = useState("");
   const [metaDiaria, setMetaDiaria] = useState("");
@@ -47,12 +48,33 @@ export const ProducaoSetor = () => {
   const [observacoes, setObservacoes] = useState("");
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
 
+  // Obter competências únicas dos registros
+  const competenciasDisponiveis = Array.from(
+    new Set(
+      registros.map(item => {
+        if (!item.data_producao) return '';
+        const date = new Date(item.data_producao);
+        return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+      }).filter(Boolean)
+    )
+  ).sort((a, b) => {
+    const [monthA, yearA] = a.split('/').map(Number);
+    const [monthB, yearB] = b.split('/').map(Number);
+    return yearB - yearA || monthB - monthA;
+  });
+
   const filteredRegistros = registros.filter(item => {
-    const monthYear = item.data_producao ? `${item.data_producao.slice(5,7)}/${item.data_producao.slice(0,4)}` : '';
-    return (
-      item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      monthYear.includes(searchTerm)
-    );
+    const monthYear = item.data_producao ? (() => {
+      const date = new Date(item.data_producao);
+      return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+    })() : '';
+    
+    const matchesSearch = item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         monthYear.includes(searchTerm);
+    
+    const matchesCompetencia = !competenciaFilter || monthYear === competenciaFilter;
+    
+    return matchesSearch && matchesCompetencia;
   });
 
   const calcularPercentual = (realizado: number, meta: number) => {
@@ -278,7 +300,7 @@ export const ProducaoSetor = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Filtro de busca */}
+          {/* Filtros */}
           <div className="flex items-center space-x-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
@@ -288,6 +310,22 @@ export const ProducaoSetor = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
+            </div>
+            
+            <div className="min-w-[200px]">
+              <Select value={competenciaFilter} onValueChange={setCompetenciaFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por competência" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas as competências</SelectItem>
+                  {competenciasDisponiveis.map((competencia) => (
+                    <SelectItem key={competencia} value={competencia}>
+                      {competencia}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
