@@ -72,7 +72,7 @@ export const ProducaoSetor = () => {
     const matchesSearch = item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          monthYear.includes(searchTerm);
     
-    const matchesCompetencia = !competenciaFilter || monthYear === competenciaFilter;
+    const matchesCompetencia = !competenciaFilter || competenciaFilter === "all" || monthYear === competenciaFilter;
     
     return matchesSearch && matchesCompetencia;
   });
@@ -318,7 +318,7 @@ export const ProducaoSetor = () => {
                   <SelectValue placeholder="Filtrar por competência" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as competências</SelectItem>
+                  <SelectItem value="all">Todas as competências</SelectItem>
                   {competenciasDisponiveis.map((competencia) => (
                     <SelectItem key={competencia} value={competencia}>
                       {competencia}
