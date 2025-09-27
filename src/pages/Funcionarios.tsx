@@ -12,6 +12,17 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   Table, 
   TableBody, 
@@ -27,7 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Eye, Edit, FileText, Users } from "lucide-react";
+import { Plus, Search, Eye, Edit, FileText, Users, Trash2 } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { useSetores } from "@/hooks/useSetores";
@@ -168,6 +179,10 @@ export const Funcionarios = () => {
     
     setIsEditOpen(false);
     setSelectedFuncionario(null);
+  };
+
+  const handleDelete = async (funcionario: any) => {
+    await deleteFuncionario(funcionario.id);
   };
 
   const setorOptions = ["Todos", ...setores.map(s => s.nome)];
@@ -411,7 +426,7 @@ export const Funcionarios = () => {
                     <TableCell>
                       <StatusBadge status={funcionario.ativo ? "active" : "inactive"} />
                     </TableCell>
-                    <TableCell className="text-right">
+                     <TableCell className="text-right">
                        <div className="flex justify-end space-x-2">
                          <Button 
                            variant="ghost" 
@@ -431,6 +446,36 @@ export const Funcionarios = () => {
                            <Edit className="h-3 w-3" />
                            Editar
                          </Button>
+                         <AlertDialog>
+                           <AlertDialogTrigger asChild>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="gap-1 text-destructive hover:text-destructive"
+                             >
+                               <Trash2 className="h-3 w-3" />
+                               Excluir
+                             </Button>
+                           </AlertDialogTrigger>
+                           <AlertDialogContent>
+                             <AlertDialogHeader>
+                               <AlertDialogTitle>Excluir Funcionário</AlertDialogTitle>
+                               <AlertDialogDescription>
+                                 Tem certeza que deseja excluir o funcionário "{funcionario.nome}"? 
+                                 Esta ação irá desativar o funcionário do sistema.
+                               </AlertDialogDescription>
+                             </AlertDialogHeader>
+                             <AlertDialogFooter>
+                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                               <AlertDialogAction 
+                                 onClick={() => handleDelete(funcionario)}
+                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                               >
+                                 Excluir
+                               </AlertDialogAction>
+                             </AlertDialogFooter>
+                           </AlertDialogContent>
+                         </AlertDialog>
                        </div>
                     </TableCell>
                   </TableRow>
