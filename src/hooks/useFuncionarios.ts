@@ -17,6 +17,7 @@ export interface Funcionario {
   funcao_id?: string;
   categoria_id?: string;
   base_premiacao_id?: string;
+  status?: string;
   ativo: boolean;
   created_at: string;
   updated_at: string;

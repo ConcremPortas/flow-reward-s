@@ -72,7 +72,8 @@ export const Funcionarios = () => {
     funcao_id: "",
     categoria_id: "",
     base_premiacao_id: "",
-    data_admissao: ""
+    data_admissao: "",
+    status: "Ativo"
   });
 
   const filteredFuncionarios = funcionarios.filter(funcionario => {
@@ -102,7 +103,8 @@ export const Funcionarios = () => {
       funcao_id: "",
       categoria_id: "",
       base_premiacao_id: "",
-      data_admissao: ""
+      data_admissao: "",
+      status: "Ativo"
     });
     setIsAddOpen(true);
   };
@@ -111,14 +113,15 @@ export const Funcionarios = () => {
     if (!formData.nome.trim()) return;
     
     const funcionarioData = {
-      nome: formData.nome,
-      cpf: formData.cod_funcionario || undefined, // Usando cod_funcionario como CPF
+      nome: formData.nome.trim(),
+      cpf: formData.cod_funcionario.trim() || undefined,
       data_admissao: formData.data_admissao || undefined,
       empresa_id: formData.empresa_id || undefined,
       setor_id: formData.setor_id || undefined,
       funcao_id: formData.funcao_id || undefined,
       categoria_id: formData.categoria_id || undefined,
       base_premiacao_id: formData.base_premiacao_id || undefined,
+      status: formData.status,
       ativo: true
     };
 
@@ -135,7 +138,8 @@ export const Funcionarios = () => {
       funcao_id: "",
       categoria_id: "",
       base_premiacao_id: "",
-      data_admissao: ""
+      data_admissao: "",
+      status: "Ativo"
     });
   };
 
@@ -154,7 +158,8 @@ export const Funcionarios = () => {
       setor_id: funcionario.setor_id || "",
       funcao_id: funcionario.funcao_id || "",
       categoria_id: funcionario.categoria_id || "",
-      base_premiacao_id: funcionario.base_premiacao_id || ""
+      base_premiacao_id: funcionario.base_premiacao_id || "",
+      status: funcionario.status || "Ativo"
     });
     setIsEditOpen(true);
   };
@@ -163,14 +168,15 @@ export const Funcionarios = () => {
     if (!formData.nome.trim() || !selectedFuncionario) return;
     
     const updateData = {
-      nome: formData.nome,
-      cpf: formData.cod_funcionario || undefined,
+      nome: formData.nome.trim(),
+      cpf: formData.cod_funcionario.trim() || undefined,
       data_admissao: formData.data_admissao || undefined,
       empresa_id: formData.empresa_id || undefined,
       setor_id: formData.setor_id || undefined,
       funcao_id: formData.funcao_id || undefined,
       categoria_id: formData.categoria_id || undefined,
       base_premiacao_id: formData.base_premiacao_id || undefined,
+      status: formData.status,
     };
 
     console.log('Dados sendo atualizados:', updateData);
@@ -187,6 +193,7 @@ export const Funcionarios = () => {
 
   const setorOptions = ["Todos", ...setores.map(s => s.nome)];
   const statusOptions = ["Todos", "Ativo", "Inativo"];
+  const funcionarioStatusOptions = ["Ativo", "Férias", "Licença", "Rescisão"];
 
   if (loading) {
     return (
@@ -346,6 +353,22 @@ export const Funcionarios = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status *</Label>
+                    <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {funcionarioStatusOptions.map(status => (
+                          <SelectItem key={status} value={status}>
+                            {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setIsAddOpen(false)}>
@@ -411,6 +434,7 @@ export const Funcionarios = () => {
                   <TableHead>Função</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Empresa</TableHead>
+                  <TableHead>Status Funcional</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -423,10 +447,11 @@ export const Funcionarios = () => {
                     <TableCell>{funcionario.funcao?.nome || "Não informado"}</TableCell>
                     <TableCell>{funcionario.categoria?.nome || "Não informado"}</TableCell>
                     <TableCell>{funcionario.empresa?.nome || "Não informado"}</TableCell>
+                    <TableCell>{funcionario.status || "Ativo"}</TableCell>
                     <TableCell>
                       <StatusBadge status={funcionario.ativo ? "active" : "inactive"} />
                     </TableCell>
-                     <TableCell className="text-right">
+                    <TableCell className="text-right">
                        <div className="flex justify-end space-x-2">
                          <Button 
                            variant="ghost" 
@@ -548,6 +573,10 @@ export const Funcionarios = () => {
                     <Label className="font-semibold">Base Premiação</Label>
                     <p className="text-sm">{selectedFuncionario.base_premiacao?.nome || "Não informado"}</p>
                   </div>
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Status</Label>
+                    <p className="text-sm font-medium">{selectedFuncionario.status || "Ativo"}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -664,6 +693,21 @@ export const Funcionarios = () => {
                   {bases.map(base => (
                     <SelectItem key={base.id} value={base.id}>
                       {base.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_status">Status</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {funcionarioStatusOptions.map(status => (
+                    <SelectItem key={status} value={status}>
+                      {status}
                     </SelectItem>
                   ))}
                 </SelectContent>
