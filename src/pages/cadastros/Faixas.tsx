@@ -11,6 +11,17 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { useFaixas } from "@/hooks/useFaixas";
 
@@ -49,9 +60,7 @@ export const Faixas = () => {
   };
 
   const handleDeleteFaixa = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir esta faixa?")) {
-      await deleteFaixa(id);
-    }
+    await deleteFaixa(id);
   };
 
   if (loading) {
@@ -188,15 +197,35 @@ export const Faixas = () => {
                             <Edit className="h-3 w-3" />
                             Editar
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="gap-1 text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteFaixa(faixa.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            Excluir
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="gap-1 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                Excluir
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir Faixa</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir a faixa "{faixa.nome}"? Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeleteFaixa(faixa.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>

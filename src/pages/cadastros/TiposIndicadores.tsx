@@ -62,9 +62,7 @@ export const TiposIndicadores = () => {
   };
 
   const handleDelete = async (id: string, nome: string) => {
-    if (confirm(`Tem certeza que deseja excluir o tipo de indicador "${nome}"?`)) {
-      await deleteTipoIndicador(id);
-    }
+    await deleteTipoIndicador(id);
   };
 
   const handleCancel = () => {

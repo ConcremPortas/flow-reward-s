@@ -11,6 +11,17 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2, Search, Building } from "lucide-react";
 import { useEmpresas } from "@/hooks/useEmpresas";
 
@@ -39,9 +50,7 @@ export const Empresas = () => {
   };
 
   const handleDeleteEmpresa = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir esta empresa?")) {
-      await deleteEmpresa(id);
-    }
+    await deleteEmpresa(id);
   };
 
   if (loading) {
@@ -153,15 +162,35 @@ export const Empresas = () => {
                           <Edit className="h-3 w-3" />
                           Editar
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="gap-1 text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteEmpresa(empresa.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          Excluir
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="gap-1 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              Excluir
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Empresa</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir a empresa "{empresa.nome}"? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteEmpresa(empresa.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>

@@ -57,9 +57,7 @@ export const TiposIndicadoresGerais = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este tipo de indicador?")) {
-      await deleteTipoIndicador(id);
-    }
+    await deleteTipoIndicador(id);
   };
 
   const handleCancel = () => {
