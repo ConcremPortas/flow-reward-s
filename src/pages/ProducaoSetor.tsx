@@ -39,7 +39,7 @@ export const ProducaoSetor = () => {
   const { setores, loading: setoresLoading } = useSetores();
   const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro } = useProducaoSetor();
   const [searchTerm, setSearchTerm] = useState("");
-  const [competenciaFilter, setCompetenciaFilter] = useState("");
+  const [competenciaFilter, setCompetenciaFilter] = useState("all");
   const [setorSelecionado, setSetorSelecionado] = useState("");
   const [dataProducao, setDataProducao] = useState("");
   const [metaDiaria, setMetaDiaria] = useState("");
