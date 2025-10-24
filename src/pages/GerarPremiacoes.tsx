@@ -171,6 +171,13 @@ const GerarPremiacoes = () => {
         nota_faltas: r.nota_faltas,
         nota_advertencias: r.nota_advertencias,
         nota_dss: r.nota_dss,
+        // Novos indicadores para Supervisor/Encarregado em Produção
+        nota_faturamento: r.nota_faturamento ?? undefined,
+        nota_itens_nc: r.nota_itens_nc ?? undefined,
+        nota_tratamento_nc: r.nota_tratamento_nc ?? undefined,
+        nota_hora_maquina: r.nota_hora_maquina ?? undefined,
+        nota_operacao_segura: r.nota_operacao_segura ?? undefined,
+        nota_limpeza: r.nota_limpeza ?? undefined,
         valor_kits: r.valor_kits || undefined,
         nota_geral: r.nota_geral,
         bonus_possivel: r.bonus_possivel,
