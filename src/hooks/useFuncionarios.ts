@@ -17,6 +17,7 @@ export interface Funcionario {
   funcao_id?: string;
   categoria_id?: string;
   base_premiacao_id?: string;
+  faixa_id?: string;
   status?: string;
   ativo: boolean;
   created_at: string;
@@ -27,6 +28,7 @@ export interface Funcionario {
   funcao?: { nome: string };
   categoria?: { nome: string };
   base_premiacao?: { nome: string };
+  faixa?: { nome: string };
 }
 
 export const useFuncionarios = () => {
@@ -45,7 +47,8 @@ export const useFuncionarios = () => {
           setor:concrem_setores(nome),
           funcao:concrem_funcoes(nome),
           categoria:concrem_categorias(nome),
-          base_premiacao:concrem_base_premiacao(nome)
+          base_premiacao:concrem_base_premiacao(nome),
+          faixa:concrem_faixas(nome)
         `)
         .eq('ativo', true)
         .order('nome');
