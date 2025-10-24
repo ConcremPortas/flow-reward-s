@@ -46,7 +46,7 @@ export const useFuncionarios = () => {
         .select(`
           *,
           empresa:concrem_empresas(nome),
-          setor:concrem_setores(nome),
+          setor:concrem_setores!concrem_funcionarios_setor_id_fkey(nome),
           funcao:concrem_funcoes(nome),
           categoria:concrem_categorias(nome),
           base_premiacao:concrem_base_premiacao(nome),
