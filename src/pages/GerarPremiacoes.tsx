@@ -100,14 +100,18 @@ const GerarPremiacoes = () => {
 
   const baseSelecionada = bases.find(b => b.id === baseId);
   const baseVisualizacaoSelecionada = bases.find(b => b.id === baseVisualizacao);
-  
+
+  // Util: normalizar texto (remover acentos e deixar maiúsculo)
+  const normalize = (s?: string) =>
+    (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+
   // Flags para visualização (baseadas na base de visualização)
-  const isProducao = baseVisualizacaoSelecionada?.nome === 'PRODUCAO';
-  const isKits = baseVisualizacaoSelecionada?.nome === 'KITS';
-  
+  const isProducao = normalize(baseVisualizacaoSelecionada?.nome) === 'PRODUCAO';
+  const isKits = normalize(baseVisualizacaoSelecionada?.nome) === 'KITS';
+
   // Flags para cálculo (baseadas na base de geração selecionada)
-  const isProducaoGeracao = baseSelecionada?.nome === 'PRODUCAO';
-  const isKitsGeracao = baseSelecionada?.nome === 'KITS';
+  const isProducaoGeracao = normalize(baseSelecionada?.nome) === 'PRODUCAO';
+  const isKitsGeracao = normalize(baseSelecionada?.nome) === 'KITS';
 
   const filteredPremiacoes = premiacoes.filter(premiacao =>
     premiacao.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
