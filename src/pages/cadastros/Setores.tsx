@@ -237,8 +237,8 @@ export const Setores = () => {
         
         <CardContent className="space-y-4">
           {/* Filtros */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative flex-1 min-w-[200px]">
+          <div className="flex items-end gap-4">
+            <div className="relative w-[300px]">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
                 placeholder="Buscar setores..."
@@ -248,7 +248,7 @@ export const Setores = () => {
               />
             </div>
             
-            <div className="w-[200px] space-y-2">
+            <div className="flex-1 min-w-[200px] space-y-2">
               <Label className="text-xs text-muted-foreground">Supervisor</Label>
               <Select value={filterSupervisor} onValueChange={(v) => setFilterSupervisor(v === 'all' ? '' : v)}>
                 <SelectTrigger>
@@ -267,7 +267,7 @@ export const Setores = () => {
               </Select>
             </div>
 
-            <div className="w-[200px] space-y-2">
+            <div className="flex-1 min-w-[200px] space-y-2">
               <Label className="text-xs text-muted-foreground">Encarregado</Label>
               <Select value={filterEncarregado} onValueChange={(v) => setFilterEncarregado(v === 'all' ? '' : v)}>
                 <SelectTrigger>
