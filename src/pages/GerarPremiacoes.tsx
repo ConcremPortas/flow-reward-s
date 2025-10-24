@@ -210,7 +210,30 @@ const GerarPremiacoes = () => {
         );
         
         if (!formula) {
-          console.warn(`Fórmula não encontrada para funcionário ${funcionario.nome}`);
+          console.error(`❌ FÓRMULA NÃO ENCONTRADA para funcionário ${funcionario.nome}`, {
+            funcionario_id: funcionario.id,
+            categoria_id: funcionario.categoria_id,
+            categoria_nome: funcionario.categoria?.nome,
+            base_premiacao_id: baseId,
+            formulas_disponiveis: formulas.map(f => ({
+              id: f.id,
+              categoria_id: f.categoria_id,
+              categoria_nome: f.categoria?.nome,
+              base_premiacao_id: f.base_premiacao_id
+            }))
+          });
+        } else {
+          console.log(`✅ Fórmula encontrada para ${funcionario.nome}:`, {
+            formula_id: formula.id,
+            categoria: formula.categoria?.nome,
+            pesos: {
+              producao: formula.peso_producao_setor,
+              epi: formula.peso_epi,
+              dss: formula.peso_dss,
+              faltas: formula.peso_faltas,
+              advertencias: formula.peso_advertencias
+            }
+          });
         }
 
         // Calcular período de competência (mês completo)
@@ -323,55 +346,70 @@ const GerarPremiacoes = () => {
           }
         }
 
-        // 6. CALCULAR NOTA GERAL com pesos fixos
-        // Pesos: Produção 60%, EPI 15%, DSS 10%, Faltas 10%, Advertências 5%
+        // 6. CALCULAR NOTA GERAL usando pesos da fórmula
         let notaGeral = 0;
-        if (isProducaoGeracao) {
-          const pesoProducao = 0.60;
-          const pesoEpi = 0.15;
-          const pesoDss = 0.10;
-          const pesoFaltas = 0.10;
-          const pesoAdvertencias = 0.05;
-          
-          notaGeral = (
-            (notaProducao * pesoProducao) +
-            (notaEpi * pesoEpi) +
-            (notaDss * pesoDss) +
-            (notaFaltas * pesoFaltas) +
-            (notaAdvertencias * pesoAdvertencias)
-          );
-          
-          console.log(`\n=== NOTA GERAL ${funcionario.nome} ===`);
-          console.log(`Notas individuais:`, {
-            producao: `${(notaProducao * 100).toFixed(2)}%`,
-            epi: `${(notaEpi * 100).toFixed(2)}%`,
-            dss: `${(notaDss * 100).toFixed(2)}%`,
-            faltas: `${(notaFaltas * 100).toFixed(2)}%`,
-            advertencias: `${(notaAdvertencias * 100).toFixed(2)}%`
-          });
-          console.log(`Pesos:`, {
-            producao: `${pesoProducao} (60%)`,
-            epi: `${pesoEpi} (15%)`,
-            dss: `${pesoDss} (10%)`,
-            faltas: `${pesoFaltas} (10%)`,
-            advertencias: `${pesoAdvertencias} (5%)`
-          });
-          console.log(`Cálculo detalhado:`);
-          console.log(`  Produção: ${(notaProducao * 100).toFixed(2)}% × ${pesoProducao} = ${(notaProducao * pesoProducao * 100).toFixed(2)}%`);
-          console.log(`  EPI: ${(notaEpi * 100).toFixed(2)}% × ${pesoEpi} = ${(notaEpi * pesoEpi * 100).toFixed(2)}%`);
-          console.log(`  DSS: ${(notaDss * 100).toFixed(2)}% × ${pesoDss} = ${(notaDss * pesoDss * 100).toFixed(2)}%`);
-          console.log(`  Faltas: ${(notaFaltas * 100).toFixed(2)}% × ${pesoFaltas} = ${(notaFaltas * pesoFaltas * 100).toFixed(2)}%`);
-          console.log(`  Advertências: ${(notaAdvertencias * 100).toFixed(2)}% × ${pesoAdvertencias} = ${(notaAdvertencias * pesoAdvertencias * 100).toFixed(2)}%`);
-          console.log(`Nota Geral Final: ${(notaGeral * 100).toFixed(2)}%`);
-          console.log(`---`);
+        
+        if (!formula) {
+          console.error(`❌ Não foi possível calcular nota geral para ${funcionario.nome} - fórmula não encontrada`);
+          notaGeral = 0;
         } else {
-          // Para KITS, sem produção, redistribui os pesos
-          notaGeral = (
-            (notaEpi * 0.30) +            // 30% EPI
-            (notaDss * 0.30) +            // 30% DSS
-            (notaFaltas * 0.25) +         // 25% Faltas
-            (notaAdvertencias * 0.15)     // 15% Advertências
-          );
+          // Converter pesos de número para decimal (ex: 60 -> 0.60)
+          const pesoProducao = (formula.peso_producao_setor || 0) / 100;
+          const pesoEpi = (formula.peso_epi || 0) / 100;
+          const pesoDss = (formula.peso_dss || 0) / 100;
+          const pesoFaltas = (formula.peso_faltas || 0) / 100;
+          const pesoAdvertencias = (formula.peso_advertencias || 0) / 100;
+          
+          // Validar se a soma dos pesos é 100%
+          const somaPesos = pesoProducao + pesoEpi + pesoDss + pesoFaltas + pesoAdvertencias;
+          if (Math.abs(somaPesos - 1.0) > 0.01) {
+            console.warn(`⚠️ Soma dos pesos não é 100% para ${funcionario.nome}: ${(somaPesos * 100).toFixed(2)}%`);
+          }
+          
+          if (isProducaoGeracao) {
+            notaGeral = (
+              (notaProducao * pesoProducao) +
+              (notaEpi * pesoEpi) +
+              (notaDss * pesoDss) +
+              (notaFaltas * pesoFaltas) +
+              (notaAdvertencias * pesoAdvertencias)
+            );
+            
+            console.log(`\n=== NOTA GERAL ${funcionario.nome} ===`);
+            console.log(`Categoria: ${funcionario.categoria?.nome}`);
+            console.log(`Fórmula: ${formula.nome}`);
+            console.log(`Notas individuais:`, {
+              producao: `${(notaProducao * 100).toFixed(2)}%`,
+              epi: `${(notaEpi * 100).toFixed(2)}%`,
+              dss: `${(notaDss * 100).toFixed(2)}%`,
+              faltas: `${(notaFaltas * 100).toFixed(2)}%`,
+              advertencias: `${(notaAdvertencias * 100).toFixed(2)}%`
+            });
+            console.log(`Pesos da fórmula:`, {
+              producao: `${(pesoProducao * 100).toFixed(0)}%`,
+              epi: `${(pesoEpi * 100).toFixed(0)}%`,
+              dss: `${(pesoDss * 100).toFixed(0)}%`,
+              faltas: `${(pesoFaltas * 100).toFixed(0)}%`,
+              advertencias: `${(pesoAdvertencias * 100).toFixed(0)}%`,
+              soma: `${(somaPesos * 100).toFixed(0)}%`
+            });
+            console.log(`Cálculo detalhado:`);
+            console.log(`  Produção: ${(notaProducao * 100).toFixed(2)}% × ${(pesoProducao * 100).toFixed(0)}% = ${(notaProducao * pesoProducao * 100).toFixed(2)}%`);
+            console.log(`  EPI: ${(notaEpi * 100).toFixed(2)}% × ${(pesoEpi * 100).toFixed(0)}% = ${(notaEpi * pesoEpi * 100).toFixed(2)}%`);
+            console.log(`  DSS: ${(notaDss * 100).toFixed(2)}% × ${(pesoDss * 100).toFixed(0)}% = ${(notaDss * pesoDss * 100).toFixed(2)}%`);
+            console.log(`  Faltas: ${(notaFaltas * 100).toFixed(2)}% × ${(pesoFaltas * 100).toFixed(0)}% = ${(notaFaltas * pesoFaltas * 100).toFixed(2)}%`);
+            console.log(`  Advertências: ${(notaAdvertencias * 100).toFixed(2)}% × ${(pesoAdvertencias * 100).toFixed(0)}% = ${(notaAdvertencias * pesoAdvertencias * 100).toFixed(2)}%`);
+            console.log(`Nota Geral Final: ${(notaGeral * 100).toFixed(2)}%`);
+            console.log(`---`);
+          } else {
+            // Para KITS, usa os mesmos pesos da fórmula (que já não deve ter peso de produção)
+            notaGeral = (
+              (notaEpi * pesoEpi) +
+              (notaDss * pesoDss) +
+              (notaFaltas * pesoFaltas) +
+              (notaAdvertencias * pesoAdvertencias)
+            );
+          }
         }
 
         // 7. CALCULAR BÔNUS
