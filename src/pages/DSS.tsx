@@ -1,5 +1,5 @@
 // Página DSS - conectada ao banco de dados
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +58,17 @@ export const DSS = () => {
   const funcionariosFiltrados = localDssId
     ? funcionarios.filter(f => f.local_dss_id === localDssId)
     : [];
+
+  // Marcar todos como presentes por padrão quando o local for selecionado
+  useEffect(() => {
+    if (localDssId && funcionariosFiltrados.length > 0 && !editingRecord) {
+      const todasPresencas: Record<string, boolean> = {};
+      funcionariosFiltrados.forEach(funcionario => {
+        todasPresencas[funcionario.id] = true;
+      });
+      setPresencas(todasPresencas);
+    }
+  }, [localDssId, funcionariosFiltrados.length, editingRecord]);
 
   const handlePresencaChange = (funcionarioId: string, presente: boolean) => {
     setPresencas(prev => ({
