@@ -230,11 +230,35 @@ const GerarPremiacoes = () => {
           e.data_entrega >= dataInicio &&
           e.data_entrega <= dataFim
         );
+        
+        console.log(`\n=== EPI para ${funcionario.nome} ===`, {
+          funcionario_id: funcionario.id,
+          periodo: `${dataInicio} a ${dataFim}`,
+          totalRegistrosEPI: episDoMes.length,
+          registrosEPI: episDoMes.map(e => ({
+            id: e.id,
+            data_entrega: e.data_entrega,
+            status: e.status,
+            tipo_epi: e.tipo_epi,
+            descricao: e.descricao
+          }))
+        });
+        
         const totalAuditorias = episDoMes.length;
         const naoConformidades = episDoMes.filter(e => e.status === 'nao_conforme').length;
         const notaEpi = totalAuditorias > 0 
           ? (totalAuditorias - naoConformidades) / totalAuditorias 
           : 1.0;
+        
+        console.log(`Cálculo EPI ${funcionario.nome}:`, {
+          totalAuditorias,
+          naoConformidades,
+          conformidades: totalAuditorias - naoConformidades,
+          notaEpi: (notaEpi * 100).toFixed(2) + '%',
+          formula: totalAuditorias > 0 
+            ? `(${totalAuditorias} - ${naoConformidades}) / ${totalAuditorias} = ${notaEpi.toFixed(4)}`
+            : 'Sem auditorias no período, considerando 100%'
+        });
 
         // 4. CALCULAR NOTA DE DSS (presença / total DSS do local)
         const dssDoLocalNoMes = dssRecords.filter(d => 
@@ -288,13 +312,43 @@ const GerarPremiacoes = () => {
         // Pesos: Produção 60%, EPI 15%, DSS 10%, Faltas 10%, Advertências 5%
         let notaGeral = 0;
         if (isProducao) {
+          const pesoProducao = 0.60;
+          const pesoEpi = 0.15;
+          const pesoDss = 0.10;
+          const pesoFaltas = 0.10;
+          const pesoAdvertencias = 0.05;
+          
           notaGeral = (
-            (notaProducao * 0.60) +      // 60% Produção
-            (notaEpi * 0.15) +            // 15% EPI
-            (notaDss * 0.10) +            // 10% DSS
-            (notaFaltas * 0.10) +         // 10% Faltas
-            (notaAdvertencias * 0.05)     // 5% Advertências
+            (notaProducao * pesoProducao) +
+            (notaEpi * pesoEpi) +
+            (notaDss * pesoDss) +
+            (notaFaltas * pesoFaltas) +
+            (notaAdvertencias * pesoAdvertencias)
           );
+          
+          console.log(`\n=== NOTA GERAL ${funcionario.nome} ===`);
+          console.log(`Notas individuais:`, {
+            producao: `${(notaProducao * 100).toFixed(2)}%`,
+            epi: `${(notaEpi * 100).toFixed(2)}%`,
+            dss: `${(notaDss * 100).toFixed(2)}%`,
+            faltas: `${(notaFaltas * 100).toFixed(2)}%`,
+            advertencias: `${(notaAdvertencias * 100).toFixed(2)}%`
+          });
+          console.log(`Pesos:`, {
+            producao: `${pesoProducao} (60%)`,
+            epi: `${pesoEpi} (15%)`,
+            dss: `${pesoDss} (10%)`,
+            faltas: `${pesoFaltas} (10%)`,
+            advertencias: `${pesoAdvertencias} (5%)`
+          });
+          console.log(`Cálculo detalhado:`);
+          console.log(`  Produção: ${(notaProducao * 100).toFixed(2)}% × ${pesoProducao} = ${(notaProducao * pesoProducao * 100).toFixed(2)}%`);
+          console.log(`  EPI: ${(notaEpi * 100).toFixed(2)}% × ${pesoEpi} = ${(notaEpi * pesoEpi * 100).toFixed(2)}%`);
+          console.log(`  DSS: ${(notaDss * 100).toFixed(2)}% × ${pesoDss} = ${(notaDss * pesoDss * 100).toFixed(2)}%`);
+          console.log(`  Faltas: ${(notaFaltas * 100).toFixed(2)}% × ${pesoFaltas} = ${(notaFaltas * pesoFaltas * 100).toFixed(2)}%`);
+          console.log(`  Advertências: ${(notaAdvertencias * 100).toFixed(2)}% × ${pesoAdvertencias} = ${(notaAdvertencias * pesoAdvertencias * 100).toFixed(2)}%`);
+          console.log(`Nota Geral Final: ${(notaGeral * 100).toFixed(2)}%`);
+          console.log(`---`);
         } else {
           // Para KITS, sem produção, redistribui os pesos
           notaGeral = (
