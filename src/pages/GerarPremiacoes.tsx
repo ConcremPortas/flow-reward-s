@@ -459,7 +459,7 @@ const GerarPremiacoes = () => {
                 
                 if (valores.length === 0) return 1.0; // Se não há dados, considera 100%
                 const media = valores.reduce((acc, v) => acc + v, 0) / valores.length;
-                return media / 100; // Converter de percentual (0-100) para decimal (0-1)
+                return media; // Os valores já vêm como decimal (0-1) da tabela
               };
               
               notaItensNC = calcularMediaIndicador('identificacao_nc_percentual');
