@@ -20,6 +20,12 @@ export interface ResultadoPremiacao {
   nota_faltas: number;
   nota_advertencias: number;
   nota_dss: number;
+  nota_faturamento?: number;
+  nota_itens_nc?: number;
+  nota_tratamento_nc?: number;
+  nota_hora_maquina?: number;
+  nota_operacao_segura?: number;
+  nota_limpeza?: number;
   valor_kits?: number;
   nota_geral: number;
   bonus_possivel: number;
@@ -91,6 +97,12 @@ export const useResultadosPremiacao = () => {
         nota_faltas: premiacao.nota_faltas,
         nota_advertencias: premiacao.nota_advertencias,
         nota_dss: premiacao.nota_dss,
+        nota_faturamento: premiacao.nota_faturamento || null,
+        nota_itens_nc: premiacao.nota_itens_nc || null,
+        nota_tratamento_nc: premiacao.nota_tratamento_nc || null,
+        nota_hora_maquina: premiacao.nota_hora_maquina || null,
+        nota_operacao_segura: premiacao.nota_operacao_segura || null,
+        nota_limpeza: premiacao.nota_limpeza || null,
         valor_kits: premiacao.valor_kits || null,
         nota_geral: premiacao.nota_geral,
         bonus_possivel: premiacao.bonus_possivel,

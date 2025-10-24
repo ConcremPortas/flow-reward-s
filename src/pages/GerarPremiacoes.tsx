@@ -76,6 +76,12 @@ interface FuncionarioPremiacao {
   nota_faltas: number;
   nota_advertencias: number;
   nota_dss: number;
+  nota_faturamento?: number;
+  nota_itens_nc?: number;
+  nota_tratamento_nc?: number;
+  nota_hora_maquina?: number;
+  nota_operacao_segura?: number;
+  nota_limpeza?: number;
   // Cálculos
   valor_kits?: number;
   nota_geral: number;
@@ -587,6 +593,12 @@ const GerarPremiacoes = () => {
           nota_faltas: notaFaltas,
           nota_advertencias: notaAdvertencias,
           nota_dss: notaDss,
+          nota_faturamento: (isSupervisorOrEncarregado && isProducaoGeracao) ? notaFaturamento : undefined,
+          nota_itens_nc: (isSupervisorOrEncarregado && isProducaoGeracao) ? notaItensNC : undefined,
+          nota_tratamento_nc: (isSupervisorOrEncarregado && isProducaoGeracao) ? notaTratamentoNC : undefined,
+          nota_hora_maquina: (isSupervisorOrEncarregado && isProducaoGeracao) ? notaHoraMaquina : undefined,
+          nota_operacao_segura: (isSupervisorOrEncarregado && isProducaoGeracao) ? notaOperacaoSegura : undefined,
+          nota_limpeza: (isSupervisorOrEncarregado && isProducaoGeracao) ? notaLimpeza : undefined,
           valor_kits: valorKits,
           nota_geral: notaGeral,
           bonus_possivel: bonusPossivel,
@@ -855,6 +867,12 @@ const GerarPremiacoes = () => {
                     <TableHead>Nota EPI</TableHead>
                     <TableHead>Nota Faltas</TableHead>
                     <TableHead>Nota Advertências</TableHead>
+                    {isProducao && <TableHead>Faturamento</TableHead>}
+                    {isProducao && <TableHead>Itens NC</TableHead>}
+                    {isProducao && <TableHead>Trat. NC</TableHead>}
+                    {isProducao && <TableHead>Hora Máq.</TableHead>}
+                    {isProducao && <TableHead>Op. Segura</TableHead>}
+                    {isProducao && <TableHead>Limpeza</TableHead>}
                     {isKits && <TableHead>Valor Kits</TableHead>}
                     <TableHead>Nota Geral</TableHead>
                     <TableHead>Bônus Possível</TableHead>
@@ -874,6 +892,12 @@ const GerarPremiacoes = () => {
                       <TableCell>{formatPercentage(premiacao.nota_epi)}</TableCell>
                       <TableCell>{formatPercentage(premiacao.nota_faltas)}</TableCell>
                       <TableCell>{formatPercentage(premiacao.nota_advertencias)}</TableCell>
+                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_faturamento || 0)}</TableCell>}
+                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_itens_nc || 0)}</TableCell>}
+                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_tratamento_nc || 0)}</TableCell>}
+                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_hora_maquina || 0)}</TableCell>}
+                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_operacao_segura || 0)}</TableCell>}
+                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_limpeza || 0)}</TableCell>}
                       {isKits && <TableCell>{formatCurrency(premiacao.valor_kits || 0)}</TableCell>}
                       <TableCell className="font-bold">{formatPercentage(premiacao.nota_geral)}</TableCell>
                       <TableCell>{formatCurrency(premiacao.bonus_possivel)}</TableCell>
