@@ -382,9 +382,12 @@ const GerarPremiacoes = () => {
               s.supervisor_id === funcionario.id || s.encarregado_id === funcionario.id
             );
             
-            console.log(`${categoriaNome} ${funcionario.nome} supervisiona ${setoresSupervisionados.length} setores:`, 
-              setoresSupervisionados.map(s => s.nome)
-            );
+            console.log(`📊 ${categoriaNome} ${funcionario.nome} - Buscando setores supervisionados:`, {
+              funcionario_id: funcionario.id,
+              total_setores_encontrados: setoresSupervisionados.length,
+              setores_ids: setoresSupervisionados.map(s => s.id),
+              setores_nomes: setoresSupervisionados.map(s => s.nome)
+            });
             
             if (setoresSupervisionados.length > 0) {
               const setorIds = setoresSupervisionados.map(s => s.id);
@@ -394,20 +397,35 @@ const GerarPremiacoes = () => {
                 p.data_producao <= dataFim
               );
               
+              console.log(`📈 Registros de produção encontrados para ${funcionario.nome}:`, {
+                periodo: `${dataInicio} a ${dataFim}`,
+                total_registros: producaoDosSetores.length,
+                registros: producaoDosSetores.map(p => ({
+                  setor_id: p.setor_id,
+                  data: p.data_producao,
+                  meta: p.meta_diaria,
+                  realizado: p.producao_realizada
+                }))
+              });
+              
               if (producaoDosSetores.length > 0) {
                 const totalMeta = producaoDosSetores.reduce((acc, p) => acc + (p.meta_diaria || 0), 0);
                 const totalRealizado = producaoDosSetores.reduce((acc, p) => acc + (p.producao_realizada || 0), 0);
                 percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
                 notaProducao = Math.min(percentualProducao, 1.0);
                 
-                console.log(`Cálculo produção agregada ${funcionario.nome}:`, {
+                console.log(`✅ Cálculo produção agregada ${funcionario.nome}:`, {
                   setores: setoresSupervisionados.map(s => s.nome).join(', '),
                   totalMeta,
                   totalRealizado,
                   percentualProducao: (percentualProducao * 100).toFixed(2) + '%',
                   notaProducao: (notaProducao * 100).toFixed(2) + '%'
                 });
+              } else {
+                console.warn(`⚠️ Nenhum registro de produção encontrado para ${funcionario.nome} no período ${dataInicio} a ${dataFim}`);
               }
+            } else {
+              console.warn(`⚠️ ${funcionario.nome} não possui setores supervisionados`);
             }
           } else {
             // Para auxiliares, usar apenas o setor do funcionário
