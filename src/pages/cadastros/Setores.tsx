@@ -187,11 +187,13 @@ export const Setores = () => {
                         <SelectValue placeholder="Selecione um supervisor ou deixe em branco" />
                       </SelectTrigger>
                       <SelectContent>
-                        {funcionarios.filter(f => f.ativo).map(funcionario => (
-                          <SelectItem key={funcionario.id} value={funcionario.id}>
-                            {funcionario.nome}
-                          </SelectItem>
-                        ))}
+                        {funcionarios
+                          .filter(f => f.ativo && f.categoria?.nome.toLowerCase().includes('supervisor'))
+                          .map(funcionario => (
+                            <SelectItem key={funcionario.id} value={funcionario.id}>
+                              {funcionario.nome}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -202,11 +204,13 @@ export const Setores = () => {
                         <SelectValue placeholder="Selecione um encarregado ou deixe em branco" />
                       </SelectTrigger>
                       <SelectContent>
-                        {funcionarios.filter(f => f.ativo).map(funcionario => (
-                          <SelectItem key={funcionario.id} value={funcionario.id}>
-                            {funcionario.nome}
-                          </SelectItem>
-                        ))}
+                        {funcionarios
+                          .filter(f => f.ativo && f.categoria?.nome.toLowerCase().includes('encarregado'))
+                          .map(funcionario => (
+                            <SelectItem key={funcionario.id} value={funcionario.id}>
+                              {funcionario.nome}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
