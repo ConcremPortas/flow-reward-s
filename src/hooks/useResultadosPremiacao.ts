@@ -14,7 +14,8 @@ export interface ResultadoPremiacao {
   categoria?: string;
   faixa?: string;
   valor_faixa?: number;
-  nota_producao?: number;
+  percentual_producao?: number; // Percentual real (pode ser > 100%)
+  nota_producao?: number; // Nota limitada a 100%
   nota_epi: number;
   nota_faltas: number;
   nota_advertencias: number;
@@ -84,6 +85,7 @@ export const useResultadosPremiacao = () => {
         categoria: premiacao.categoria,
         faixa: premiacao.faixa,
         valor_faixa: premiacao.valor_faixa || null,
+        percentual_producao: premiacao.percentual_producao || null,
         nota_producao: premiacao.nota_producao || null,
         nota_epi: premiacao.nota_epi,
         nota_faltas: premiacao.nota_faltas,

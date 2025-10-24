@@ -132,7 +132,7 @@ const GerarPremiacoes = () => {
         faixa: r.faixa || 'N/A',
         categoria: r.categoria || 'N/A',
         valor_faixa: r.valor_faixa || 0,
-        percentual_producao: r.nota_producao ? r.nota_producao : undefined,
+        percentual_producao: r.percentual_producao || undefined,
         nota_producao: r.nota_producao || undefined,
         nota_epi: r.nota_epi,
         nota_faltas: r.nota_faltas,

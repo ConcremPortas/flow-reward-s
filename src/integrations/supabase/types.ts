@@ -678,6 +678,7 @@ export type Database = {
           nota_faltas: number
           nota_geral: number
           nota_producao: number | null
+          percentual_producao: number | null
           setor: string | null
           updated_at: string
           valor_faixa: number | null
@@ -702,6 +703,7 @@ export type Database = {
           nota_faltas?: number
           nota_geral: number
           nota_producao?: number | null
+          percentual_producao?: number | null
           setor?: string | null
           updated_at?: string
           valor_faixa?: number | null
@@ -726,6 +728,7 @@ export type Database = {
           nota_faltas?: number
           nota_geral?: number
           nota_producao?: number | null
+          percentual_producao?: number | null
           setor?: string | null
           updated_at?: string
           valor_faixa?: number | null
