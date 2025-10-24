@@ -42,11 +42,12 @@ import {
 } from "@/components/ui/select";
 
 export const Setores = () => {
-  const { setores, loading, createSetor, deleteSetor } = useSetores();
+  const { setores, loading, createSetor, updateSetor, deleteSetor } = useSetores();
   const { empresas } = useEmpresas();
   const { funcionarios } = useFuncionarios();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
@@ -61,6 +62,7 @@ export const Setores = () => {
   );
 
   const handleAdd = () => {
+    setEditingId(null);
     setFormData({
       nome: "",
       descricao: "",
@@ -71,19 +73,42 @@ export const Setores = () => {
     setIsAddOpen(true);
   };
 
+  const handleEdit = (setor: typeof setores[0]) => {
+    setEditingId(setor.id);
+    setFormData({
+      nome: setor.nome,
+      descricao: setor.descricao || "",
+      empresa_id: setor.empresa_id || "",
+      supervisor_id: setor.supervisor_id || "",
+      encarregado_id: setor.encarregado_id || ""
+    });
+    setIsAddOpen(true);
+  };
+
   const handleSave = async () => {
     if (!formData.nome.trim()) return;
     
-    await createSetor({
-      nome: formData.nome,
-      descricao: formData.descricao || undefined,
-      empresa_id: formData.empresa_id || undefined,
-      supervisor_id: formData.supervisor_id || undefined,
-      encarregado_id: formData.encarregado_id || undefined,
-      ativo: true
-    });
+    if (editingId) {
+      await updateSetor(editingId, {
+        nome: formData.nome,
+        descricao: formData.descricao || undefined,
+        empresa_id: formData.empresa_id || undefined,
+        supervisor_id: formData.supervisor_id || undefined,
+        encarregado_id: formData.encarregado_id || undefined,
+      });
+    } else {
+      await createSetor({
+        nome: formData.nome,
+        descricao: formData.descricao || undefined,
+        empresa_id: formData.empresa_id || undefined,
+        supervisor_id: formData.supervisor_id || undefined,
+        encarregado_id: formData.encarregado_id || undefined,
+        ativo: true
+      });
+    }
     
     setIsAddOpen(false);
+    setEditingId(null);
     setFormData({ nome: "", descricao: "", empresa_id: "", supervisor_id: "", encarregado_id: "" });
   };
 
@@ -119,7 +144,7 @@ export const Setores = () => {
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Novo Setor</DialogTitle>
+                  <DialogTitle>{editingId ? "Editar Setor" : "Novo Setor"}</DialogTitle>
                 </DialogHeader>
                 <div className="grid grid-cols-1 gap-4 py-4">
                   <div className="space-y-2">
@@ -236,7 +261,7 @@ export const Setores = () => {
                     <TableCell>{setor.encarregado?.nome || "Não definido"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm" className="gap-1">
+                        <Button variant="ghost" size="sm" className="gap-1" onClick={() => handleEdit(setor)}>
                           <Edit className="h-3 w-3" />
                           Editar
                         </Button>
