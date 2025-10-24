@@ -643,12 +643,12 @@ const GerarPremiacoes = () => {
 
             <div className="space-y-2">
               <Label htmlFor="categoriaVisualizacao">Categoria</Label>
-              <Select value={categoriaVisualizacao} onValueChange={setCategoriaVisualizacao}>
+              <Select value={categoriaVisualizacao || "TODAS"} onValueChange={(value) => setCategoriaVisualizacao(value === "TODAS" ? "" : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="TODAS">Todas</SelectItem>
                   {categorias
                     .filter(c => ['AUXILIAR', 'SUPERVISOR', 'ENCARREGADO'].includes(c.nome.toUpperCase()))
                     .map((categoria) => (
