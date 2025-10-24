@@ -30,18 +30,34 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Save, FileText, Edit, Trash2 } from "lucide-react";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useDSS } from "@/hooks/useDSS";
+import { useLocaisDSS } from "@/hooks/useLocaisDSS";
 
 export const DSS = () => {
   const { funcionarios, loading } = useFuncionarios();
   const { dssRecords, loading: dssLoading, createDSS, updateDSS, deleteDSS } = useDSS();
+  const { locais: locaisDSS } = useLocaisDSS();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [tema, setTema] = useState("");
+  const [localDssId, setLocalDssId] = useState<string>("");
   const [presencas, setPresencas] = useState<Record<string, boolean>>({});
   const [observacoes, setObservacoes] = useState("");
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<any>(null);
+
+  // Filtrar funcionários pelo local DSS selecionado
+  const funcionariosFiltrados = localDssId
+    ? funcionarios.filter(f => f.local_dss_id === localDssId)
+    : [];
 
   const handlePresencaChange = (funcionarioId: string, presente: boolean) => {
     setPresencas(prev => ({
@@ -51,8 +67,8 @@ export const DSS = () => {
   };
 
   const handleSave = async () => {
-    if (!selectedDate || !tema.trim()) {
-      alert("Por favor, preencha a data e o tema do DSS");
+    if (!selectedDate || !tema.trim() || !localDssId) {
+      alert("Por favor, preencha a data, local e tema do DSS");
       return;
     }
     
@@ -62,6 +78,7 @@ export const DSS = () => {
       titulo: tema,
       descricao: `DSS realizado sobre: ${tema}`,
       data_realizacao: selectedDate.toISOString().split('T')[0],
+      local_dss_id: localDssId,
       participantes_ids: participantesPresentes,
       topics: [tema],
       observacoes: `${participantesPresentes.length} funcionários presentes`
@@ -70,6 +87,7 @@ export const DSS = () => {
     // Reset form
     setSelectedDate(undefined);
     setTema("");
+    setLocalDssId("");
     setPresencas({});
     setObservacoes("");
     setEditingRecord(null);
@@ -137,7 +155,23 @@ export const DSS = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Local do DSS *</Label>
+              <Select value={localDssId} onValueChange={setLocalDssId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o local" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locaisDSS.map(local => (
+                    <SelectItem key={local.id} value={local.id}>
+                      {local.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium">Data de Realização</label>
               <Popover>
@@ -179,7 +213,11 @@ export const DSS = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Lista de Presença</h3>
             
-            {funcionarios.length > 0 ? (
+            {!localDssId ? (
+              <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                <p>Selecione o local do DSS para visualizar os funcionários vinculados.</p>
+              </div>
+            ) : funcionariosFiltrados.length > 0 ? (
               <div className="border rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -191,7 +229,7 @@ export const DSS = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {funcionarios.filter(f => f.ativo).map((funcionario) => (
+                    {funcionariosFiltrados.map((funcionario) => (
                       <TableRow key={funcionario.id}>
                         <TableCell className="font-medium">{funcionario.nome}</TableCell>
                         <TableCell>{funcionario.setor?.nome || "Não informado"}</TableCell>
@@ -214,8 +252,8 @@ export const DSS = () => {
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground border rounded-lg">
-                <p>Nenhum funcionário cadastrado ainda.</p>
-                <p className="text-sm">Cadastre funcionários para realizar o DSS.</p>
+                <p>Nenhum funcionário vinculado a este local.</p>
+                <p className="text-sm">Cadastre funcionários vinculados ao local {locaisDSS.find(l => l.id === localDssId)?.nome}.</p>
               </div>
             )}
           </div>
@@ -224,6 +262,7 @@ export const DSS = () => {
             <Button variant="outline" onClick={() => {
               setSelectedDate(undefined);
               setTema("");
+              setLocalDssId("");
               setPresencas({});
             }}>
               Cancelar
@@ -231,7 +270,7 @@ export const DSS = () => {
             <Button 
               className="gap-2" 
               onClick={handleSave}
-              disabled={!selectedDate || !tema.trim() || funcionarios.length === 0}
+              disabled={!selectedDate || !tema.trim() || !localDssId || funcionariosFiltrados.length === 0}
             >
               <Save className="h-4 w-4" />
               Salvar DSS
@@ -349,7 +388,14 @@ export const DSS = () => {
                     // Modo de visualização
                     <>
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium">{dss.titulo}</h4>
+                        <div>
+                          <h4 className="font-medium">{dss.titulo}</h4>
+                          {dss.local_dss && (
+                            <span className="text-sm text-muted-foreground">
+                              Local: {dss.local_dss.nome}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
                             {format(new Date(dss.data_realizacao), "dd/MM/yyyy", { locale: ptBR })}

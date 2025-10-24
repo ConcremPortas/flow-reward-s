@@ -9,11 +9,14 @@ export interface DSS {
   data_realizacao: string;
   setor_id?: string;
   responsavel_id?: string;
+  local_dss_id?: string;
   participantes_ids?: string[];
   topics?: string[];
   observacoes?: string;
   created_at: string;
   updated_at: string;
+  // Dados relacionados
+  local_dss?: { nome: string };
 }
 
 export const useDSS = () => {
@@ -26,11 +29,14 @@ export const useDSS = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('concrem_dss')
-        .select('*')
+        .select(`
+          *,
+          local_dss:concrem_locais_dss(nome)
+        `)
         .order('data_realizacao', { ascending: false });
 
       if (error) throw error;
-      setDssRecords(data || []);
+      setDssRecords((data as any) || []);
     } catch (error) {
       console.error('Erro ao carregar DSS:', error);
       toast({
