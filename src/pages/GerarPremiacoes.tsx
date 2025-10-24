@@ -375,7 +375,7 @@ const GerarPremiacoes = () => {
         }
 
         // 7. CALCULAR BÔNUS
-        const valorFaixa = funcionario.faixa?.valor_minimo || 0;
+        const valorFaixa = funcionario.faixa?.valor || 0;
         const valorKits = isKitsGeracao ? calcularComissao(Math.floor(Math.random() * 5000) + 8000) : undefined;
         const bonusPossivel = isKitsGeracao ? (valorKits || 0) : valorFaixa;
         const bonusAlcancado = bonusPossivel * notaGeral;

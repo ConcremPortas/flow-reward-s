@@ -5,8 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface Faixa {
   id: string;
   nome: string;
-  valor_minimo?: number;
-  valor_maximo?: number;
+  valor: number;
   categoria_id?: string;
   ativo: boolean;
   created_at: string;

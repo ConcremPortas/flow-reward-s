@@ -29,7 +29,7 @@ export interface Funcionario {
   funcao?: { nome: string };
   categoria?: { nome: string };
   base_premiacao?: { nome: string };
-  faixa?: { nome: string; valor_minimo?: number; valor_maximo?: number };
+  faixa?: { nome: string; valor: number };
   local_dss?: { nome: string };
 }
 
@@ -50,7 +50,7 @@ export const useFuncionarios = () => {
           funcao:concrem_funcoes(nome),
           categoria:concrem_categorias(nome),
           base_premiacao:concrem_base_premiacao(nome),
-          faixa:concrem_faixas(nome, valor_minimo, valor_maximo),
+          faixa:concrem_faixas(nome, valor),
           local_dss:concrem_locais_dss(nome)
         `)
         .order('nome');
