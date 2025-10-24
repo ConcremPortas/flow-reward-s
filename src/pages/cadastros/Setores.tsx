@@ -156,13 +156,12 @@ export const Setores = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="supervisor">Supervisor</Label>
+                    <Label htmlFor="supervisor">Supervisor (Opcional)</Label>
                     <Select value={formData.supervisor_id} onValueChange={(value) => setFormData({...formData, supervisor_id: value})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um supervisor" />
+                        <SelectValue placeholder="Selecione um supervisor ou deixe em branco" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
                         {funcionarios.filter(f => f.ativo).map(funcionario => (
                           <SelectItem key={funcionario.id} value={funcionario.id}>
                             {funcionario.nome}
@@ -172,13 +171,12 @@ export const Setores = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="encarregado">Encarregado</Label>
+                    <Label htmlFor="encarregado">Encarregado (Opcional)</Label>
                     <Select value={formData.encarregado_id} onValueChange={(value) => setFormData({...formData, encarregado_id: value})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um encarregado" />
+                        <SelectValue placeholder="Selecione um encarregado ou deixe em branco" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
                         {funcionarios.filter(f => f.ativo).map(funcionario => (
                           <SelectItem key={funcionario.id} value={funcionario.id}>
                             {funcionario.nome}
