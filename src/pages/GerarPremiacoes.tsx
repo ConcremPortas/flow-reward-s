@@ -269,6 +269,12 @@ const GerarPremiacoes = () => {
     }
   };
 
+  const formatCompetencia = (competencia: string) => {
+    if (!competencia) return '';
+    const [ano, mes] = competencia.split('-');
+    return `${mes}/${ano}`;
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -432,7 +438,7 @@ const GerarPremiacoes = () => {
           {premiacoes.length > 0 && (
             <div className="flex justify-between items-center pt-2">
               <div className="text-sm text-muted-foreground">
-                Exibindo resultados de {competenciaVisualizacao && format(new Date(competenciaVisualizacao + '-01'), 'MM/yyyy')} - {baseVisualizacaoSelecionada?.nome}
+                Exibindo resultados de {formatCompetencia(competenciaVisualizacao)} - {baseVisualizacaoSelecionada?.nome}
               </div>
               <Button variant="outline">
                 <Download className="h-4 w-4 mr-2" />
@@ -448,7 +454,7 @@ const GerarPremiacoes = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              Premiações - {baseVisualizacaoSelecionada?.nome} - {competenciaVisualizacao && format(new Date(competenciaVisualizacao + '-01'), 'MM/yyyy')}
+              Premiações - {baseVisualizacaoSelecionada?.nome} - {formatCompetencia(competenciaVisualizacao)}
             </CardTitle>
           </CardHeader>
           <CardContent>
