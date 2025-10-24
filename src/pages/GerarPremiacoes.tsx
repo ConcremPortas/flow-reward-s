@@ -100,8 +100,14 @@ const GerarPremiacoes = () => {
 
   const baseSelecionada = bases.find(b => b.id === baseId);
   const baseVisualizacaoSelecionada = bases.find(b => b.id === baseVisualizacao);
+  
+  // Flags para visualização (baseadas na base de visualização)
   const isProducao = baseVisualizacaoSelecionada?.nome === 'PRODUCAO';
   const isKits = baseVisualizacaoSelecionada?.nome === 'KITS';
+  
+  // Flags para cálculo (baseadas na base de geração selecionada)
+  const isProducaoGeracao = baseSelecionada?.nome === 'PRODUCAO';
+  const isKitsGeracao = baseSelecionada?.nome === 'KITS';
 
   const filteredPremiacoes = premiacoes.filter(premiacao =>
     premiacao.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -175,6 +181,11 @@ const GerarPremiacoes = () => {
     setShowOverwriteDialog(false);
     
     try {
+      console.log('\n🎯 ===== INICIANDO GERAÇÃO DE PREMIAÇÕES =====');
+      console.log('Base utilizada para cálculo:', baseSelecionada?.nome);
+      console.log('Base ID:', baseId);
+      console.log('Competência:', competencia);
+      console.log('==============================================\n');
 
       // Filtrar apenas funcionários com a base de premiação selecionada
       const funcionariosAtivos = funcionarios.filter(f => 
@@ -275,7 +286,7 @@ const GerarPremiacoes = () => {
         // 5. CALCULAR NOTA DE PRODUÇÃO (se for base PRODUCAO)
         let notaProducao = 0;
         let percentualProducao = 0;
-        if (isProducao && funcionario.setor_id) {
+        if (isProducaoGeracao && funcionario.setor_id) {
           const producaoDoSetor = producaoSetor.filter(p => 
             p.setor_id === funcionario.setor_id &&
             p.data_producao >= dataInicio &&
@@ -311,7 +322,7 @@ const GerarPremiacoes = () => {
         // 6. CALCULAR NOTA GERAL com pesos fixos
         // Pesos: Produção 60%, EPI 15%, DSS 10%, Faltas 10%, Advertências 5%
         let notaGeral = 0;
-        if (isProducao) {
+        if (isProducaoGeracao) {
           const pesoProducao = 0.60;
           const pesoEpi = 0.15;
           const pesoDss = 0.10;
@@ -361,8 +372,8 @@ const GerarPremiacoes = () => {
 
         // 7. CALCULAR BÔNUS
         const valorFaixa = funcionario.faixa?.valor_minimo || 0;
-        const valorKits = isKits ? calcularComissao(Math.floor(Math.random() * 5000) + 8000) : undefined;
-        const bonusPossivel = isKits ? (valorKits || 0) : valorFaixa;
+        const valorKits = isKitsGeracao ? calcularComissao(Math.floor(Math.random() * 5000) + 8000) : undefined;
+        const bonusPossivel = isKitsGeracao ? (valorKits || 0) : valorFaixa;
         const bonusAlcancado = bonusPossivel * notaGeral;
 
         return {
@@ -374,8 +385,8 @@ const GerarPremiacoes = () => {
           faixa: funcionario.faixa?.nome || 'N/A',
           categoria: funcionario.categoria?.nome || 'N/A',
           valor_faixa: valorFaixa,
-          percentual_producao: isProducao ? percentualProducao : undefined,
-          nota_producao: isProducao ? notaProducao : undefined,
+          percentual_producao: isProducaoGeracao ? percentualProducao : undefined,
+          nota_producao: isProducaoGeracao ? notaProducao : undefined,
           nota_epi: notaEpi,
           nota_faltas: notaFaltas,
           nota_advertencias: notaAdvertencias,
