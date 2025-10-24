@@ -75,14 +75,17 @@ const GerarPremiacoes = () => {
   
   const [baseId, setBaseId] = useState('');
   const [competencia, setCompetencia] = useState('');
+  const [competenciaVisualizacao, setCompetenciaVisualizacao] = useState('');
+  const [baseVisualizacao, setBaseVisualizacao] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [premiacoes, setPremiacoes] = useState<FuncionarioPremiacao[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
 
   const baseSelecionada = bases.find(b => b.id === baseId);
-  const isProducao = baseSelecionada?.nome === 'PRODUCAO';
-  const isKits = baseSelecionada?.nome === 'KITS';
+  const baseVisualizacaoSelecionada = bases.find(b => b.id === baseVisualizacao);
+  const isProducao = baseVisualizacaoSelecionada?.nome === 'PRODUCAO';
+  const isKits = baseVisualizacaoSelecionada?.nome === 'KITS';
 
   const filteredPremiacoes = premiacoes.filter(premiacao =>
     premiacao.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,17 +93,17 @@ const GerarPremiacoes = () => {
     premiacao.cod_funcionario.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Carregar resultados salvos quando mudar base/competência
+  // Carregar resultados salvos quando mudar base/competência de visualização
   const carregarResultadosSalvos = () => {
-    if (!baseId || !competencia) {
+    if (!baseVisualizacao || !competenciaVisualizacao) {
       setPremiacoes([]);
       return;
     }
 
-    const mesCompetencia = competencia + '-01';
+    const mesCompetencia = competenciaVisualizacao + '-01';
     const resultadosFiltrados = resultados.filter(r => 
       r.mes_competencia === mesCompetencia && 
-      r.base_premiacao_id === baseId
+      r.base_premiacao_id === baseVisualizacao
     );
 
     if (resultadosFiltrados.length > 0) {
@@ -129,10 +132,10 @@ const GerarPremiacoes = () => {
     }
   };
 
-  // Carregar resultados salvos quando base/competência mudar
+  // Carregar resultados salvos quando base/competência de visualização mudar
   React.useEffect(() => {
     carregarResultadosSalvos();
-  }, [baseId, competencia, resultados]);
+  }, [baseVisualizacao, competenciaVisualizacao, resultados]);
 
   const iniciarGeracao = async () => {
     if (!baseId || !competencia) return;
@@ -254,6 +257,9 @@ const GerarPremiacoes = () => {
       
       if (salvoComSucesso) {
         setPremiacoes(premiacoesCalculadas);
+        // Definir automaticamente os filtros de visualização para a competência recém-gerada
+        setCompetenciaVisualizacao(competencia);
+        setBaseVisualizacao(baseId);
       }
       
     } catch (error) {
@@ -375,40 +381,74 @@ const GerarPremiacoes = () => {
         </CardContent>
       </Card>
 
-      {/* Busca e Status */}
-      {premiacoes.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-center gap-4">
-              <div className="relative flex-1">
+      {/* Filtros de Visualização */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Visualizar Premiações Salvas</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="baseVisualizacao">Base de Premiação</Label>
+              <Select value={baseVisualizacao} onValueChange={setBaseVisualizacao}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma base" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bases.map((base) => (
+                    <SelectItem key={base.id} value={base.id}>
+                      {base.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="competenciaVisualizacao">Mês Competência</Label>
+              <Input
+                id="competenciaVisualizacao"
+                type="month"
+                value={competenciaVisualizacao}
+                onChange={(e) => setCompetenciaVisualizacao(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="search">Buscar Funcionário</Label>
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
+                  id="search"
                   placeholder="Buscar funcionários..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <div className="text-sm text-muted-foreground">
-                  Resultados salvos para {competencia && format(new Date(competencia + '-01'), 'MM/yyyy')}
-                </div>
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </Button>
-              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+
+          {premiacoes.length > 0 && (
+            <div className="flex justify-between items-center pt-2">
+              <div className="text-sm text-muted-foreground">
+                Exibindo resultados de {competenciaVisualizacao && format(new Date(competenciaVisualizacao + '-01'), 'MM/yyyy')} - {baseVisualizacaoSelecionada?.nome}
+              </div>
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Tabela de Resultados */}
       {premiacoes.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>
-              Premiações - {baseSelecionada?.nome} - {competencia && format(new Date(competencia + '-01'), 'MM/yyyy')}
+              Premiações - {baseVisualizacaoSelecionada?.nome} - {competenciaVisualizacao && format(new Date(competenciaVisualizacao + '-01'), 'MM/yyyy')}
             </CardTitle>
           </CardHeader>
           <CardContent>
