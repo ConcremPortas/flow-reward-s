@@ -199,7 +199,7 @@ export const ProducaoSetor = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Competência *</label>
               <Input
-                type="date"
+                type="month"
                 value={dataProducao}
                 onChange={(e) => setDataProducao(e.target.value)}
               />

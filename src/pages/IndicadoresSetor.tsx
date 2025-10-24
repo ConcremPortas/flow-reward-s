@@ -204,7 +204,7 @@ export const IndicadoresSetor = () => {
             <div className="space-y-2">
               <Label>Competência *</Label>
               <Input
-                type="date"
+                type="month"
                 value={competencia}
                 onChange={(e) => setCompetencia(e.target.value)}
               />
