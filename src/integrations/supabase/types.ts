@@ -587,6 +587,83 @@ export type Database = {
           },
         ]
       }
+      concrem_indicadores_setor: {
+        Row: {
+          competencia: string
+          created_at: string
+          hora_maquina_meta: number | null
+          hora_maquina_percentual: number | null
+          hora_maquina_realizado: number | null
+          id: string
+          identificacao_nc_meta: number | null
+          identificacao_nc_percentual: number | null
+          identificacao_nc_realizado: number | null
+          limpeza_meta: number | null
+          limpeza_percentual: number | null
+          limpeza_realizado: number | null
+          operacao_segura_meta: number | null
+          operacao_segura_percentual: number | null
+          operacao_segura_realizado: number | null
+          setor_id: string | null
+          tratamento_nc_meta: number | null
+          tratamento_nc_percentual: number | null
+          tratamento_nc_realizado: number | null
+          updated_at: string
+        }
+        Insert: {
+          competencia: string
+          created_at?: string
+          hora_maquina_meta?: number | null
+          hora_maquina_percentual?: number | null
+          hora_maquina_realizado?: number | null
+          id?: string
+          identificacao_nc_meta?: number | null
+          identificacao_nc_percentual?: number | null
+          identificacao_nc_realizado?: number | null
+          limpeza_meta?: number | null
+          limpeza_percentual?: number | null
+          limpeza_realizado?: number | null
+          operacao_segura_meta?: number | null
+          operacao_segura_percentual?: number | null
+          operacao_segura_realizado?: number | null
+          setor_id?: string | null
+          tratamento_nc_meta?: number | null
+          tratamento_nc_percentual?: number | null
+          tratamento_nc_realizado?: number | null
+          updated_at?: string
+        }
+        Update: {
+          competencia?: string
+          created_at?: string
+          hora_maquina_meta?: number | null
+          hora_maquina_percentual?: number | null
+          hora_maquina_realizado?: number | null
+          id?: string
+          identificacao_nc_meta?: number | null
+          identificacao_nc_percentual?: number | null
+          identificacao_nc_realizado?: number | null
+          limpeza_meta?: number | null
+          limpeza_percentual?: number | null
+          limpeza_realizado?: number | null
+          operacao_segura_meta?: number | null
+          operacao_segura_percentual?: number | null
+          operacao_segura_realizado?: number | null
+          setor_id?: string | null
+          tratamento_nc_meta?: number | null
+          tratamento_nc_percentual?: number | null
+          tratamento_nc_realizado?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concrem_indicadores_setor_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concrem_locais_dss: {
         Row: {
           ativo: boolean
