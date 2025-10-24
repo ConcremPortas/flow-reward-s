@@ -1,6 +1,5 @@
 import { ReactNode, createContext, useContext, useState } from "react";
 import { Sidebar } from "./Sidebar";
-import { Header } from "./Header";
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -26,14 +25,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
-      <div className="min-h-screen bg-background w-full">
+      <div className="min-h-screen bg-background w-full flex">
         <Sidebar />
-        <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-          <Header />
-          <main className="p-6">
-            {children}
-          </main>
-        </div>
+        <main className={`flex-1 p-6 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+          {children}
+        </main>
       </div>
     </SidebarContext.Provider>
   );
