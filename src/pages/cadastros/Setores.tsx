@@ -46,6 +46,8 @@ export const Setores = () => {
   const { empresas } = useEmpresas();
   const { funcionarios } = useFuncionarios();
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterSupervisor, setFilterSupervisor] = useState("");
+  const [filterEncarregado, setFilterEncarregado] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -56,10 +58,15 @@ export const Setores = () => {
     encarregado_id: ""
   });
 
-  const filteredSetores = setores.filter(setor =>
-    setor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (setor.descricao && setor.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredSetores = setores.filter(setor => {
+    const matchesSearch = setor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (setor.descricao && setor.descricao.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesSupervisor = !filterSupervisor || setor.supervisor_id === filterSupervisor;
+    const matchesEncarregado = !filterEncarregado || setor.encarregado_id === filterEncarregado;
+    
+    return matchesSearch && matchesSupervisor && matchesEncarregado;
+  });
 
   const handleAdd = () => {
     setEditingId(null);
@@ -229,9 +236,9 @@ export const Setores = () => {
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Filtro de busca */}
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-sm">
+          {/* Filtros */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
                 placeholder="Buscar setores..."
@@ -239,6 +246,44 @@ export const Setores = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
+            </div>
+            
+            <div className="w-[200px] space-y-2">
+              <Label className="text-xs text-muted-foreground">Supervisor</Label>
+              <Select value={filterSupervisor} onValueChange={setFilterSupervisor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos</SelectItem>
+                  {funcionarios
+                    .filter(f => f.categoria?.nome.toLowerCase().includes('supervisor'))
+                    .map(funcionario => (
+                      <SelectItem key={funcionario.id} value={funcionario.id}>
+                        {funcionario.nome}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-[200px] space-y-2">
+              <Label className="text-xs text-muted-foreground">Encarregado</Label>
+              <Select value={filterEncarregado} onValueChange={setFilterEncarregado}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos</SelectItem>
+                  {funcionarios
+                    .filter(f => f.categoria?.nome.toLowerCase().includes('encarregado'))
+                    .map(funcionario => (
+                      <SelectItem key={funcionario.id} value={funcionario.id}>
+                        {funcionario.nome}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
