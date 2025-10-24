@@ -65,8 +65,9 @@ interface FuncionarioPremiacao {
   faixa: string;
   categoria: string;
   valor_faixa: number;
-  // Notas individuais
-  nota_producao?: number;
+  // Percentuais e notas individuais
+  percentual_producao?: number; // Percentual real da produção (pode ser > 100%)
+  nota_producao?: number; // Nota da produção (limitada a 100%)
   nota_epi: number;
   nota_faltas: number;
   nota_advertencias: number;
@@ -131,6 +132,7 @@ const GerarPremiacoes = () => {
         faixa: r.faixa || 'N/A',
         categoria: r.categoria || 'N/A',
         valor_faixa: r.valor_faixa || 0,
+        percentual_producao: r.nota_producao ? r.nota_producao : undefined,
         nota_producao: r.nota_producao || undefined,
         nota_epi: r.nota_epi,
         nota_faltas: r.nota_faltas,
@@ -248,6 +250,7 @@ const GerarPremiacoes = () => {
 
         // 5. CALCULAR NOTA DE PRODUÇÃO (se for base PRODUCAO)
         let notaProducao = 0;
+        let percentualProducao = 0;
         if (isProducao && funcionario.setor_id) {
           const producaoDoSetor = producaoSetor.filter(p => 
             p.setor_id === funcionario.setor_id &&
@@ -258,31 +261,31 @@ const GerarPremiacoes = () => {
           if (producaoDoSetor.length > 0) {
             const totalMeta = producaoDoSetor.reduce((acc, p) => acc + (p.meta_diaria || 0), 0);
             const totalRealizado = producaoDoSetor.reduce((acc, p) => acc + (p.producao_realizada || 0), 0);
-            const percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
-            // Se passar de 100%, considera 100%
+            percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
+            // Se passar de 100%, considera 100% para o cálculo da nota
             notaProducao = Math.min(percentualProducao, 1.0);
           }
         }
 
-        // 6. CALCULAR NOTA GERAL baseada nos pesos da fórmula
+        // 6. CALCULAR NOTA GERAL com pesos fixos
+        // Pesos: Produção 60%, EPI 15%, DSS 10%, Faltas 10%, Advertências 5%
         let notaGeral = 0;
-        if (formula) {
-          if (isProducao) {
-            notaGeral = (
-              (notaProducao * formula.peso_producao_setor / 100) +
-              (notaEpi * formula.peso_epi / 100) +
-              (notaFaltas * formula.peso_faltas / 100) +
-              (notaAdvertencias * formula.peso_advertencias / 100) +
-              (notaDss * formula.peso_dss / 100)
-            );
-          } else {
-            notaGeral = (
-              (notaEpi * formula.peso_epi / 100) +
-              (notaFaltas * formula.peso_faltas / 100) +
-              (notaAdvertencias * formula.peso_advertencias / 100) +
-              (notaDss * formula.peso_dss / 100)
-            );
-          }
+        if (isProducao) {
+          notaGeral = (
+            (notaProducao * 0.60) +      // 60% Produção
+            (notaEpi * 0.15) +            // 15% EPI
+            (notaDss * 0.10) +            // 10% DSS
+            (notaFaltas * 0.10) +         // 10% Faltas
+            (notaAdvertencias * 0.05)     // 5% Advertências
+          );
+        } else {
+          // Para KITS, sem produção, redistribui os pesos
+          notaGeral = (
+            (notaEpi * 0.30) +            // 30% EPI
+            (notaDss * 0.30) +            // 30% DSS
+            (notaFaltas * 0.25) +         // 25% Faltas
+            (notaAdvertencias * 0.15)     // 15% Advertências
+          );
         }
 
         // 7. CALCULAR BÔNUS
@@ -300,6 +303,7 @@ const GerarPremiacoes = () => {
           faixa: funcionario.faixa?.nome || 'N/A',
           categoria: funcionario.categoria?.nome || 'N/A',
           valor_faixa: valorFaixa,
+          percentual_producao: isProducao ? percentualProducao : undefined,
           nota_producao: isProducao ? notaProducao : undefined,
           nota_epi: notaEpi,
           nota_faltas: notaFaltas,
@@ -526,8 +530,8 @@ const GerarPremiacoes = () => {
                     <TableHead>Nome</TableHead>
                     <TableHead>Setor</TableHead>
                     <TableHead>Função</TableHead>
-                    {isProducao && <TableHead>Faixa</TableHead>}
-                    {isProducao && <TableHead>Resultado Produção %</TableHead>}
+                    <TableHead>Faixa</TableHead>
+                    {isProducao && <TableHead>% Produção</TableHead>}
                     {isProducao && <TableHead>Nota DSS</TableHead>}
                     {isKits && <TableHead>Valor Kits</TableHead>}
                     <TableHead>Nota EPI</TableHead>
@@ -545,8 +549,8 @@ const GerarPremiacoes = () => {
                       <TableCell className="font-medium">{premiacao.nome}</TableCell>
                       <TableCell>{premiacao.setor}</TableCell>
                       <TableCell>{premiacao.funcao}</TableCell>
-                      {isProducao && <TableCell>{premiacao.faixa}</TableCell>}
-                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_producao || 0)}</TableCell>}
+                      <TableCell>{premiacao.faixa}</TableCell>
+                      {isProducao && <TableCell>{formatPercentage(premiacao.percentual_producao || 0)}</TableCell>}
                       {isProducao && <TableCell>{formatPercentage(premiacao.nota_dss)}</TableCell>}
                       {isKits && <TableCell>{formatCurrency(premiacao.valor_kits || 0)}</TableCell>}
                       <TableCell>{formatPercentage(premiacao.nota_epi)}</TableCell>
