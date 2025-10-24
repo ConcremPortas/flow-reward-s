@@ -26,6 +26,9 @@ import { useEPI } from '@/hooks/useEPI';
 import { useDSS } from '@/hooks/useDSS';
 import { useProducaoSetor } from '@/hooks/useProducaoSetor';
 import { useCategorias } from '@/hooks/useCategorias';
+import { useSetores } from '@/hooks/useSetores';
+import { useIndicadoresSetor } from '@/hooks/useIndicadoresSetor';
+import { useIndicadoresGerais } from '@/hooks/useIndicadoresGerais';
 import { format } from 'date-fns';
 
 // Função para calcular comissão de Kits
@@ -90,6 +93,9 @@ const GerarPremiacoes = () => {
   const { dssRecords } = useDSS();
   const { registros: producaoSetor } = useProducaoSetor();
   const { categorias } = useCategorias();
+  const { setores } = useSetores();
+  const { indicadores: indicadoresSetor } = useIndicadoresSetor();
+  const { indicadores: indicadoresGerais } = useIndicadoresGerais();
   
   const [baseId, setBaseId] = useState('');
   const [competencia, setCompetencia] = useState('');
@@ -334,40 +340,140 @@ const GerarPremiacoes = () => {
         // 5. CALCULAR NOTA DE PRODUÇÃO (se for base PRODUCAO)
         let notaProducao = 0;
         let percentualProducao = 0;
-        if (isProducaoGeracao && funcionario.setor_id) {
-          const producaoDoSetor = producaoSetor.filter(p => 
-            p.setor_id === funcionario.setor_id &&
-            p.data_producao >= dataInicio &&
-            p.data_producao <= dataFim
-          );
-          
-          console.log(`Funcionário ${funcionario.nome}:`, {
-            setor_id: funcionario.setor_id,
-            dataInicio,
-            dataFim,
-            registrosEncontrados: producaoDoSetor.length,
-            producaoDoSetor
-          });
-          
-          if (producaoDoSetor.length > 0) {
-            const totalMeta = producaoDoSetor.reduce((acc, p) => acc + (p.meta_diaria || 0), 0);
-            const totalRealizado = producaoDoSetor.reduce((acc, p) => acc + (p.producao_realizada || 0), 0);
-            percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
-            // Se passar de 100%, considera 100% para o cálculo da nota
-            notaProducao = Math.min(percentualProducao, 1.0);
+        
+        // Verificar se é Supervisor ou Encarregado
+        const isSupervisorOrEncarregado = ['SUPERVISOR', 'ENCARREGADO'].includes(categoriaNome);
+        
+        if (isProducaoGeracao) {
+          if (isSupervisorOrEncarregado) {
+            // Para supervisores/encarregados, agregar produção de todos os setores que supervisionam
+            const setoresSupervisionados = setores.filter(s => 
+              s.supervisor_id === funcionario.id || s.encarregado_id === funcionario.id
+            );
             
-            console.log(`Cálculo produção ${funcionario.nome}:`, {
-              totalMeta,
-              totalRealizado,
-              percentualProducao: (percentualProducao * 100).toFixed(2) + '%',
-              notaProducao: (notaProducao * 100).toFixed(2) + '%'
-            });
+            console.log(`${categoriaNome} ${funcionario.nome} supervisiona ${setoresSupervisionados.length} setores:`, 
+              setoresSupervisionados.map(s => s.nome)
+            );
+            
+            if (setoresSupervisionados.length > 0) {
+              const setorIds = setoresSupervisionados.map(s => s.id);
+              const producaoDosSetores = producaoSetor.filter(p => 
+                setorIds.includes(p.setor_id || '') &&
+                p.data_producao >= dataInicio &&
+                p.data_producao <= dataFim
+              );
+              
+              if (producaoDosSetores.length > 0) {
+                const totalMeta = producaoDosSetores.reduce((acc, p) => acc + (p.meta_diaria || 0), 0);
+                const totalRealizado = producaoDosSetores.reduce((acc, p) => acc + (p.producao_realizada || 0), 0);
+                percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
+                notaProducao = Math.min(percentualProducao, 1.0);
+                
+                console.log(`Cálculo produção agregada ${funcionario.nome}:`, {
+                  setores: setoresSupervisionados.map(s => s.nome).join(', '),
+                  totalMeta,
+                  totalRealizado,
+                  percentualProducao: (percentualProducao * 100).toFixed(2) + '%',
+                  notaProducao: (notaProducao * 100).toFixed(2) + '%'
+                });
+              }
+            }
           } else {
-            console.warn(`Nenhum registro de produção encontrado para ${funcionario.nome} no período ${dataInicio} a ${dataFim}`);
+            // Para auxiliares, usar apenas o setor do funcionário
+            if (funcionario.setor_id) {
+              const producaoDoSetor = producaoSetor.filter(p => 
+                p.setor_id === funcionario.setor_id &&
+                p.data_producao >= dataInicio &&
+                p.data_producao <= dataFim
+              );
+              
+              if (producaoDoSetor.length > 0) {
+                const totalMeta = producaoDoSetor.reduce((acc, p) => acc + (p.meta_diaria || 0), 0);
+                const totalRealizado = producaoDoSetor.reduce((acc, p) => acc + (p.producao_realizada || 0), 0);
+                percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
+                notaProducao = Math.min(percentualProducao, 1.0);
+                
+                console.log(`Cálculo produção ${funcionario.nome}:`, {
+                  totalMeta,
+                  totalRealizado,
+                  percentualProducao: (percentualProducao * 100).toFixed(2) + '%',
+                  notaProducao: (notaProducao * 100).toFixed(2) + '%'
+                });
+              }
+            }
           }
         }
 
-        // 6. CALCULAR NOTA GERAL usando pesos da fórmula
+        // 6. CALCULAR INDICADORES ADICIONAIS PARA SUPERVISOR/ENCARREGADO
+        let notaFaturamento = 0;
+        let notaItensNC = 0;
+        let notaTratamentoNC = 0;
+        let notaHoraMaquina = 0;
+        let notaOperacaoSegura = 0;
+        let notaLimpeza = 0;
+        
+        if (isSupervisorOrEncarregado && isProducaoGeracao) {
+          // Buscar indicador de faturamento do mês
+          const [ano, mes] = competencia.split('-');
+          const competenciaFormatada = `${ano}-${mes}-01`;
+          
+          const faturamentoMes = indicadoresGerais.find(i => 
+            i.tipo_indicador?.codigo === 'FAT' &&
+            i.competencia === competenciaFormatada
+          );
+          
+          if (faturamentoMes) {
+            notaFaturamento = faturamentoMes.percentual / 100;
+            console.log(`Faturamento ${funcionario.nome}:`, {
+              meta: faturamentoMes.meta,
+              realizado: faturamentoMes.realizado,
+              percentual: faturamentoMes.percentual,
+              nota: (notaFaturamento * 100).toFixed(2) + '%'
+            });
+          }
+          
+          // Buscar indicadores de setor (agregar dos setores supervisionados)
+          const setoresSupervisionados = setores.filter(s => 
+            s.supervisor_id === funcionario.id || s.encarregado_id === funcionario.id
+          );
+          
+          if (setoresSupervisionados.length > 0) {
+            const setorIds = setoresSupervisionados.map(s => s.id);
+            const indicadoresDosMeses = indicadoresSetor.filter(i => 
+              setorIds.includes(i.setor_id || '') &&
+              i.competencia === competenciaFormatada
+            );
+            
+            if (indicadoresDosMeses.length > 0) {
+              // Calcular médias dos indicadores
+              const calcularMediaIndicador = (campo: string) => {
+                const valores = indicadoresDosMeses
+                  .map(i => (i as any)[campo])
+                  .filter(v => v != null && v > 0);
+                
+                if (valores.length === 0) return 1.0; // Se não há dados, considera 100%
+                const media = valores.reduce((acc, v) => acc + v, 0) / valores.length;
+                return media;
+              };
+              
+              notaItensNC = calcularMediaIndicador('identificacao_nc_percentual');
+              notaTratamentoNC = calcularMediaIndicador('tratamento_nc_percentual');
+              notaHoraMaquina = calcularMediaIndicador('hora_maquina_percentual');
+              notaOperacaoSegura = calcularMediaIndicador('operacao_segura_percentual');
+              notaLimpeza = calcularMediaIndicador('limpeza_percentual');
+              
+              console.log(`Indicadores de setor agregados ${funcionario.nome}:`, {
+                itensNC: (notaItensNC * 100).toFixed(2) + '%',
+                tratamentoNC: (notaTratamentoNC * 100).toFixed(2) + '%',
+                horaMaquina: (notaHoraMaquina * 100).toFixed(2) + '%',
+                operacaoSegura: (notaOperacaoSegura * 100).toFixed(2) + '%',
+                limpeza: (notaLimpeza * 100).toFixed(2) + '%'
+              });
+            }
+          }
+        }
+
+        // 7. CALCULAR NOTA GERAL usando pesos da fórmula
         let notaGeral = 0;
         
         if (!formula) {
@@ -381,47 +487,96 @@ const GerarPremiacoes = () => {
           const pesoFaltas = (formula.peso_faltas || 0) / 100;
           const pesoAdvertencias = (formula.peso_advertencias || 0) / 100;
           
-          // Validar se a soma dos pesos é 100%
-          const somaPesos = pesoProducao + pesoEpi + pesoDss + pesoFaltas + pesoAdvertencias;
-          if (Math.abs(somaPesos - 1.0) > 0.01) {
-            console.warn(`⚠️ Soma dos pesos não é 100% para ${funcionario.nome}: ${(somaPesos * 100).toFixed(2)}%`);
-          }
-          
           if (isProducaoGeracao) {
-            notaGeral = (
-              (notaProducao * pesoProducao) +
-              (notaEpi * pesoEpi) +
-              (notaDss * pesoDss) +
-              (notaFaltas * pesoFaltas) +
-              (notaAdvertencias * pesoAdvertencias)
-            );
-            
-            console.log(`\n=== NOTA GERAL ${funcionario.nome} ===`);
-            console.log(`Categoria: ${funcionario.categoria?.nome}`);
-            console.log(`Fórmula: ${formula.nome}`);
-            console.log(`Notas individuais:`, {
-              producao: `${(notaProducao * 100).toFixed(2)}%`,
-              epi: `${(notaEpi * 100).toFixed(2)}%`,
-              dss: `${(notaDss * 100).toFixed(2)}%`,
-              faltas: `${(notaFaltas * 100).toFixed(2)}%`,
-              advertencias: `${(notaAdvertencias * 100).toFixed(2)}%`
-            });
-            console.log(`Pesos da fórmula:`, {
-              producao: `${(pesoProducao * 100).toFixed(0)}%`,
-              epi: `${(pesoEpi * 100).toFixed(0)}%`,
-              dss: `${(pesoDss * 100).toFixed(0)}%`,
-              faltas: `${(pesoFaltas * 100).toFixed(0)}%`,
-              advertencias: `${(pesoAdvertencias * 100).toFixed(0)}%`,
-              soma: `${(somaPesos * 100).toFixed(0)}%`
-            });
-            console.log(`Cálculo detalhado:`);
-            console.log(`  Produção: ${(notaProducao * 100).toFixed(2)}% × ${(pesoProducao * 100).toFixed(0)}% = ${(notaProducao * pesoProducao * 100).toFixed(2)}%`);
-            console.log(`  EPI: ${(notaEpi * 100).toFixed(2)}% × ${(pesoEpi * 100).toFixed(0)}% = ${(notaEpi * pesoEpi * 100).toFixed(2)}%`);
-            console.log(`  DSS: ${(notaDss * 100).toFixed(2)}% × ${(pesoDss * 100).toFixed(0)}% = ${(notaDss * pesoDss * 100).toFixed(2)}%`);
-            console.log(`  Faltas: ${(notaFaltas * 100).toFixed(2)}% × ${(pesoFaltas * 100).toFixed(0)}% = ${(notaFaltas * pesoFaltas * 100).toFixed(2)}%`);
-            console.log(`  Advertências: ${(notaAdvertencias * 100).toFixed(2)}% × ${(pesoAdvertencias * 100).toFixed(0)}% = ${(notaAdvertencias * pesoAdvertencias * 100).toFixed(2)}%`);
-            console.log(`Nota Geral Final: ${(notaGeral * 100).toFixed(2)}%`);
-            console.log(`---`);
+            if (isSupervisorOrEncarregado) {
+              // Fórmula para Supervisor/Encarregado com 11 indicadores
+              // Pesos: Prod(20%), EPI(10%), Faltas(10%), Adv(3%), DSS(10%), 
+              //        Fat(30%), ItensNC(5%), TratNC(3%), HoraMaq(3%), OpSeg(3%), Limp(3%)
+              notaGeral = (
+                (notaProducao * 0.20) +
+                (notaEpi * 0.10) +
+                (notaFaltas * 0.10) +
+                (notaAdvertencias * 0.03) +
+                (notaDss * 0.10) +
+                (notaFaturamento * 0.30) +
+                (notaItensNC * 0.05) +
+                (notaTratamentoNC * 0.03) +
+                (notaHoraMaquina * 0.03) +
+                (notaOperacaoSegura * 0.03) +
+                (notaLimpeza * 0.03)
+              );
+              
+              console.log(`\n=== NOTA GERAL ${categoriaNome} ${funcionario.nome} ===`);
+              console.log(`Fórmula: ${formula.nome}`);
+              console.log(`Notas individuais:`, {
+                producao: `${(notaProducao * 100).toFixed(2)}%`,
+                epi: `${(notaEpi * 100).toFixed(2)}%`,
+                faltas: `${(notaFaltas * 100).toFixed(2)}%`,
+                advertencias: `${(notaAdvertencias * 100).toFixed(2)}%`,
+                dss: `${(notaDss * 100).toFixed(2)}%`,
+                faturamento: `${(notaFaturamento * 100).toFixed(2)}%`,
+                itensNC: `${(notaItensNC * 100).toFixed(2)}%`,
+                tratamentoNC: `${(notaTratamentoNC * 100).toFixed(2)}%`,
+                horaMaquina: `${(notaHoraMaquina * 100).toFixed(2)}%`,
+                operacaoSegura: `${(notaOperacaoSegura * 100).toFixed(2)}%`,
+                limpeza: `${(notaLimpeza * 100).toFixed(2)}%`
+              });
+              console.log(`Cálculo detalhado:`);
+              console.log(`  Produção: ${(notaProducao * 100).toFixed(2)}% × 20% = ${(notaProducao * 0.20 * 100).toFixed(2)}%`);
+              console.log(`  EPI: ${(notaEpi * 100).toFixed(2)}% × 10% = ${(notaEpi * 0.10 * 100).toFixed(2)}%`);
+              console.log(`  Faltas: ${(notaFaltas * 100).toFixed(2)}% × 10% = ${(notaFaltas * 0.10 * 100).toFixed(2)}%`);
+              console.log(`  Advertências: ${(notaAdvertencias * 100).toFixed(2)}% × 3% = ${(notaAdvertencias * 0.03 * 100).toFixed(2)}%`);
+              console.log(`  DSS: ${(notaDss * 100).toFixed(2)}% × 10% = ${(notaDss * 0.10 * 100).toFixed(2)}%`);
+              console.log(`  Faturamento: ${(notaFaturamento * 100).toFixed(2)}% × 30% = ${(notaFaturamento * 0.30 * 100).toFixed(2)}%`);
+              console.log(`  Itens NC: ${(notaItensNC * 100).toFixed(2)}% × 5% = ${(notaItensNC * 0.05 * 100).toFixed(2)}%`);
+              console.log(`  Tratamento NC: ${(notaTratamentoNC * 100).toFixed(2)}% × 3% = ${(notaTratamentoNC * 0.03 * 100).toFixed(2)}%`);
+              console.log(`  Hora Máquina: ${(notaHoraMaquina * 100).toFixed(2)}% × 3% = ${(notaHoraMaquina * 0.03 * 100).toFixed(2)}%`);
+              console.log(`  Operação Segura: ${(notaOperacaoSegura * 100).toFixed(2)}% × 3% = ${(notaOperacaoSegura * 0.03 * 100).toFixed(2)}%`);
+              console.log(`  Limpeza: ${(notaLimpeza * 100).toFixed(2)}% × 3% = ${(notaLimpeza * 0.03 * 100).toFixed(2)}%`);
+              console.log(`Nota Geral Final: ${(notaGeral * 100).toFixed(2)}%`);
+              console.log(`---`);
+            } else {
+              // Fórmula para Auxiliar (usa os pesos da fórmula)
+              notaGeral = (
+                (notaProducao * pesoProducao) +
+                (notaEpi * pesoEpi) +
+                (notaDss * pesoDss) +
+                (notaFaltas * pesoFaltas) +
+                (notaAdvertencias * pesoAdvertencias)
+              );
+              
+              const somaPesos = pesoProducao + pesoEpi + pesoDss + pesoFaltas + pesoAdvertencias;
+              if (Math.abs(somaPesos - 1.0) > 0.01) {
+                console.warn(`⚠️ Soma dos pesos não é 100% para ${funcionario.nome}: ${(somaPesos * 100).toFixed(2)}%`);
+              }
+              
+              console.log(`\n=== NOTA GERAL ${funcionario.nome} ===`);
+              console.log(`Categoria: ${funcionario.categoria?.nome}`);
+              console.log(`Fórmula: ${formula.nome}`);
+              console.log(`Notas individuais:`, {
+                producao: `${(notaProducao * 100).toFixed(2)}%`,
+                epi: `${(notaEpi * 100).toFixed(2)}%`,
+                dss: `${(notaDss * 100).toFixed(2)}%`,
+                faltas: `${(notaFaltas * 100).toFixed(2)}%`,
+                advertencias: `${(notaAdvertencias * 100).toFixed(2)}%`
+              });
+              console.log(`Pesos da fórmula:`, {
+                producao: `${(pesoProducao * 100).toFixed(0)}%`,
+                epi: `${(pesoEpi * 100).toFixed(0)}%`,
+                dss: `${(pesoDss * 100).toFixed(0)}%`,
+                faltas: `${(pesoFaltas * 100).toFixed(0)}%`,
+                advertencias: `${(pesoAdvertencias * 100).toFixed(0)}%`,
+                soma: `${(somaPesos * 100).toFixed(0)}%`
+              });
+              console.log(`Cálculo detalhado:`);
+              console.log(`  Produção: ${(notaProducao * 100).toFixed(2)}% × ${(pesoProducao * 100).toFixed(0)}% = ${(notaProducao * pesoProducao * 100).toFixed(2)}%`);
+              console.log(`  EPI: ${(notaEpi * 100).toFixed(2)}% × ${(pesoEpi * 100).toFixed(0)}% = ${(notaEpi * pesoEpi * 100).toFixed(2)}%`);
+              console.log(`  DSS: ${(notaDss * 100).toFixed(2)}% × ${(pesoDss * 100).toFixed(0)}% = ${(notaDss * pesoDss * 100).toFixed(2)}%`);
+              console.log(`  Faltas: ${(notaFaltas * 100).toFixed(2)}% × ${(pesoFaltas * 100).toFixed(0)}% = ${(notaFaltas * pesoFaltas * 100).toFixed(2)}%`);
+              console.log(`  Advertências: ${(notaAdvertencias * 100).toFixed(2)}% × ${(pesoAdvertencias * 100).toFixed(0)}% = ${(notaAdvertencias * pesoAdvertencias * 100).toFixed(2)}%`);
+              console.log(`Nota Geral Final: ${(notaGeral * 100).toFixed(2)}%`);
+              console.log(`---`);
+            }
           } else {
             // Para KITS, usa os mesmos pesos da fórmula (que já não deve ter peso de produção)
             notaGeral = (
@@ -433,7 +588,7 @@ const GerarPremiacoes = () => {
           }
         }
 
-        // 7. CALCULAR BÔNUS
+        // 8. CALCULAR BÔNUS
         const valorFaixa = funcionario.faixa?.valor || 0;
         const valorKits = isKitsGeracao ? calcularComissao(Math.floor(Math.random() * 5000) + 8000) : undefined;
         const bonusPossivel = isKitsGeracao ? (valorKits || 0) : valorFaixa;
