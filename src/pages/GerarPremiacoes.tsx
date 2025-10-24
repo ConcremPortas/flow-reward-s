@@ -78,6 +78,7 @@ const GerarPremiacoes = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [premiacoes, setPremiacoes] = useState<FuncionarioPremiacao[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
 
   const baseSelecionada = bases.find(b => b.id === baseId);
   const isProducao = baseSelecionada?.nome === 'PRODUCAO';
@@ -133,20 +134,27 @@ const GerarPremiacoes = () => {
     carregarResultadosSalvos();
   }, [baseId, competencia, resultados]);
 
+  const iniciarGeracao = async () => {
+    if (!baseId || !competencia) return;
+    
+    // Verificar se já existem resultados para este mês/base
+    const existem = await verificarResultadosExistentes(competencia, baseId);
+    
+    if (existem) {
+      setShowOverwriteDialog(true);
+      return;
+    }
+    
+    await gerarPremiacoes();
+  };
+
   const gerarPremiacoes = async () => {
     if (!baseId || !competencia) return;
     
     setIsCalculating(true);
+    setShowOverwriteDialog(false);
     
     try {
-      // Verificar se já existem resultados para este mês/base
-      const existem = await verificarResultadosExistentes(competencia, baseId);
-      
-      if (existem) {
-        // Simular uma confirmação - implementar AlertDialog se necessário
-        setIsCalculating(false);
-        return;
-      }
 
       // Filtrar apenas funcionários com a base de premiação selecionada
       const funcionariosAtivos = funcionarios.filter(f => 
@@ -327,13 +335,32 @@ const GerarPremiacoes = () => {
             </div>
 
             <div className="flex items-end">
-              <Button 
-                onClick={gerarPremiacoes} 
-                disabled={!baseId || !competencia || isCalculating}
-                className="w-full"
-              >
-                {isCalculating ? 'Calculando...' : 'Gerar Premiações'}
-              </Button>
+              <AlertDialog open={showOverwriteDialog} onOpenChange={setShowOverwriteDialog}>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    onClick={iniciarGeracao} 
+                    disabled={!baseId || !competencia || isCalculating}
+                    className="w-full"
+                  >
+                    {isCalculating ? 'Calculando...' : 'Gerar Premiações'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Já existem resultados salvos</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Já existem premiações calculadas para {competencia && format(new Date(competencia + '-01'), 'MM/yyyy')} 
+                      com a base {baseSelecionada?.nome}. Deseja recalcular e sobrescrever os resultados existentes?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={gerarPremiacoes}>
+                      Sim, Recalcular
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
           
