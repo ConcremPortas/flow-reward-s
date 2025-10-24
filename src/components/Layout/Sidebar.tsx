@@ -32,7 +32,7 @@ import {
 
 const menuItems = [
   {
-    title: "Dashboard",
+    title: "DASHBOARD",
     href: "/",
     icon: LayoutDashboard,
   },
@@ -442,7 +442,7 @@ export const Sidebar = () => {
               onClick={() => setCadastrosOpen(!cadastrosOpen)}
             >
               <Settings className="h-5 w-5" />
-              Cadastros
+              CADASTROS
               {cadastrosOpen ? (
                 <ChevronDown className="h-4 w-4 ml-auto" />
               ) : (
