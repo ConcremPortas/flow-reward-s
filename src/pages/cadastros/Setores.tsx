@@ -188,7 +188,7 @@ export const Setores = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {funcionarios
-                          .filter(f => f.ativo && f.categoria?.nome.toLowerCase().includes('supervisor'))
+                          .filter(f => f.categoria?.nome.toLowerCase().includes('supervisor'))
                           .map(funcionario => (
                             <SelectItem key={funcionario.id} value={funcionario.id}>
                               {funcionario.nome}
@@ -205,7 +205,7 @@ export const Setores = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {funcionarios
-                          .filter(f => f.ativo && f.categoria?.nome.toLowerCase().includes('encarregado'))
+                          .filter(f => f.categoria?.nome.toLowerCase().includes('encarregado'))
                           .map(funcionario => (
                             <SelectItem key={funcionario.id} value={funcionario.id}>
                               {funcionario.nome}
