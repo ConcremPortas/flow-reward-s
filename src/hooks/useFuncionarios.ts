@@ -18,6 +18,7 @@ export interface Funcionario {
   categoria_id?: string;
   base_premiacao_id?: string;
   faixa_id?: string;
+  local_dss_id?: string;
   status?: string;
   ativo: boolean;
   created_at: string;
@@ -29,6 +30,7 @@ export interface Funcionario {
   categoria?: { nome: string };
   base_premiacao?: { nome: string };
   faixa?: { nome: string };
+  local_dss?: { nome: string };
 }
 
 export const useFuncionarios = () => {
@@ -48,7 +50,8 @@ export const useFuncionarios = () => {
           funcao:concrem_funcoes(nome),
           categoria:concrem_categorias(nome),
           base_premiacao:concrem_base_premiacao(nome),
-          faixa:concrem_faixas(nome)
+          faixa:concrem_faixas(nome),
+          local_dss:concrem_locais_dss(nome)
         `)
         .order('nome');
 

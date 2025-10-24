@@ -117,6 +117,11 @@ const cadastrosItems = [
     icon: PieChart,
   },
   {
+    title: "Locais DSS",
+    href: "/cadastros/locais-dss",
+    icon: Shield,
+  },
+  {
     title: "Fórmulas de Cálculo",
     href: "/cadastros/formulas-calculo",
     icon: Settings,

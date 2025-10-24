@@ -20,6 +20,7 @@ import { BasePremiacao } from "./pages/cadastros/BasePremiacao";
 import { Empresas } from "./pages/cadastros/Empresas";
 import { TiposIndicadores } from "./pages/cadastros/TiposIndicadores";
 import { TiposIndicadoresGerais } from "./pages/cadastros/TiposIndicadoresGerais";
+import { LocaisDSS } from "./pages/cadastros/LocaisDSS";
 import FormulasCalculo from "./pages/cadastros/FormulasCalculo";
 import GerarPremiacoes from "./pages/GerarPremiacoes";
 import NotFound from "./pages/NotFound";
@@ -49,6 +50,7 @@ const App = () => (
           <Route path="/cadastros/empresas" element={<MainLayout><Empresas /></MainLayout>} />
           <Route path="/cadastros/tipos-indicadores" element={<MainLayout><TiposIndicadores /></MainLayout>} />
           <Route path="/cadastros/tipos-indicadores-gerais" element={<MainLayout><TiposIndicadoresGerais /></MainLayout>} />
+          <Route path="/cadastros/locais-dss" element={<MainLayout><LocaisDSS /></MainLayout>} />
           <Route path="/cadastros/formulas-calculo" element={<MainLayout><FormulasCalculo /></MainLayout>} />
           <Route path="/gerar-premiacoes" element={<MainLayout><GerarPremiacoes /></MainLayout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

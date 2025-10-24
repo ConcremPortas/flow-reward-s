@@ -83,6 +83,7 @@ export type Database = {
           data_realizacao: string
           descricao: string | null
           id: string
+          local_dss_id: string | null
           observacoes: string | null
           participantes_ids: string[] | null
           responsavel_id: string | null
@@ -96,6 +97,7 @@ export type Database = {
           data_realizacao: string
           descricao?: string | null
           id?: string
+          local_dss_id?: string | null
           observacoes?: string | null
           participantes_ids?: string[] | null
           responsavel_id?: string | null
@@ -109,6 +111,7 @@ export type Database = {
           data_realizacao?: string
           descricao?: string | null
           id?: string
+          local_dss_id?: string | null
           observacoes?: string | null
           participantes_ids?: string[] | null
           responsavel_id?: string | null
@@ -118,6 +121,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "concrem_dss_local_dss_id_fkey"
+            columns: ["local_dss_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_locais_dss"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "concrem_dss_responsavel_id_fkey"
             columns: ["responsavel_id"]
@@ -399,6 +409,7 @@ export type Database = {
           faixa_id: string | null
           funcao_id: string | null
           id: string
+          local_dss_id: string | null
           nome: string
           salario: number | null
           setor_id: string | null
@@ -421,6 +432,7 @@ export type Database = {
           faixa_id?: string | null
           funcao_id?: string | null
           id?: string
+          local_dss_id?: string | null
           nome: string
           salario?: number | null
           setor_id?: string | null
@@ -443,6 +455,7 @@ export type Database = {
           faixa_id?: string | null
           funcao_id?: string | null
           id?: string
+          local_dss_id?: string | null
           nome?: string
           salario?: number | null
           setor_id?: string | null
@@ -485,6 +498,13 @@ export type Database = {
             columns: ["funcao_id"]
             isOneToOne: false
             referencedRelation: "concrem_funcoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_funcionarios_local_dss_id_fkey"
+            columns: ["local_dss_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_locais_dss"
             referencedColumns: ["id"]
           },
           {
@@ -566,6 +586,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      concrem_locais_dss: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       concrem_producao_setor: {
         Row: {

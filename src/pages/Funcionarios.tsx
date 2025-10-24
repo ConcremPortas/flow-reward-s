@@ -46,6 +46,7 @@ import { useFuncoes } from "@/hooks/useFuncoes";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useBasePremiacao } from "@/hooks/useBasePremiacao";
 import { useFaixas } from "@/hooks/useFaixas";
+import { useLocaisDSS } from "@/hooks/useLocaisDSS";
 
 export const Funcionarios = () => {
   // Componente de gestão de funcionários conectado ao banco de dados
@@ -56,6 +57,7 @@ export const Funcionarios = () => {
   const { categorias } = useCategorias();
   const { bases } = useBasePremiacao();
   const { faixas } = useFaixas();
+  const { locais: locaisDSS } = useLocaisDSS();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSetor, setSelectedSetor] = useState("Todos");
@@ -73,6 +75,7 @@ export const Funcionarios = () => {
     categoria_id: "",
     base_premiacao_id: "",
     faixa_id: "",
+    local_dss_id: "",
     data_admissao: "",
     status: "Ativo"
   });
@@ -103,6 +106,7 @@ export const Funcionarios = () => {
       categoria_id: "",
       base_premiacao_id: "",
       faixa_id: "",
+      local_dss_id: "",
       data_admissao: "",
       status: "Ativo"
     });
@@ -122,6 +126,7 @@ export const Funcionarios = () => {
       categoria_id: formData.categoria_id || undefined,
       base_premiacao_id: formData.base_premiacao_id || undefined,
       faixa_id: formData.faixa_id || undefined,
+      local_dss_id: formData.local_dss_id || undefined,
       status: formData.status,
       ativo: true
     };
@@ -140,6 +145,7 @@ export const Funcionarios = () => {
       categoria_id: "",
       base_premiacao_id: "",
       faixa_id: "",
+      local_dss_id: "",
       data_admissao: "",
       status: "Ativo"
     });
@@ -162,6 +168,7 @@ export const Funcionarios = () => {
       categoria_id: funcionario.categoria_id || "",
       base_premiacao_id: funcionario.base_premiacao_id || "",
       faixa_id: funcionario.faixa_id || "",
+      local_dss_id: funcionario.local_dss_id || "",
       status: funcionario.status || "Ativo"
     });
     setIsEditOpen(true);
@@ -180,6 +187,7 @@ export const Funcionarios = () => {
       categoria_id: formData.categoria_id || undefined,
       base_premiacao_id: formData.base_premiacao_id || undefined,
       faixa_id: formData.faixa_id || undefined,
+      local_dss_id: formData.local_dss_id || undefined,
       status: formData.status,
     };
 
@@ -368,6 +376,22 @@ export const Funcionarios = () => {
                         {faixas.map(faixa => (
                           <SelectItem key={faixa.id} value={faixa.id}>
                             {faixa.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="local_dss">Local DSS *</Label>
+                    <Select value={formData.local_dss_id} onValueChange={(value) => setFormData({...formData, local_dss_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar local DSS" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locaisDSS.map(local => (
+                          <SelectItem key={local.id} value={local.id}>
+                            {local.nome}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -598,10 +622,15 @@ export const Funcionarios = () => {
                     <Label className="font-semibold">Base Premiação</Label>
                     <p className="text-sm">{selectedFuncionario.base_premiacao?.nome || "Não informado"}</p>
                   </div>
-                  <div className="space-y-2">
+                   <div className="space-y-2">
                     <Label className="font-semibold text-primary">Faixa</Label>
                     <p className="text-sm font-medium">{selectedFuncionario.faixa?.nome || "Não informado"}</p>
                     <p className="text-xs text-muted-foreground">Base para cálculo da premiação (produção)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-semibold text-primary">Local DSS</Label>
+                    <p className="text-sm font-medium">{selectedFuncionario.local_dss?.nome || "Não informado"}</p>
+                    <p className="text-xs text-muted-foreground">Vinculação para presença em DSS</p>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-semibold">Status</Label>
@@ -738,6 +767,21 @@ export const Funcionarios = () => {
                   {faixas.map(faixa => (
                     <SelectItem key={faixa.id} value={faixa.id}>
                       {faixa.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_local_dss">Local DSS</Label>
+              <Select value={formData.local_dss_id} onValueChange={(value) => setFormData({...formData, local_dss_id: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar local DSS" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locaisDSS.map(local => (
+                    <SelectItem key={local.id} value={local.id}>
+                      {local.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
