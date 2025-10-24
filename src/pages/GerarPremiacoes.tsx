@@ -21,6 +21,10 @@ import { useBasePremiacao } from '@/hooks/useBasePremiacao';
 import { useFuncionarios } from '@/hooks/useFuncionarios';
 import { useFormulasCalculo } from '@/hooks/useFormulasCalculo';
 import { useResultadosPremiacao } from '@/hooks/useResultadosPremiacao';
+import { useFaltasAdvertencias } from '@/hooks/useFaltasAdvertencias';
+import { useEPI } from '@/hooks/useEPI';
+import { useDSS } from '@/hooks/useDSS';
+import { useProducaoSetor } from '@/hooks/useProducaoSetor';
 import { format } from 'date-fns';
 
 // Função para calcular comissão de Kits
@@ -36,13 +40,20 @@ const calcularComissao = (realizado: number) => {
 };
 
 // Funções para calcular notas
-const calcularNotaFaltasAdvertencias = (quantidade: number) => {
-  if (quantidade > 4) return 0;
-  if (quantidade === 4) return 0;
+const calcularNotaFaltas = (quantidade: number) => {
+  if (quantidade >= 4) return 0;
   if (quantidade === 3) return 0.25;
   if (quantidade === 2) return 0.50;
   if (quantidade === 1) return 0.75;
-  return 1.0; // 0 faltas/advertências
+  return 1.0; // 0 faltas
+};
+
+const calcularNotaAdvertencias = (quantidade: number) => {
+  if (quantidade >= 4) return 0;
+  if (quantidade === 3) return 0.25;
+  if (quantidade === 2) return 0.50;
+  if (quantidade === 1) return 0.75;
+  return 1.0; // 0 advertências
 };
 
 interface FuncionarioPremiacao {
@@ -72,6 +83,10 @@ const GerarPremiacoes = () => {
   const { funcionarios } = useFuncionarios();
   const { formulas } = useFormulasCalculo();
   const { salvarResultados, verificarResultadosExistentes, resultados } = useResultadosPremiacao();
+  const { registros: faltasAdvertencias } = useFaltasAdvertencias();
+  const { epiRecords } = useEPI();
+  const { dssRecords } = useDSS();
+  const { registros: producaoSetor } = useProducaoSetor();
   
   const [baseId, setBaseId] = useState('');
   const [competencia, setCompetencia] = useState('');
@@ -178,55 +193,100 @@ const GerarPremiacoes = () => {
         );
         
         if (!formula) {
-          // Valores padrão se não encontrar fórmula
-          return {
-            id: funcionario.id,
-            cod_funcionario: funcionario.cpf || funcionario.id.substring(0, 8),
-            nome: funcionario.nome,
-            setor: funcionario.setor?.nome || 'N/A',
-            funcao: funcionario.funcao?.nome || 'N/A',
-            faixa: 'Faixa 1', // Buscar da relação do funcionário
-            categoria: funcionario.categoria?.nome || 'N/A',
-            valor_faixa: 500, // Valor mock - buscar da faixa real
-            nota_producao: isProducao ? 0.85 : undefined,
-            nota_epi: 0.9,
-            nota_faltas: 1.0,
-            nota_advertencias: 1.0,
-            nota_dss: 0.8,
-            valor_kits: isKits ? calcularComissao(9500) : undefined,
-            nota_geral: 0.85,
-            bonus_possivel: isKits ? calcularComissao(9500) : 500,
-            bonus_alcancado: isKits ? calcularComissao(9500) * 0.85 : 500 * 0.85
-          };
+          console.warn(`Fórmula não encontrada para funcionário ${funcionario.nome}`);
         }
 
-        // Calcular notas baseadas na fórmula
-        const notaEpi = Math.random() * 0.3 + 0.7; // Mock - calcular real
-        const notaFaltas = calcularNotaFaltasAdvertencias(Math.floor(Math.random() * 3));
-        const notaAdvertencias = calcularNotaFaltasAdvertencias(Math.floor(Math.random() * 2));
-        const notaDss = Math.random() * 0.3 + 0.7; // Mock - calcular real
-        const notaProducao = isProducao ? Math.random() * 0.3 + 0.7 : 0;
+        // Calcular período de competência (mês completo)
+        const [ano, mes] = competencia.split('-');
+        const dataInicio = `${ano}-${mes}-01`;
+        const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate();
+        const dataFim = `${ano}-${mes}-${ultimoDia}`;
 
-        // Calcular nota geral baseada nos pesos da fórmula
+        // 1. CALCULAR NOTA DE FALTAS
+        const faltasDoMes = faltasAdvertencias.filter(f => 
+          f.funcionario_id === funcionario.id &&
+          f.tipo === 'falta' &&
+          f.data_ocorrencia >= dataInicio &&
+          f.data_ocorrencia <= dataFim
+        );
+        const totalFaltas = faltasDoMes.reduce((acc, f) => acc + (f.quantidade || 1), 0);
+        const notaFaltas = calcularNotaFaltas(totalFaltas);
+
+        // 2. CALCULAR NOTA DE ADVERTÊNCIAS
+        const advertenciasDoMes = faltasAdvertencias.filter(f => 
+          f.funcionario_id === funcionario.id &&
+          f.tipo === 'advertencia' &&
+          f.data_ocorrencia >= dataInicio &&
+          f.data_ocorrencia <= dataFim
+        );
+        const totalAdvertencias = advertenciasDoMes.reduce((acc, f) => acc + (f.quantidade || 1), 0);
+        const notaAdvertencias = calcularNotaAdvertencias(totalAdvertencias);
+
+        // 3. CALCULAR NOTA DE EPI (baseado em auditorias)
+        const episDoMes = epiRecords.filter(e => 
+          e.funcionario_id === funcionario.id &&
+          e.data_entrega >= dataInicio &&
+          e.data_entrega <= dataFim
+        );
+        const totalAuditorias = episDoMes.length;
+        const naoConformidades = episDoMes.filter(e => e.status === 'nao_conforme').length;
+        const notaEpi = totalAuditorias > 0 
+          ? (totalAuditorias - naoConformidades) / totalAuditorias 
+          : 1.0;
+
+        // 4. CALCULAR NOTA DE DSS (presença / total DSS do local)
+        const dssDoLocalNoMes = dssRecords.filter(d => 
+          d.local_dss_id === funcionario.local_dss_id &&
+          d.data_realizacao >= dataInicio &&
+          d.data_realizacao <= dataFim
+        );
+        const totalDssLocal = dssDoLocalNoMes.length;
+        const presencasDss = dssDoLocalNoMes.filter(d => 
+          d.participantes_ids?.includes(funcionario.id)
+        ).length;
+        const notaDss = totalDssLocal > 0 ? presencasDss / totalDssLocal : 1.0;
+
+        // 5. CALCULAR NOTA DE PRODUÇÃO (se for base PRODUCAO)
+        let notaProducao = 0;
+        if (isProducao && funcionario.setor_id) {
+          const producaoDoSetor = producaoSetor.filter(p => 
+            p.setor_id === funcionario.setor_id &&
+            p.data_producao >= dataInicio &&
+            p.data_producao <= dataFim
+          );
+          
+          if (producaoDoSetor.length > 0) {
+            const totalMeta = producaoDoSetor.reduce((acc, p) => acc + (p.meta_diaria || 0), 0);
+            const totalRealizado = producaoDoSetor.reduce((acc, p) => acc + (p.producao_realizada || 0), 0);
+            const percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
+            // Se passar de 100%, considera 100%
+            notaProducao = Math.min(percentualProducao, 1.0);
+          }
+        }
+
+        // 6. CALCULAR NOTA GERAL baseada nos pesos da fórmula
         let notaGeral = 0;
-        if (isProducao) {
-          notaGeral = (
-            (notaProducao * formula.peso_producao_setor / 100) +
-            (notaEpi * formula.peso_epi / 100) +
-            (notaFaltas * formula.peso_faltas / 100) +
-            (notaAdvertencias * formula.peso_advertencias / 100) +
-            (notaDss * formula.peso_dss / 100)
-          );
-        } else {
-          notaGeral = (
-            (notaEpi * formula.peso_epi / 100) +
-            (notaFaltas * formula.peso_faltas / 100) +
-            (notaAdvertencias * formula.peso_advertencias / 100) +
-            (notaDss * formula.peso_dss / 100)
-          );
+        if (formula) {
+          if (isProducao) {
+            notaGeral = (
+              (notaProducao * formula.peso_producao_setor / 100) +
+              (notaEpi * formula.peso_epi / 100) +
+              (notaFaltas * formula.peso_faltas / 100) +
+              (notaAdvertencias * formula.peso_advertencias / 100) +
+              (notaDss * formula.peso_dss / 100)
+            );
+          } else {
+            notaGeral = (
+              (notaEpi * formula.peso_epi / 100) +
+              (notaFaltas * formula.peso_faltas / 100) +
+              (notaAdvertencias * formula.peso_advertencias / 100) +
+              (notaDss * formula.peso_dss / 100)
+            );
+          }
         }
 
-        const valorFaixa = 500; // Mock - buscar valor real da faixa
+        // 7. CALCULAR BÔNUS
+        const valorFaixa = funcionario.faixa?.valor_minimo || 0;
         const valorKits = isKits ? calcularComissao(Math.floor(Math.random() * 5000) + 8000) : undefined;
         const bonusPossivel = isKits ? (valorKits || 0) : valorFaixa;
         const bonusAlcancado = bonusPossivel * notaGeral;
@@ -237,7 +297,7 @@ const GerarPremiacoes = () => {
           nome: funcionario.nome,
           setor: funcionario.setor?.nome || 'N/A',
           funcao: funcionario.funcao?.nome || 'N/A',
-          faixa: 'Faixa 1', // Mock - buscar real
+          faixa: funcionario.faixa?.nome || 'N/A',
           categoria: funcionario.categoria?.nome || 'N/A',
           valor_faixa: valorFaixa,
           nota_producao: isProducao ? notaProducao : undefined,
