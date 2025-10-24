@@ -50,7 +50,6 @@ export const useFuncionarios = () => {
           base_premiacao:concrem_base_premiacao(nome),
           faixa:concrem_faixas(nome)
         `)
-        .eq('ativo', true)
         .order('nome');
 
       if (error) throw error;

@@ -80,9 +80,7 @@ export const Funcionarios = () => {
   const filteredFuncionarios = funcionarios.filter(funcionario => {
     const matchesSearch = funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSetor = selectedSetor === "Todos" || funcionario.setor?.nome === selectedSetor;
-    const matchesStatus = selectedStatus === "Todos" || 
-                         (selectedStatus === "Ativo" && funcionario.ativo) ||
-                         (selectedStatus === "Inativo" && !funcionario.ativo);
+    const matchesStatus = selectedStatus === "Todos" || funcionario.status === selectedStatus;
     
     return matchesSearch && matchesSetor && matchesStatus;
   });
@@ -198,7 +196,7 @@ export const Funcionarios = () => {
   };
 
   const setorOptions = ["Todos", ...setores.map(s => s.nome)];
-  const statusOptions = ["Todos", "Ativo", "Inativo"];
+  const statusOptions = ["Todos", "Ativo", "Férias", "Licença", "Rescisão"];
   const funcionarioStatusOptions = ["Ativo", "Férias", "Licença", "Rescisão"];
 
   if (loading) {
@@ -457,7 +455,6 @@ export const Funcionarios = () => {
                   <TableHead>Categoria</TableHead>
                   <TableHead>Empresa</TableHead>
                   <TableHead>Status Funcional</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -469,9 +466,9 @@ export const Funcionarios = () => {
                     <TableCell>{funcionario.funcao?.nome || "Não informado"}</TableCell>
                     <TableCell>{funcionario.categoria?.nome || "Não informado"}</TableCell>
                     <TableCell>{funcionario.empresa?.nome || "Não informado"}</TableCell>
-                    <TableCell>{funcionario.status || "Ativo"}</TableCell>
                     <TableCell>
-                      <StatusBadge status={funcionario.ativo ? "active" : "inactive"} />
+                      <StatusBadge status={funcionario.status === "Ativo" ? "active" : "inactive"} />
+                      <span className="ml-2">{funcionario.status || "Ativo"}</span>
                     </TableCell>
                     <TableCell className="text-right">
                        <div className="flex justify-end space-x-2">
@@ -566,8 +563,14 @@ export const Funcionarios = () => {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label className="font-semibold">Status</Label>
-                <StatusBadge status={selectedFuncionario.ativo ? "active" : "inactive"} />
+                <Label className="font-semibold">Status Funcional</Label>
+                <div className="flex items-center gap-2">
+                  <StatusBadge status={selectedFuncionario.status === "Ativo" ? "active" : "inactive"} />
+                  <p className="text-sm font-medium">{selectedFuncionario.status || "Ativo"}</p>
+                </div>
+                {selectedFuncionario.status !== "Ativo" && (
+                  <p className="text-xs text-muted-foreground">Não participa da premiação</p>
+                )}
               </div>
               
               {/* Seção de Vinculação Organizacional */}
