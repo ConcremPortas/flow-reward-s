@@ -7,11 +7,15 @@ export interface Setor {
   nome: string;
   descricao?: string;
   empresa_id?: string;
+  supervisor_id?: string;
+  encarregado_id?: string;
   ativo: boolean;
   created_at: string;
   updated_at: string;
   // Dados relacionados
   empresa?: { nome: string };
+  supervisor?: { nome: string };
+  encarregado?: { nome: string };
 }
 
 export const useSetores = () => {
@@ -26,7 +30,9 @@ export const useSetores = () => {
         .from('concrem_setores')
         .select(`
           *,
-          empresa:concrem_empresas(nome)
+          empresa:concrem_empresas(nome),
+          supervisor:concrem_funcionarios!supervisor_id(nome),
+          encarregado:concrem_funcionarios!encarregado_id(nome)
         `)
         .eq('ativo', true)
         .order('nome');
@@ -45,7 +51,7 @@ export const useSetores = () => {
     }
   };
 
-  const createSetor = async (setor: Omit<Setor, 'id' | 'created_at' | 'updated_at'>) => {
+  const createSetor = async (setor: Omit<Setor, 'id' | 'created_at' | 'updated_at' | 'empresa' | 'supervisor' | 'encarregado'>) => {
     try {
       const { data, error } = await supabase
         .from('concrem_setores')

@@ -757,8 +757,10 @@ export type Database = {
           created_at: string
           descricao: string | null
           empresa_id: string | null
+          encarregado_id: string | null
           id: string
           nome: string
+          supervisor_id: string | null
           updated_at: string
         }
         Insert: {
@@ -766,8 +768,10 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           empresa_id?: string | null
+          encarregado_id?: string | null
           id?: string
           nome: string
+          supervisor_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -775,8 +779,10 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           empresa_id?: string | null
+          encarregado_id?: string | null
           id?: string
           nome?: string
+          supervisor_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -785,6 +791,20 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "concrem_empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_setores_encarregado_id_fkey"
+            columns: ["encarregado_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_setores_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_funcionarios"
             referencedColumns: ["id"]
           },
         ]

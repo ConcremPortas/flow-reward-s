@@ -32,6 +32,7 @@ import {
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { useSetores } from "@/hooks/useSetores";
 import { useEmpresas } from "@/hooks/useEmpresas";
+import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { 
   Select,
   SelectContent,
@@ -43,12 +44,15 @@ import {
 export const Setores = () => {
   const { setores, loading, createSetor, deleteSetor } = useSetores();
   const { empresas } = useEmpresas();
+  const { funcionarios } = useFuncionarios();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
-    empresa_id: ""
+    empresa_id: "",
+    supervisor_id: "",
+    encarregado_id: ""
   });
 
   const filteredSetores = setores.filter(setor =>
@@ -60,7 +64,9 @@ export const Setores = () => {
     setFormData({
       nome: "",
       descricao: "",
-      empresa_id: ""
+      empresa_id: "",
+      supervisor_id: "",
+      encarregado_id: ""
     });
     setIsAddOpen(true);
   };
@@ -72,11 +78,13 @@ export const Setores = () => {
       nome: formData.nome,
       descricao: formData.descricao || undefined,
       empresa_id: formData.empresa_id || undefined,
+      supervisor_id: formData.supervisor_id || undefined,
+      encarregado_id: formData.encarregado_id || undefined,
       ativo: true
     });
     
     setIsAddOpen(false);
-    setFormData({ nome: "", descricao: "", empresa_id: "" });
+    setFormData({ nome: "", descricao: "", empresa_id: "", supervisor_id: "", encarregado_id: "" });
   };
 
   const handleDeleteSetor = async (id: string) => {
@@ -147,6 +155,38 @@ export const Setores = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supervisor">Supervisor</Label>
+                    <Select value={formData.supervisor_id} onValueChange={(value) => setFormData({...formData, supervisor_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um supervisor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Nenhum</SelectItem>
+                        {funcionarios.filter(f => f.ativo).map(funcionario => (
+                          <SelectItem key={funcionario.id} value={funcionario.id}>
+                            {funcionario.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="encarregado">Encarregado</Label>
+                    <Select value={formData.encarregado_id} onValueChange={(value) => setFormData({...formData, encarregado_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um encarregado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Nenhum</SelectItem>
+                        {funcionarios.filter(f => f.ativo).map(funcionario => (
+                          <SelectItem key={funcionario.id} value={funcionario.id}>
+                            {funcionario.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setIsAddOpen(false)}>
@@ -183,6 +223,8 @@ export const Setores = () => {
                   <TableHead>Nome do Setor</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Empresa</TableHead>
+                  <TableHead>Supervisor</TableHead>
+                  <TableHead>Encarregado</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -192,6 +234,8 @@ export const Setores = () => {
                     <TableCell className="font-medium">{setor.nome}</TableCell>
                     <TableCell>{setor.descricao || "Sem descrição"}</TableCell>
                     <TableCell>{setor.empresa?.nome || "Não vinculado"}</TableCell>
+                    <TableCell>{setor.supervisor?.nome || "Não definido"}</TableCell>
+                    <TableCell>{setor.encarregado?.nome || "Não definido"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
                         <Button variant="ghost" size="sm" className="gap-1">
