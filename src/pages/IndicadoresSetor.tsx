@@ -44,6 +44,7 @@ export const IndicadoresSetor = () => {
   const { tiposIndicadores, loading: tiposLoading } = useTiposIndicadores();
   const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro } = useProducaoSetor();
   const [searchTerm, setSearchTerm] = useState("");
+  const [setorFilter, setSetorFilter] = useState("");
   const [setorSelecionado, setSetorSelecionado] = useState("");
   const [competencia, setCompetencia] = useState("");
   const [metaEficiencia, setMetaEficiencia] = useState("");
@@ -60,10 +61,13 @@ export const IndicadoresSetor = () => {
   // Filtrar registros e calcular indicadores baseados na produção
   const filteredIndicadores = registros.filter(item => {
     const monthYear = item.data_producao ? `${item.data_producao.slice(5,7)}/${item.data_producao.slice(0,4)}` : '';
-    return (
-      item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      monthYear.includes(searchTerm)
-    );
+    
+    const matchesSearch = item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         monthYear.includes(searchTerm);
+    
+    const matchesSetor = !setorFilter || setorFilter === "all" || item.setor_id === setorFilter;
+    
+    return matchesSearch && matchesSetor;
   });
 
   const calcularEficiencia = (realizado: number, meta: number) => {
@@ -494,9 +498,9 @@ export const IndicadoresSetor = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Filtro de busca */}
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-sm">
+          {/* Filtros */}
+          <div className="flex items-end gap-4">
+            <div className="relative w-[300px]">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
                 placeholder="Buscar por setor ou período..."
@@ -504,6 +508,22 @@ export const IndicadoresSetor = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
+            </div>
+            
+            <div className="flex-1 min-w-[200px]">
+              <Select value={setorFilter} onValueChange={(v) => setSetorFilter(v === 'all' ? '' : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os setores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os setores</SelectItem>
+                  {setores.filter(s => s.ativo).map(setor => (
+                    <SelectItem key={setor.id} value={setor.id}>
+                      {setor.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
