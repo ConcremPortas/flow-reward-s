@@ -450,37 +450,38 @@ const GerarPremiacoes = () => {
               i.competencia === competenciaFormatada
             );
             
-            if (indicadoresDosMeses.length > 0) {
-              // Calcular médias dos indicadores baseado em meta e realizado
-              const calcularMediaIndicador = (campoMeta: string, campoRealizado: string) => {
-                const percentuais = indicadoresDosMeses
-                  .map(i => {
-                    const meta = (i as any)[campoMeta];
-                    const realizado = (i as any)[campoRealizado];
-                    if (!meta || meta === 0) return null;
-                    return Math.min((realizado / meta), 1.0); // Calcular percentual e limitar a 100%
-                  })
-                  .filter(v => v != null);
-                
-                if (percentuais.length === 0) return 1.0; // Se não há dados, considera 100%
-                const media = percentuais.reduce((acc, v) => acc + v, 0) / percentuais.length;
-                return media;
-              };
+            // Calcular médias dos indicadores baseado em meta e realizado
+            const calcularMediaIndicador = (campoMeta: string, campoRealizado: string) => {
+              const percentuais = indicadoresDosMeses
+                .map(i => {
+                  const meta = (i as any)[campoMeta];
+                  const realizado = (i as any)[campoRealizado];
+                  if (!meta || meta === 0) return null;
+                  return Math.min((realizado / meta), 1.0); // Calcular percentual e limitar a 100%
+                })
+                .filter(v => v != null);
               
-              notaItensNC = calcularMediaIndicador('identificacao_nc_meta', 'identificacao_nc_realizado');
-              notaTratamentoNC = calcularMediaIndicador('tratamento_nc_meta', 'tratamento_nc_realizado');
-              notaHoraMaquina = calcularMediaIndicador('hora_maquina_meta', 'hora_maquina_realizado');
-              notaOperacaoSegura = calcularMediaIndicador('operacao_segura_meta', 'operacao_segura_realizado');
-              notaLimpeza = calcularMediaIndicador('limpeza_meta', 'limpeza_realizado');
-              
-              console.log(`Indicadores de setor agregados ${funcionario.nome}:`, {
-                itensNC: (notaItensNC * 100).toFixed(2) + '%',
-                tratamentoNC: (notaTratamentoNC * 100).toFixed(2) + '%',
-                horaMaquina: (notaHoraMaquina * 100).toFixed(2) + '%',
-                operacaoSegura: (notaOperacaoSegura * 100).toFixed(2) + '%',
-                limpeza: (notaLimpeza * 100).toFixed(2) + '%'
-              });
-            }
+              if (percentuais.length === 0) return 1.0; // Se não há dados, considera 100%
+              const media = percentuais.reduce((acc, v) => acc + v, 0) / percentuais.length;
+              return media;
+            };
+            
+            notaItensNC = calcularMediaIndicador('identificacao_nc_meta', 'identificacao_nc_realizado');
+            notaTratamentoNC = calcularMediaIndicador('tratamento_nc_meta', 'tratamento_nc_realizado');
+            notaHoraMaquina = calcularMediaIndicador('hora_maquina_meta', 'hora_maquina_realizado');
+            notaOperacaoSegura = calcularMediaIndicador('operacao_segura_meta', 'operacao_segura_realizado');
+            notaLimpeza = calcularMediaIndicador('limpeza_meta', 'limpeza_realizado');
+            
+            console.log(`Indicadores de setor agregados ${funcionario.nome}:`, {
+              totalSetores: setoresSupervisionados.length,
+              setores: setoresSupervisionados.map(s => s.nome).join(', '),
+              registrosEncontrados: indicadoresDosMeses.length,
+              itensNC: (notaItensNC * 100).toFixed(2) + '%',
+              tratamentoNC: (notaTratamentoNC * 100).toFixed(2) + '%',
+              horaMaquina: (notaHoraMaquina * 100).toFixed(2) + '%',
+              operacaoSegura: (notaOperacaoSegura * 100).toFixed(2) + '%',
+              limpeza: (notaLimpeza * 100).toFixed(2) + '%'
+            });
           }
         }
 
