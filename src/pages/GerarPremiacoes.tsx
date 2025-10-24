@@ -228,8 +228,26 @@ const GerarPremiacoes = () => {
         f.categoria_id === categoriaId
       );
 
+      console.log('🔍 Filtro de funcionários:', {
+        totalFuncionarios: funcionarios.length,
+        baseIdSelecionada: baseId,
+        baseSelecionada: baseSelecionada?.nome,
+        categoriaIdSelecionada: categoriaId,
+        categoriaSelecionada: categorias.find(c => c.id === categoriaId)?.nome,
+        funcionariosAtivos: funcionariosAtivos.length,
+        detalheFuncionarios: funcionarios.map(f => ({
+          nome: f.nome,
+          ativo: f.ativo,
+          base_premiacao_id: f.base_premiacao_id,
+          base_nome: f.base_premiacao?.nome,
+          categoria_id: f.categoria_id,
+          categoria_nome: f.categoria?.nome,
+          match: f.ativo && f.base_premiacao_id === baseId && f.categoria_id === categoriaId
+        }))
+      });
+
       if (funcionariosAtivos.length === 0) {
-        alert('Nenhum funcionário encontrado com a base de premiação selecionada.');
+        alert('Nenhum funcionário encontrado com a base de premiação e categoria selecionadas.');
         setIsCalculating(false);
         return;
       }
