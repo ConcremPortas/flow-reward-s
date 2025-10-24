@@ -750,8 +750,14 @@ export type Database = {
           nota_dss: number
           nota_epi: number
           nota_faltas: number
+          nota_faturamento: number | null
           nota_geral: number
+          nota_hora_maquina: number | null
+          nota_itens_nc: number | null
+          nota_limpeza: number | null
+          nota_operacao_segura: number | null
           nota_producao: number | null
+          nota_tratamento_nc: number | null
           percentual_producao: number | null
           setor: string | null
           updated_at: string
@@ -775,8 +781,14 @@ export type Database = {
           nota_dss?: number
           nota_epi?: number
           nota_faltas?: number
+          nota_faturamento?: number | null
           nota_geral: number
+          nota_hora_maquina?: number | null
+          nota_itens_nc?: number | null
+          nota_limpeza?: number | null
+          nota_operacao_segura?: number | null
           nota_producao?: number | null
+          nota_tratamento_nc?: number | null
           percentual_producao?: number | null
           setor?: string | null
           updated_at?: string
@@ -800,8 +812,14 @@ export type Database = {
           nota_dss?: number
           nota_epi?: number
           nota_faltas?: number
+          nota_faturamento?: number | null
           nota_geral?: number
+          nota_hora_maquina?: number | null
+          nota_itens_nc?: number | null
+          nota_limpeza?: number | null
+          nota_operacao_segura?: number | null
           nota_producao?: number | null
+          nota_tratamento_nc?: number | null
           percentual_producao?: number | null
           setor?: string | null
           updated_at?: string
