@@ -396,6 +396,7 @@ export type Database = {
           data_nascimento: string | null
           email: string | null
           empresa_id: string | null
+          faixa_id: string | null
           funcao_id: string | null
           id: string
           nome: string
@@ -416,6 +417,7 @@ export type Database = {
           data_nascimento?: string | null
           email?: string | null
           empresa_id?: string | null
+          faixa_id?: string | null
           funcao_id?: string | null
           id?: string
           nome: string
@@ -436,6 +438,7 @@ export type Database = {
           data_nascimento?: string | null
           email?: string | null
           empresa_id?: string | null
+          faixa_id?: string | null
           funcao_id?: string | null
           id?: string
           nome?: string
@@ -465,6 +468,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "concrem_empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_funcionarios_faixa_id_fkey"
+            columns: ["faixa_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_faixas"
             referencedColumns: ["id"]
           },
           {

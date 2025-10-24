@@ -54,7 +54,7 @@ export const useFuncionarios = () => {
         .order('nome');
 
       if (error) throw error;
-      setFuncionarios(data || []);
+      setFuncionarios((data as any) || []);
     } catch (error) {
       console.error('Erro ao carregar funcionários:', error);
       toast({
