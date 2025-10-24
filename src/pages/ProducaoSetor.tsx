@@ -40,6 +40,7 @@ export const ProducaoSetor = () => {
   const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro } = useProducaoSetor();
   const [searchTerm, setSearchTerm] = useState("");
   const [competenciaFilter, setCompetenciaFilter] = useState("all");
+  const [setorFilter, setSetorFilter] = useState("");
   const [setorSelecionado, setSetorSelecionado] = useState("");
   const [dataProducao, setDataProducao] = useState("");
   const [metaDiaria, setMetaDiaria] = useState("");
@@ -74,7 +75,9 @@ export const ProducaoSetor = () => {
     
     const matchesCompetencia = !competenciaFilter || competenciaFilter === "all" || monthYear === competenciaFilter;
     
-    return matchesSearch && matchesCompetencia;
+    const matchesSetor = !setorFilter || setorFilter === "all" || item.setor_id === setorFilter;
+    
+    return matchesSearch && matchesCompetencia && matchesSetor;
   });
 
   const calcularPercentual = (realizado: number, meta: number) => {
@@ -301,8 +304,8 @@ export const ProducaoSetor = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filtros */}
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex items-end gap-4">
+            <div className="relative w-[300px]">
               <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
                 placeholder="Buscar por setor ou período..."
@@ -312,10 +315,26 @@ export const ProducaoSetor = () => {
               />
             </div>
             
-            <div className="min-w-[200px]">
+            <div className="flex-1 min-w-[200px]">
+              <Select value={setorFilter} onValueChange={(v) => setSetorFilter(v === 'all' ? '' : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os setores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os setores</SelectItem>
+                  {setores.filter(s => s.ativo).map(setor => (
+                    <SelectItem key={setor.id} value={setor.id}>
+                      {setor.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex-1 min-w-[200px]">
               <Select value={competenciaFilter} onValueChange={setCompetenciaFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filtrar por competência" />
+                  <SelectValue placeholder="Todas as competências" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as competências</SelectItem>
