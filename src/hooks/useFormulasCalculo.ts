@@ -34,11 +34,7 @@ export const useFormulasCalculo = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('concrem_formulas_calculo')
-        .select(`
-          *,
-          categoria:concrem_categorias(nome),
-          base_premiacao:concrem_base_premiacao(nome)
-        `)
+        .select(`*`)
         .eq('ativo', true)
         .order('nome');
 

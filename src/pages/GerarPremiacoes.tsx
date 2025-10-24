@@ -25,6 +25,7 @@ import { useFaltasAdvertencias } from '@/hooks/useFaltasAdvertencias';
 import { useEPI } from '@/hooks/useEPI';
 import { useDSS } from '@/hooks/useDSS';
 import { useProducaoSetor } from '@/hooks/useProducaoSetor';
+import { useCategorias } from '@/hooks/useCategorias';
 import { format } from 'date-fns';
 
 // Função para calcular comissão de Kits
@@ -88,11 +89,14 @@ const GerarPremiacoes = () => {
   const { epiRecords } = useEPI();
   const { dssRecords } = useDSS();
   const { registros: producaoSetor } = useProducaoSetor();
+  const { categorias } = useCategorias();
   
   const [baseId, setBaseId] = useState('');
   const [competencia, setCompetencia] = useState('');
+  const [categoriaId, setCategoriaId] = useState('');
   const [competenciaVisualizacao, setCompetenciaVisualizacao] = useState('');
   const [baseVisualizacao, setBaseVisualizacao] = useState('');
+  const [categoriaVisualizacao, setCategoriaVisualizacao] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [premiacoes, setPremiacoes] = useState<FuncionarioPremiacao[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -127,10 +131,17 @@ const GerarPremiacoes = () => {
     }
 
     const mesCompetencia = competenciaVisualizacao + '-01';
-    const resultadosFiltrados = resultados.filter(r => 
+    let resultadosFiltrados = resultados.filter(r => 
       r.mes_competencia === mesCompetencia && 
       r.base_premiacao_id === baseVisualizacao
     );
+
+    // Filtrar por categoria se selecionada
+    if (categoriaVisualizacao) {
+      resultadosFiltrados = resultadosFiltrados.filter(r => 
+        r.categoria?.toUpperCase().includes(categoriaVisualizacao.toUpperCase())
+      );
+    }
 
     if (resultadosFiltrados.length > 0) {
       const premiacoesCarregadas: FuncionarioPremiacao[] = resultadosFiltrados.map(r => ({
@@ -159,10 +170,10 @@ const GerarPremiacoes = () => {
     }
   };
 
-  // Carregar resultados salvos quando base/competência de visualização mudar
+  // Carregar resultados salvos quando base/competência/categoria de visualização mudar
   React.useEffect(() => {
     carregarResultadosSalvos();
-  }, [baseVisualizacao, competenciaVisualizacao, resultados]);
+  }, [baseVisualizacao, competenciaVisualizacao, categoriaVisualizacao, resultados]);
 
   const iniciarGeracao = async () => {
     if (!baseId || !competencia) return;
@@ -179,7 +190,7 @@ const GerarPremiacoes = () => {
   };
 
   const gerarPremiacoes = async () => {
-    if (!baseId || !competencia) return;
+    if (!baseId || !competencia || !categoriaId) return;
     
     setIsCalculating(true);
     setShowOverwriteDialog(false);
@@ -191,9 +202,11 @@ const GerarPremiacoes = () => {
       console.log('Competência:', competencia);
       console.log('==============================================\n');
 
-      // Filtrar apenas funcionários com a base de premiação selecionada
+      // Filtrar apenas funcionários com a base de premiação E categoria selecionadas
       const funcionariosAtivos = funcionarios.filter(f => 
-        f.ativo && f.base_premiacao_id === baseId
+        f.ativo && 
+        f.base_premiacao_id === baseId &&
+        f.categoria_id === categoriaId
       );
 
       if (funcionariosAtivos.length === 0) {
@@ -203,10 +216,13 @@ const GerarPremiacoes = () => {
       }
       
       const premiacoesCalculadas: FuncionarioPremiacao[] = funcionariosAtivos.map(funcionario => {
-        // Buscar fórmula para a categoria do funcionário
+        // Buscar fórmula pelo nome: "CATEGORIA - BASE"
+        const categoriaNome = funcionario.categoria?.nome?.toUpperCase() || '';
+        const baseNome = baseSelecionada?.nome?.toUpperCase() || '';
+        const nomeFormula = `${categoriaNome} - ${baseNome}`;
+        
         const formula = formulas.find(f => 
-          f.categoria_id === funcionario.categoria_id && 
-          f.base_premiacao_id === baseId
+          normalize(f.nome) === normalize(nomeFormula)
         );
         
         if (!formula) {
@@ -215,17 +231,22 @@ const GerarPremiacoes = () => {
             categoria_id: funcionario.categoria_id,
             categoria_nome: funcionario.categoria?.nome,
             base_premiacao_id: baseId,
+            base_nome: baseSelecionada?.nome,
+            nome_formula_buscado: nomeFormula,
             formulas_disponiveis: formulas.map(f => ({
               id: f.id,
+              nome: f.nome,
               categoria_id: f.categoria_id,
               categoria_nome: f.categoria?.nome,
-              base_premiacao_id: f.base_premiacao_id
+              base_premiacao_id: f.base_premiacao_id,
+              base_nome: f.base_premiacao?.nome
             }))
           });
         } else {
           console.log(`✅ Fórmula encontrada para ${funcionario.nome}:`, {
             formula_id: formula.id,
-            categoria: formula.categoria?.nome,
+            formula_nome: formula.nome,
+            categoria: formula.categoria?.nome || categoriaNome,
             pesos: {
               producao: formula.peso_producao_setor,
               epi: formula.peso_epi,
@@ -507,7 +528,7 @@ const GerarPremiacoes = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="base">Base de Premiação*</Label>
               <Select value={baseId} onValueChange={setBaseId}>
@@ -520,6 +541,24 @@ const GerarPremiacoes = () => {
                       {base.nome}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="categoria">Categoria*</Label>
+              <Select value={categoriaId} onValueChange={setCategoriaId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categorias
+                    .filter(c => ['AUXILIAR', 'SUPERVISOR', 'ENCARREGADO'].includes(c.nome.toUpperCase()))
+                    .map((categoria) => (
+                      <SelectItem key={categoria.id} value={categoria.id}>
+                        {categoria.nome}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -539,7 +578,7 @@ const GerarPremiacoes = () => {
                 <AlertDialogTrigger asChild>
                   <Button 
                     onClick={iniciarGeracao} 
-                    disabled={!baseId || !competencia || isCalculating}
+                    disabled={!baseId || !categoriaId || !competencia || isCalculating}
                     className="w-full"
                   >
                     {isCalculating ? 'Calculando...' : 'Gerar Premiações'}
@@ -565,10 +604,14 @@ const GerarPremiacoes = () => {
           </div>
           
           {/* Informação sobre funcionários elegíveis */}
-          {baseId && (
+          {baseId && categoriaId && (
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="text-sm text-blue-800">
-                <strong>Funcionários elegíveis:</strong> {funcionarios.filter(f => f.ativo && f.base_premiacao_id === baseId).length} funcionário(s) com base de premiação {baseSelecionada?.nome}
+                <strong>Funcionários elegíveis:</strong> {funcionarios.filter(f => 
+                  f.ativo && 
+                  f.base_premiacao_id === baseId && 
+                  f.categoria_id === categoriaId
+                ).length} funcionário(s) com base {baseSelecionada?.nome} e categoria {categorias.find(c => c.id === categoriaId)?.nome}
               </div>
             </div>
           )}
@@ -581,7 +624,7 @@ const GerarPremiacoes = () => {
           <CardTitle>Visualizar Premiações Salvas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="baseVisualizacao">Base de Premiação</Label>
               <Select value={baseVisualizacao} onValueChange={setBaseVisualizacao}>
@@ -594,6 +637,25 @@ const GerarPremiacoes = () => {
                       {base.nome}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="categoriaVisualizacao">Categoria</Label>
+              <Select value={categoriaVisualizacao} onValueChange={setCategoriaVisualizacao}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas</SelectItem>
+                  {categorias
+                    .filter(c => ['AUXILIAR', 'SUPERVISOR', 'ENCARREGADO'].includes(c.nome.toUpperCase()))
+                    .map((categoria) => (
+                      <SelectItem key={categoria.id} value={categoria.nome}>
+                        {categoria.nome}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
