@@ -402,6 +402,7 @@ export type Database = {
           nome: string
           salario: number | null
           setor_id: string | null
+          status: string | null
           telefone: string | null
           updated_at: string
           user_id: string | null
@@ -423,6 +424,7 @@ export type Database = {
           nome: string
           salario?: number | null
           setor_id?: string | null
+          status?: string | null
           telefone?: string | null
           updated_at?: string
           user_id?: string | null
@@ -444,6 +446,7 @@ export type Database = {
           nome?: string
           salario?: number | null
           setor_id?: string | null
+          status?: string | null
           telefone?: string | null
           updated_at?: string
           user_id?: string | null
