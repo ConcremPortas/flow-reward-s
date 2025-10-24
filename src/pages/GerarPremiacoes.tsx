@@ -258,12 +258,29 @@ const GerarPremiacoes = () => {
             p.data_producao <= dataFim
           );
           
+          console.log(`Funcionário ${funcionario.nome}:`, {
+            setor_id: funcionario.setor_id,
+            dataInicio,
+            dataFim,
+            registrosEncontrados: producaoDoSetor.length,
+            producaoDoSetor
+          });
+          
           if (producaoDoSetor.length > 0) {
             const totalMeta = producaoDoSetor.reduce((acc, p) => acc + (p.meta_diaria || 0), 0);
             const totalRealizado = producaoDoSetor.reduce((acc, p) => acc + (p.producao_realizada || 0), 0);
             percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
             // Se passar de 100%, considera 100% para o cálculo da nota
             notaProducao = Math.min(percentualProducao, 1.0);
+            
+            console.log(`Cálculo produção ${funcionario.nome}:`, {
+              totalMeta,
+              totalRealizado,
+              percentualProducao: (percentualProducao * 100).toFixed(2) + '%',
+              notaProducao: (notaProducao * 100).toFixed(2) + '%'
+            });
+          } else {
+            console.warn(`Nenhum registro de produção encontrado para ${funcionario.nome} no período ${dataInicio} a ${dataFim}`);
           }
         }
 
