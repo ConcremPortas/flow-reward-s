@@ -451,22 +451,27 @@ const GerarPremiacoes = () => {
             );
             
             if (indicadoresDosMeses.length > 0) {
-              // Calcular médias dos indicadores
-              const calcularMediaIndicador = (campo: string) => {
-                const valores = indicadoresDosMeses
-                  .map(i => (i as any)[campo])
-                  .filter(v => v != null && v > 0);
+              // Calcular médias dos indicadores baseado em meta e realizado
+              const calcularMediaIndicador = (campoMeta: string, campoRealizado: string) => {
+                const percentuais = indicadoresDosMeses
+                  .map(i => {
+                    const meta = (i as any)[campoMeta];
+                    const realizado = (i as any)[campoRealizado];
+                    if (!meta || meta === 0) return null;
+                    return Math.min((realizado / meta), 1.0); // Calcular percentual e limitar a 100%
+                  })
+                  .filter(v => v != null);
                 
-                if (valores.length === 0) return 1.0; // Se não há dados, considera 100%
-                const media = valores.reduce((acc, v) => acc + v, 0) / valores.length;
-                return media; // Os valores já vêm como decimal (0-1) da tabela
+                if (percentuais.length === 0) return 1.0; // Se não há dados, considera 100%
+                const media = percentuais.reduce((acc, v) => acc + v, 0) / percentuais.length;
+                return media;
               };
               
-              notaItensNC = calcularMediaIndicador('identificacao_nc_percentual');
-              notaTratamentoNC = calcularMediaIndicador('tratamento_nc_percentual');
-              notaHoraMaquina = calcularMediaIndicador('hora_maquina_percentual');
-              notaOperacaoSegura = calcularMediaIndicador('operacao_segura_percentual');
-              notaLimpeza = calcularMediaIndicador('limpeza_percentual');
+              notaItensNC = calcularMediaIndicador('identificacao_nc_meta', 'identificacao_nc_realizado');
+              notaTratamentoNC = calcularMediaIndicador('tratamento_nc_meta', 'tratamento_nc_realizado');
+              notaHoraMaquina = calcularMediaIndicador('hora_maquina_meta', 'hora_maquina_realizado');
+              notaOperacaoSegura = calcularMediaIndicador('operacao_segura_meta', 'operacao_segura_realizado');
+              notaLimpeza = calcularMediaIndicador('limpeza_meta', 'limpeza_realizado');
               
               console.log(`Indicadores de setor agregados ${funcionario.nome}:`, {
                 itensNC: (notaItensNC * 100).toFixed(2) + '%',
