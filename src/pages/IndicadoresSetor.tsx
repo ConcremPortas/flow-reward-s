@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   Table, 
   TableBody, 
@@ -29,38 +30,36 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2, Target } from "lucide-react";
+import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSetores } from "@/hooks/useSetores";
-import { useTiposIndicadores } from "@/hooks/useTiposIndicadores";
+import { useIndicadoresSetor } from "@/hooks/useIndicadoresSetor";
 import { formatDateToBrasilia, formatDateToBrazilian, formatDateToInput } from "@/lib/dateUtils";
-
-// Hook específico para indicadores do setor (vamos usar os dados de produção como base)
-import { useProducaoSetor } from "@/hooks/useProducaoSetor";
 
 export const IndicadoresSetor = () => {
   const { setores, loading: setoresLoading } = useSetores();
-  const { tiposIndicadores, loading: tiposLoading } = useTiposIndicadores();
-  const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro } = useProducaoSetor();
+  const { indicadores, loading: indicadoresLoading, createIndicador, updateIndicador, deleteIndicador } = useIndicadoresSetor();
   const [searchTerm, setSearchTerm] = useState("");
   const [setorFilter, setSetorFilter] = useState("");
   const [setorSelecionado, setSetorSelecionado] = useState("");
   const [competencia, setCompetencia] = useState("");
-  const [metaEficiencia, setMetaEficiencia] = useState("");
-  const [eficienciaRealizada, setEficienciaRealizada] = useState("");
-  const [tipoIndicador, setTipoIndicador] = useState("");
-  const [observacoes, setObservacoes] = useState("");
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
+  
+  // Estados para os indicadores
+  const [horaMaquinaMeta, setHoraMaquinaMeta] = useState("");
+  const [horaMaquinaRealizado, setHoraMaquinaRealizado] = useState("");
+  const [identificacaoNcMeta, setIdentificacaoNcMeta] = useState("");
+  const [identificacaoNcRealizado, setIdentificacaoNcRealizado] = useState("");
+  const [limpezaMeta, setLimpezaMeta] = useState("");
+  const [limpezaRealizado, setLimpezaRealizado] = useState("");
+  const [tratamentoNcMeta, setTratamentoNcMeta] = useState("");
+  const [tratamentoNcRealizado, setTratamentoNcRealizado] = useState("");
+  const [operacaoSeguraMeta, setOperacaoSeguraMeta] = useState("");
+  const [operacaoSeguraRealizado, setOperacaoSeguraRealizado] = useState("");
 
-  // Estados para cadastro em lote
-  const [loteSetor, setLoteSetor] = useState("");
-  const [loteCompetencia, setLoteCompetencia] = useState("");
-  const [loteIndicadores, setLoteIndicadores] = useState<Record<string, { meta: string; realizado: string }>>({});
-
-  // Filtrar registros e calcular indicadores baseados na produção
-  const filteredIndicadores = registros.filter(item => {
-    const monthYear = item.data_producao ? `${item.data_producao.slice(5,7)}/${item.data_producao.slice(0,4)}` : '';
+  // Filtrar indicadores
+  const filteredIndicadores = indicadores.filter(item => {
+    const monthYear = item.competencia ? `${item.competencia.slice(5,7)}/${item.competencia.slice(0,4)}` : '';
     
     const matchesSearch = item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          monthYear.includes(searchTerm);
@@ -70,8 +69,12 @@ export const IndicadoresSetor = () => {
     return matchesSearch && matchesSetor;
   });
 
-  const calcularEficiencia = (realizado: number, meta: number) => {
-    return Math.round((realizado / meta) * 100);
+  const calcularPercentual = (realizado?: string, meta?: string) => {
+    if (!meta || !realizado) return 0;
+    const metaNum = parseFloat(meta);
+    const realizadoNum = parseFloat(realizado);
+    if (metaNum === 0) return 0;
+    return Math.round((realizadoNum / metaNum) * 100);
   };
 
   const getStatusIcon = (percentual: number) => {
@@ -87,130 +90,81 @@ export const IndicadoresSetor = () => {
   };
 
   const handleSave = async () => {
-    if (!setorSelecionado || !competencia || !metaEficiencia || !eficienciaRealizada || !tipoIndicador) {
-      alert("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
-
-    // Ajustar data para fuso horário de Brasília
-    const dataFormatada = formatDateToBrasilia(competencia);
-
-    const registro = {
-      setor_id: setorSelecionado,
-      data_producao: dataFormatada,
-      meta_diaria: parseFloat(metaEficiencia),
-      producao_realizada: parseFloat(eficienciaRealizada),
-      unidade_medida: "percentual",
-      observacoes: `Indicador: ${tiposIndicadores.find(t => t.id === tipoIndicador)?.nome} (${tiposIndicadores.find(t => t.id === tipoIndicador)?.codigo}) - ${observacoes || "Sem observações"}`
-    };
-
-    if (editingRecord) {
-      await updateRegistro(editingRecord, registro);
-    } else {
-      await createRegistro(registro);
-    }
-
-    // Reset form
-    setSetorSelecionado("");
-    setCompetencia("");
-    setMetaEficiencia("");
-    setEficienciaRealizada("");
-    setTipoIndicador("");
-    setObservacoes("");
-    setEditingRecord(null);
-  };
-
-  const handleEdit = (registro: any) => {
-    setSetorSelecionado(registro.setor_id);
-    setCompetencia(formatDateToInput(registro.data_producao));
-    setMetaEficiencia(registro.meta_diaria.toString());
-    setEficienciaRealizada(registro.producao_realizada.toString());
-    // Extrair tipo do indicador das observações
-    const tipoFromObs = registro.observacoes?.includes("Indicador:") ? 
-      registro.observacoes.split("(")[1]?.split(")")[0] : "";
-    const tipoEncontrado = tiposIndicadores.find(t => t.codigo === tipoFromObs);
-    setTipoIndicador(tipoEncontrado?.id || "");
-    setObservacoes(registro.observacoes?.split(" - ")[1] || "");
-    setEditingRecord(registro.id);
-  };
-
-  const handleDelete = async (id: string) => {
-    await deleteRegistro(id);
-  };
-
-  const handleCancel = () => {
-    setSetorSelecionado("");
-    setCompetencia("");
-    setMetaEficiencia("");
-    setEficienciaRealizada("");
-    setTipoIndicador("");
-    setObservacoes("");
-    setEditingRecord(null);
-  };
-
-  const handleLoteIndicadorChange = (tipoId: string, field: 'meta' | 'realizado', value: string) => {
-    setLoteIndicadores(prev => ({
-      ...prev,
-      [tipoId]: {
-        ...prev[tipoId],
-        [field]: value
-      }
-    }));
-  };
-
-  const handleSaveLote = async () => {
-    if (!loteSetor || !loteCompetencia) {
+    if (!setorSelecionado || !competencia) {
       alert("Por favor, selecione o setor e a competência");
       return;
     }
 
-    const indicadoresPreenchidos = Object.entries(loteIndicadores).filter(
-      ([_, dados]) => dados.meta && dados.realizado
-    );
-
-    if (indicadoresPreenchidos.length === 0) {
-      alert("Por favor, preencha pelo menos um indicador com meta e realizado");
+    // Verificar se pelo menos um indicador foi preenchido
+    const temIndicador = horaMaquinaMeta || identificacaoNcMeta || limpezaMeta || tratamentoNcMeta || operacaoSeguraMeta;
+    if (!temIndicador) {
+      alert("Por favor, preencha pelo menos um indicador");
       return;
     }
 
-    const dataFormatada = formatDateToBrasilia(loteCompetencia);
+    const dataFormatada = formatDateToBrasilia(competencia);
 
-    try {
-      // Salvar todos os indicadores preenchidos
-      for (const [tipoId, dados] of indicadoresPreenchidos) {
-        const tipoIndicador = tiposIndicadores.find(t => t.id === tipoId);
-        
-        const registro = {
-          setor_id: loteSetor,
-          data_producao: dataFormatada,
-          meta_diaria: parseFloat(dados.meta),
-          producao_realizada: parseFloat(dados.realizado),
-          unidade_medida: "percentual",
-          observacoes: `Indicador: ${tipoIndicador?.nome} (${tipoIndicador?.codigo}) - Cadastro em lote`
-        };
+    const indicador = {
+      setor_id: setorSelecionado,
+      competencia: dataFormatada,
+      hora_maquina_meta: horaMaquinaMeta ? parseFloat(horaMaquinaMeta) : undefined,
+      hora_maquina_realizado: horaMaquinaRealizado ? parseFloat(horaMaquinaRealizado) : undefined,
+      identificacao_nc_meta: identificacaoNcMeta ? parseFloat(identificacaoNcMeta) : undefined,
+      identificacao_nc_realizado: identificacaoNcRealizado ? parseFloat(identificacaoNcRealizado) : undefined,
+      limpeza_meta: limpezaMeta ? parseFloat(limpezaMeta) : undefined,
+      limpeza_realizado: limpezaRealizado ? parseFloat(limpezaRealizado) : undefined,
+      tratamento_nc_meta: tratamentoNcMeta ? parseFloat(tratamentoNcMeta) : undefined,
+      tratamento_nc_realizado: tratamentoNcRealizado ? parseFloat(tratamentoNcRealizado) : undefined,
+      operacao_segura_meta: operacaoSeguraMeta ? parseFloat(operacaoSeguraMeta) : undefined,
+      operacao_segura_realizado: operacaoSeguraRealizado ? parseFloat(operacaoSeguraRealizado) : undefined,
+    };
 
-        await createRegistro(registro);
-      }
-
-      // Reset form
-      setLoteSetor("");
-      setLoteCompetencia("");
-      setLoteIndicadores({});
-      
-      alert(`${indicadoresPreenchidos.length} indicadores salvos com sucesso!`);
-    } catch (error) {
-      console.error("Erro ao salvar indicadores:", error);
-      alert("Erro ao salvar os indicadores. Tente novamente.");
+    if (editingRecord) {
+      await updateIndicador(editingRecord, indicador);
+    } else {
+      await createIndicador(indicador);
     }
+
+    handleCancel();
   };
 
-  const handleCancelLote = () => {
-    setLoteSetor("");
-    setLoteCompetencia("");
-    setLoteIndicadores({});
+  const handleEdit = (indicador: any) => {
+    setEditingRecord(indicador.id);
+    setSetorSelecionado(indicador.setor_id || "");
+    setCompetencia(formatDateToInput(indicador.competencia));
+    setHoraMaquinaMeta(indicador.hora_maquina_meta?.toString() || "");
+    setHoraMaquinaRealizado(indicador.hora_maquina_realizado?.toString() || "");
+    setIdentificacaoNcMeta(indicador.identificacao_nc_meta?.toString() || "");
+    setIdentificacaoNcRealizado(indicador.identificacao_nc_realizado?.toString() || "");
+    setLimpezaMeta(indicador.limpeza_meta?.toString() || "");
+    setLimpezaRealizado(indicador.limpeza_realizado?.toString() || "");
+    setTratamentoNcMeta(indicador.tratamento_nc_meta?.toString() || "");
+    setTratamentoNcRealizado(indicador.tratamento_nc_realizado?.toString() || "");
+    setOperacaoSeguraMeta(indicador.operacao_segura_meta?.toString() || "");
+    setOperacaoSeguraRealizado(indicador.operacao_segura_realizado?.toString() || "");
   };
 
-  if (setoresLoading || registrosLoading || tiposLoading) {
+  const handleDelete = async (id: string) => {
+    await deleteIndicador(id);
+  };
+
+  const handleCancel = () => {
+    setEditingRecord(null);
+    setSetorSelecionado("");
+    setCompetencia("");
+    setHoraMaquinaMeta("");
+    setHoraMaquinaRealizado("");
+    setIdentificacaoNcMeta("");
+    setIdentificacaoNcRealizado("");
+    setLimpezaMeta("");
+    setLimpezaRealizado("");
+    setTratamentoNcMeta("");
+    setTratamentoNcRealizado("");
+    setOperacaoSeguraMeta("");
+    setOperacaoSeguraRealizado("");
+  };
+
+  if (setoresLoading || indicadoresLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-lg">Carregando dados...</div>
@@ -220,282 +174,261 @@ export const IndicadoresSetor = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="individual" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="individual">Cadastro Individual</TabsTrigger>
-          <TabsTrigger value="lote">Cadastro em Lote</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="individual" className="space-y-6">
-          {/* Novo Registro */}
-          <Card className="card-elegant">
-            <CardHeader>
-              <CardTitle>{editingRecord ? "Editar" : "Registrar"} Indicador por Setor</CardTitle>
-              <CardDescription>
-                {editingRecord ? "Edite o indicador selecionado" : "Registre metas e realizações de indicadores específicos por setor"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Setor *</label>
-                  <Select value={setorSelecionado} onValueChange={setSetorSelecionado}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o setor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {setores.filter(s => s.ativo).map(setor => (
-                        <SelectItem key={setor.id} value={setor.id}>
-                          {setor.nome} {setor.empresa && `- ${setor.empresa.nome}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Competência *</label>
-                  <Input
-                    type="date"
-                    value={competencia}
-                    onChange={(e) => setCompetencia(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Tipo de Indicador *</label>
-                  <Select value={tipoIndicador} onValueChange={setTipoIndicador}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo de indicador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tiposIndicadores.map(tipo => (
-                        <SelectItem key={tipo.id} value={tipo.id}>
-                          {tipo.nome} ({tipo.codigo})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Meta (%)</label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    placeholder="Ex: 95.0"
-                    min="0"
-                    max="100"
-                    value={metaEficiencia}
-                    onChange={(e) => setMetaEficiencia(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Realizado (%)</label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    placeholder="Ex: 98.5"
-                    min="0"
-                    max="100"
-                    value={eficienciaRealizada}
-                    onChange={(e) => setEficienciaRealizada(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Observações</label>
-                  <Input
-                    placeholder="Observações opcionais..."
-                    value={observacoes}
-                    onChange={(e) => setObservacoes(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Prévia do cálculo */}
-              {metaEficiencia && eficienciaRealizada && (
-                <div className="p-4 bg-accent/50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Atingimento da Meta:</span>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia)))}
-                      <span className={cn(
-                        "text-lg font-bold",
-                        getStatusColor(calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia)))
-                      )}>
-                        {calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia))}%
-                      </span>
-                    </div>
-                  </div>
-                  <Progress 
-                    value={Math.min(calcularEficiencia(Number(eficienciaRealizada), Number(metaEficiencia)), 100)} 
-                    className="mt-2"
-                  />
-                </div>
-              )}
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={handleCancel}>
-                  Cancelar
-                </Button>
-                <Button 
-                  className="gap-2" 
-                  onClick={handleSave}
-                  disabled={!setorSelecionado || !competencia || !metaEficiencia || !eficienciaRealizada || !tipoIndicador}
-                >
-                  <Plus className="h-4 w-4" />
-                  {editingRecord ? "Atualizar" : "Adicionar"} Registro
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="lote" className="space-y-6">
-          {/* Cadastro em Lote */}
-          <Card className="card-elegant">
-            <CardHeader>
-              <CardTitle>Cadastro em Lote de Indicadores</CardTitle>
-              <CardDescription>
-                Cadastre todos os indicadores de um setor para uma competência específica
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Setor *</label>
-                  <Select value={loteSetor} onValueChange={setLoteSetor}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o setor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {setores.filter(s => s.ativo).map(setor => (
-                        <SelectItem key={setor.id} value={setor.id}>
-                          {setor.nome} {setor.empresa && `- ${setor.empresa.nome}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Competência *</label>
-                  <Input
-                    type="date"
-                    value={loteCompetencia}
-                    onChange={(e) => setLoteCompetencia(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Lista de Indicadores */}
-              {loteSetor && loteCompetencia && (
-                <div className="space-y-4">
-                  <h4 className="text-lg font-medium">Indicadores do Setor</h4>
-                  <div className="grid gap-4">
-                    {tiposIndicadores.map(tipo => (
-                      <Card key={tipo.id} className="p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <Target className="h-4 w-4 text-primary" />
-                              <span className="font-medium">{tipo.nome}</span>
-                              <span className="text-sm text-muted-foreground">({tipo.codigo})</span>
-                            </div>
-                            {tipo.descricao && (
-                              <p className="text-sm text-muted-foreground mt-1">{tipo.descricao}</p>
-                            )}
-                          </div>
-                          
-                          <div className="flex gap-4">
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium">Meta (%)</label>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                placeholder="0.0"
-                                min="0"
-                                max="100"
-                                className="w-24"
-                                value={loteIndicadores[tipo.id]?.meta || ""}
-                                onChange={(e) => handleLoteIndicadorChange(tipo.id, 'meta', e.target.value)}
-                              />
-                            </div>
-                            
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium">Realizado (%)</label>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                placeholder="0.0"
-                                min="0"
-                                max="100"
-                                className="w-24"
-                                value={loteIndicadores[tipo.id]?.realizado || ""}
-                                onChange={(e) => handleLoteIndicadorChange(tipo.id, 'realizado', e.target.value)}
-                              />
-                            </div>
-
-                            {/* Prévia do cálculo para este indicador */}
-                            {loteIndicadores[tipo.id]?.meta && loteIndicadores[tipo.id]?.realizado && (
-                              <div className="flex items-center gap-2">
-                                {getStatusIcon(calcularEficiencia(
-                                  Number(loteIndicadores[tipo.id].realizado), 
-                                  Number(loteIndicadores[tipo.id].meta)
-                                ))}
-                                <span className={cn(
-                                  "text-sm font-medium",
-                                  getStatusColor(calcularEficiencia(
-                                    Number(loteIndicadores[tipo.id].realizado), 
-                                    Number(loteIndicadores[tipo.id].meta)
-                                  ))
-                                )}>
-                                  {calcularEficiencia(
-                                    Number(loteIndicadores[tipo.id].realizado), 
-                                    Number(loteIndicadores[tipo.id].meta)
-                                  )}%
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={handleCancelLote}>
-                  Cancelar
-                </Button>
-                <Button 
-                  className="gap-2" 
-                  onClick={handleSaveLote}
-                  disabled={!loteSetor || !loteCompetencia || Object.keys(loteIndicadores).length === 0}
-                >
-                  <Plus className="h-4 w-4" />
-                  Salvar Indicadores
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Dados de Indicadores */}
+      {/* Formulário de Cadastro */}
       <Card className="card-elegant">
         <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>Indicadores por Setor</CardTitle>
-              <CardDescription>
-                Performance dos indicadores específicos de cada setor
-              </CardDescription>
+          <CardTitle>{editingRecord ? "Editar" : "Registrar"} Indicadores por Setor</CardTitle>
+          <CardDescription>
+            Performance dos indicadores específicos de cada setor
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Dados básicos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Setor *</Label>
+              <Select value={setorSelecionado} onValueChange={setSetorSelecionado}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {setores.filter(s => s.ativo).map(setor => (
+                    <SelectItem key={setor.id} value={setor.id}>
+                      {setor.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Competência *</Label>
+              <Input
+                type="date"
+                value={competencia}
+                onChange={(e) => setCompetencia(e.target.value)}
+              />
             </div>
           </div>
+
+          {/* Indicadores */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Indicadores</h3>
+            
+            {/* Hora Máquina */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+              <div className="col-span-2">
+                <h4 className="font-medium">Hora Máquina</h4>
+              </div>
+              <div className="space-y-2">
+                <Label>Meta</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 100"
+                  value={horaMaquinaMeta}
+                  onChange={(e) => setHoraMaquinaMeta(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Realizado</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 95"
+                  value={horaMaquinaRealizado}
+                  onChange={(e) => setHoraMaquinaRealizado(e.target.value)}
+                />
+              </div>
+              {horaMaquinaMeta && horaMaquinaRealizado && (
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(calcularPercentual(horaMaquinaRealizado, horaMaquinaMeta))}
+                    <span className={cn("font-medium", getStatusColor(calcularPercentual(horaMaquinaRealizado, horaMaquinaMeta)))}>
+                      {calcularPercentual(horaMaquinaRealizado, horaMaquinaMeta)}%
+                    </span>
+                  </div>
+                  <Progress value={Math.min(calcularPercentual(horaMaquinaRealizado, horaMaquinaMeta), 100)} className="mt-2" />
+                </div>
+              )}
+            </div>
+
+            {/* Identificação NC */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+              <div className="col-span-2">
+                <h4 className="font-medium">Identificação de Não Conformidades</h4>
+              </div>
+              <div className="space-y-2">
+                <Label>Meta</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 100"
+                  value={identificacaoNcMeta}
+                  onChange={(e) => setIdentificacaoNcMeta(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Realizado</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 98"
+                  value={identificacaoNcRealizado}
+                  onChange={(e) => setIdentificacaoNcRealizado(e.target.value)}
+                />
+              </div>
+              {identificacaoNcMeta && identificacaoNcRealizado && (
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(calcularPercentual(identificacaoNcRealizado, identificacaoNcMeta))}
+                    <span className={cn("font-medium", getStatusColor(calcularPercentual(identificacaoNcRealizado, identificacaoNcMeta)))}>
+                      {calcularPercentual(identificacaoNcRealizado, identificacaoNcMeta)}%
+                    </span>
+                  </div>
+                  <Progress value={Math.min(calcularPercentual(identificacaoNcRealizado, identificacaoNcMeta), 100)} className="mt-2" />
+                </div>
+              )}
+            </div>
+
+            {/* Limpeza */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+              <div className="col-span-2">
+                <h4 className="font-medium">Limpeza</h4>
+              </div>
+              <div className="space-y-2">
+                <Label>Meta</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 100"
+                  value={limpezaMeta}
+                  onChange={(e) => setLimpezaMeta(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Realizado</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 100"
+                  value={limpezaRealizado}
+                  onChange={(e) => setLimpezaRealizado(e.target.value)}
+                />
+              </div>
+              {limpezaMeta && limpezaRealizado && (
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(calcularPercentual(limpezaRealizado, limpezaMeta))}
+                    <span className={cn("font-medium", getStatusColor(calcularPercentual(limpezaRealizado, limpezaMeta)))}>
+                      {calcularPercentual(limpezaRealizado, limpezaMeta)}%
+                    </span>
+                  </div>
+                  <Progress value={Math.min(calcularPercentual(limpezaRealizado, limpezaMeta), 100)} className="mt-2" />
+                </div>
+              )}
+            </div>
+
+            {/* Tratamento NC */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+              <div className="col-span-2">
+                <h4 className="font-medium">Tratamento de Não Conformidades</h4>
+              </div>
+              <div className="space-y-2">
+                <Label>Meta</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 100"
+                  value={tratamentoNcMeta}
+                  onChange={(e) => setTratamentoNcMeta(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Realizado</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 95"
+                  value={tratamentoNcRealizado}
+                  onChange={(e) => setTratamentoNcRealizado(e.target.value)}
+                />
+              </div>
+              {tratamentoNcMeta && tratamentoNcRealizado && (
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(calcularPercentual(tratamentoNcRealizado, tratamentoNcMeta))}
+                    <span className={cn("font-medium", getStatusColor(calcularPercentual(tratamentoNcRealizado, tratamentoNcMeta)))}>
+                      {calcularPercentual(tratamentoNcRealizado, tratamentoNcMeta)}%
+                    </span>
+                  </div>
+                  <Progress value={Math.min(calcularPercentual(tratamentoNcRealizado, tratamentoNcMeta), 100)} className="mt-2" />
+                </div>
+              )}
+            </div>
+
+            {/* Operação Segura */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+              <div className="col-span-2">
+                <h4 className="font-medium">Operação Segura</h4>
+              </div>
+              <div className="space-y-2">
+                <Label>Meta</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 100"
+                  value={operacaoSeguraMeta}
+                  onChange={(e) => setOperacaoSeguraMeta(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Realizado</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 100"
+                  value={operacaoSeguraRealizado}
+                  onChange={(e) => setOperacaoSeguraRealizado(e.target.value)}
+                />
+              </div>
+              {operacaoSeguraMeta && operacaoSeguraRealizado && (
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(calcularPercentual(operacaoSeguraRealizado, operacaoSeguraMeta))}
+                    <span className={cn("font-medium", getStatusColor(calcularPercentual(operacaoSeguraRealizado, operacaoSeguraMeta)))}>
+                      {calcularPercentual(operacaoSeguraRealizado, operacaoSeguraMeta)}%
+                    </span>
+                  </div>
+                  <Progress value={Math.min(calcularPercentual(operacaoSeguraRealizado, operacaoSeguraMeta), 100)} className="mt-2" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={handleCancel}>
+              Cancelar
+            </Button>
+            <Button 
+              className="gap-2" 
+              onClick={handleSave}
+              disabled={!setorSelecionado || !competencia}
+            >
+              <Plus className="h-4 w-4" />
+              {editingRecord ? "Atualizar" : "Adicionar"} Indicadores
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Lista de Indicadores */}
+      <Card className="card-elegant">
+        <CardHeader>
+          <CardTitle>Indicadores por Setor</CardTitle>
+          <CardDescription>
+            Histórico de indicadores registrados por setor
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filtros */}
@@ -534,144 +467,125 @@ export const IndicadoresSetor = () => {
                 <TableRow className="bg-muted/50">
                   <TableHead>Setor</TableHead>
                   <TableHead>Competência</TableHead>
-                  <TableHead className="text-center">Meta (%)</TableHead>
-                  <TableHead className="text-center">Realizado (%)</TableHead>
-                  <TableHead>Atingimento</TableHead>
-                  <TableHead>Performance</TableHead>
-                  <TableHead>Tipo</TableHead>
+                  <TableHead className="text-center">Hora Máq.</TableHead>
+                  <TableHead className="text-center">Ident. NC</TableHead>
+                  <TableHead className="text-center">Limpeza</TableHead>
+                  <TableHead className="text-center">Trat. NC</TableHead>
+                  <TableHead className="text-center">Op. Segura</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredIndicadores.map((item) => {
-                  const eficiencia = calcularEficiencia(item.producao_realizada, item.meta_diaria);
-                  // Extrair tipo do indicador das observações
-                  const tipoFromObs = item.observacoes?.includes("Indicador:") ? 
-                    item.observacoes.split("(")[1]?.split(")")[0] : "";
-                  const tipoIndicadorInfo = tiposIndicadores.find(t => t.codigo === tipoFromObs);
-                  
-                  return (
-                    <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
-                      <TableCell className="font-medium">
-                        {item.setor?.nome || "Setor não encontrado"}
-                        {item.setor?.empresa && (
-                          <div className="text-xs text-muted-foreground">
-                            {item.setor.empresa.nome}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {formatDateToBrazilian(item.data_producao)}
-                      </TableCell>
-                      <TableCell className="text-center">{item.meta_diaria}%</TableCell>
-                      <TableCell className="text-center">{item.producao_realizada}%</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(eficiencia)}
-                          <span className={cn("font-medium", getStatusColor(eficiencia))}>
-                            {eficiencia}%
+                {filteredIndicadores.map((item) => (
+                  <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
+                    <TableCell className="font-medium">
+                      {item.setor?.nome || "Setor não encontrado"}
+                    </TableCell>
+                    <TableCell>
+                      {formatDateToBrazilian(item.competencia)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.hora_maquina_percentual !== null && item.hora_maquina_percentual !== undefined ? (
+                        <div className="flex items-center justify-center gap-1">
+                          {getStatusIcon(Math.round(item.hora_maquina_percentual * 100))}
+                          <span className={cn("text-sm", getStatusColor(Math.round(item.hora_maquina_percentual * 100)))}>
+                            {Math.round(item.hora_maquina_percentual * 100)}%
                           </span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <Progress 
-                            value={Math.min(eficiencia, 100)} 
-                            className="h-2"
-                          />
-                          <div className="text-xs text-muted-foreground">
-                            {eficiencia >= 100 ? "Meta superada" : 
-                             eficiencia >= 95 ? "Próximo da meta" : 
-                             "Abaixo da meta"}
-                          </div>
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.identificacao_nc_percentual !== null && item.identificacao_nc_percentual !== undefined ? (
+                        <div className="flex items-center justify-center gap-1">
+                          {getStatusIcon(Math.round(item.identificacao_nc_percentual * 100))}
+                          <span className={cn("text-sm", getStatusColor(Math.round(item.identificacao_nc_percentual * 100)))}>
+                            {Math.round(item.identificacao_nc_percentual * 100)}%
+                          </span>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {tipoIndicadorInfo ? (
-                          <div>
-                            <span className="font-medium">{tipoIndicadorInfo.codigo}</span>
-                            <div className="text-xs">{tipoIndicadorInfo.nome}</div>
-                          </div>
-                        ) : (
-                          "N/A"
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleEdit(item)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.limpeza_percentual !== null && item.limpeza_percentual !== undefined ? (
+                        <div className="flex items-center justify-center gap-1">
+                          {getStatusIcon(Math.round(item.limpeza_percentual * 100))}
+                          <span className={cn("text-sm", getStatusColor(Math.round(item.limpeza_percentual * 100)))}>
+                            {Math.round(item.limpeza_percentual * 100)}%
+                          </span>
+                        </div>
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.tratamento_nc_percentual !== null && item.tratamento_nc_percentual !== undefined ? (
+                        <div className="flex items-center justify-center gap-1">
+                          {getStatusIcon(Math.round(item.tratamento_nc_percentual * 100))}
+                          <span className={cn("text-sm", getStatusColor(Math.round(item.tratamento_nc_percentual * 100)))}>
+                            {Math.round(item.tratamento_nc_percentual * 100)}%
+                          </span>
+                        </div>
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.operacao_segura_percentual !== null && item.operacao_segura_percentual !== undefined ? (
+                        <div className="flex items-center justify-center gap-1">
+                          {getStatusIcon(Math.round(item.operacao_segura_percentual * 100))}
+                          <span className={cn("text-sm", getStatusColor(Math.round(item.operacao_segura_percentual * 100)))}>
+                            {Math.round(item.operacao_segura_percentual * 100)}%
+                          </span>
+                        </div>
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Indicadores</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir estes indicadores? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDelete(item.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Excluir Indicador</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja excluir este indicador? Esta ação não pode ser desfeita.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleDelete(item.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
 
-          {/* Cards de Resumo */}
-          {filteredIndicadores.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t">
-              {filteredIndicadores.slice(0, 4).map((item) => {
-                const eficiencia = calcularEficiencia(item.producao_realizada, item.meta_diaria);
-                return (
-                  <Card key={item.id} className="card-elegant">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{item.setor?.nome}</h4>
-                        {getStatusIcon(eficiencia)}
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Meta:</span>
-                          <span>{item.meta_diaria}%</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Realizado:</span>
-                          <span className={getStatusColor(eficiencia)}>{item.producao_realizada}%</span>
-                        </div>
-                        <Progress value={Math.min(eficiencia, 100)} className="h-2" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+          {/* Footer */}
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div>
+              Mostrando {filteredIndicadores.length} de {indicadores.length} registros
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>

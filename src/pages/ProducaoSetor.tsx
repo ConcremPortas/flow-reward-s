@@ -64,21 +64,23 @@ export const ProducaoSetor = () => {
     return yearB - yearA || monthB - monthA;
   });
 
-  const filteredRegistros = registros.filter(item => {
-    const monthYear = item.data_producao ? (() => {
-      const date = new Date(item.data_producao);
-      return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-    })() : '';
-    
-    const matchesSearch = item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         monthYear.includes(searchTerm);
-    
-    const matchesCompetencia = !competenciaFilter || competenciaFilter === "all" || monthYear === competenciaFilter;
-    
-    const matchesSetor = !setorFilter || setorFilter === "all" || item.setor_id === setorFilter;
-    
-    return matchesSearch && matchesCompetencia && matchesSetor;
-  });
+  const filteredRegistros = registros
+    .filter(item => item.unidade_medida !== "percentual") // Excluir indicadores (que usam percentual)
+    .filter(item => {
+      const monthYear = item.data_producao ? (() => {
+        const date = new Date(item.data_producao);
+        return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+      })() : '';
+      
+      const matchesSearch = item.setor?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           monthYear.includes(searchTerm);
+      
+      const matchesCompetencia = !competenciaFilter || competenciaFilter === "all" || monthYear === competenciaFilter;
+      
+      const matchesSetor = !setorFilter || setorFilter === "all" || item.setor_id === setorFilter;
+      
+      return matchesSearch && matchesCompetencia && matchesSetor;
+    });
 
   const calcularPercentual = (realizado: number, meta: number) => {
     return Math.round((realizado / meta) * 100);
