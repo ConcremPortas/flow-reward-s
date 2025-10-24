@@ -250,12 +250,12 @@ export const Setores = () => {
             
             <div className="w-[200px] space-y-2">
               <Label className="text-xs text-muted-foreground">Supervisor</Label>
-              <Select value={filterSupervisor} onValueChange={setFilterSupervisor}>
+              <Select value={filterSupervisor} onValueChange={(v) => setFilterSupervisor(v === 'all' ? '' : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {funcionarios
                     .filter(f => f.categoria?.nome.toLowerCase().includes('supervisor'))
                     .map(funcionario => (
@@ -269,12 +269,12 @@ export const Setores = () => {
 
             <div className="w-[200px] space-y-2">
               <Label className="text-xs text-muted-foreground">Encarregado</Label>
-              <Select value={filterEncarregado} onValueChange={setFilterEncarregado}>
+              <Select value={filterEncarregado} onValueChange={(v) => setFilterEncarregado(v === 'all' ? '' : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {funcionarios
                     .filter(f => f.categoria?.nome.toLowerCase().includes('encarregado'))
                     .map(funcionario => (
