@@ -532,11 +532,11 @@ const GerarPremiacoes = () => {
                     <TableHead>Função</TableHead>
                     <TableHead>Faixa</TableHead>
                     {isProducao && <TableHead>% Produção</TableHead>}
-                    {isProducao && <TableHead>Nota DSS</TableHead>}
-                    {isKits && <TableHead>Valor Kits</TableHead>}
+                    <TableHead>Nota DSS</TableHead>
                     <TableHead>Nota EPI</TableHead>
                     <TableHead>Nota Faltas</TableHead>
                     <TableHead>Nota Advertências</TableHead>
+                    {isKits && <TableHead>Valor Kits</TableHead>}
                     <TableHead>Nota Geral</TableHead>
                     <TableHead>Bônus Possível</TableHead>
                     <TableHead>Bônus Alcançado</TableHead>
@@ -551,11 +551,11 @@ const GerarPremiacoes = () => {
                       <TableCell>{premiacao.funcao}</TableCell>
                       <TableCell>{premiacao.faixa}</TableCell>
                       {isProducao && <TableCell>{formatPercentage(premiacao.percentual_producao || 0)}</TableCell>}
-                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_dss)}</TableCell>}
-                      {isKits && <TableCell>{formatCurrency(premiacao.valor_kits || 0)}</TableCell>}
+                      <TableCell>{formatPercentage(premiacao.nota_dss)}</TableCell>
                       <TableCell>{formatPercentage(premiacao.nota_epi)}</TableCell>
                       <TableCell>{formatPercentage(premiacao.nota_faltas)}</TableCell>
                       <TableCell>{formatPercentage(premiacao.nota_advertencias)}</TableCell>
+                      {isKits && <TableCell>{formatCurrency(premiacao.valor_kits || 0)}</TableCell>}
                       <TableCell className="font-bold">{formatPercentage(premiacao.nota_geral)}</TableCell>
                       <TableCell>{formatCurrency(premiacao.bonus_possivel)}</TableCell>
                       <TableCell className="font-bold text-green-600">
