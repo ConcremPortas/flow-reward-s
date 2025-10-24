@@ -75,7 +75,18 @@ export const useFuncionarios = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Tratamento específico para CPF duplicado
+        if (error.code === '23505' && error.message.includes('cpf_key')) {
+          toast({
+            title: "CPF Duplicado",
+            description: "Já existe um funcionário cadastrado com este CPF/Código",
+            variant: "destructive",
+          });
+          return null;
+        }
+        throw error;
+      }
 
       toast({
         title: "Sucesso",
@@ -84,11 +95,11 @@ export const useFuncionarios = () => {
 
       fetchFuncionarios();
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar funcionário:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar o funcionário",
+        description: error.message || "Não foi possível criar o funcionário",
         variant: "destructive",
       });
       return null;
@@ -104,7 +115,18 @@ export const useFuncionarios = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Tratamento específico para CPF duplicado
+        if (error.code === '23505' && error.message.includes('cpf_key')) {
+          toast({
+            title: "CPF Duplicado",
+            description: "Já existe outro funcionário cadastrado com este CPF/Código",
+            variant: "destructive",
+          });
+          return null;
+        }
+        throw error;
+      }
 
       toast({
         title: "Sucesso",
@@ -113,11 +135,11 @@ export const useFuncionarios = () => {
 
       fetchFuncionarios();
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao atualizar funcionário:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o funcionário",
+        description: error.message || "Não foi possível atualizar o funcionário",
         variant: "destructive",
       });
       return null;
