@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import logoImage from "@/assets/logo-concrem-new.png";
+import logoImage from "@/assets/logo-concrem-hub.png";
 
 const iconMap: Record<string, any> = {
   Trophy,
