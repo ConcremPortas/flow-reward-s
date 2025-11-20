@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      concrem_avaliacoes_desempenho: {
+        Row: {
+          avaliador_id: string | null
+          comentarios: string | null
+          competencias_avaliadas: Json | null
+          created_at: string
+          data_avaliacao: string
+          elegivel_promocao: boolean | null
+          funcionario_id: string
+          id: string
+          nota_geral: number | null
+          objetivos_alcancados: string[] | null
+          periodo_fim: string
+          periodo_inicio: string
+          pontos_fortes: string[] | null
+          pontos_melhoria: string[] | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          avaliador_id?: string | null
+          comentarios?: string | null
+          competencias_avaliadas?: Json | null
+          created_at?: string
+          data_avaliacao: string
+          elegivel_promocao?: boolean | null
+          funcionario_id: string
+          id?: string
+          nota_geral?: number | null
+          objetivos_alcancados?: string[] | null
+          periodo_fim: string
+          periodo_inicio: string
+          pontos_fortes?: string[] | null
+          pontos_melhoria?: string[] | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avaliador_id?: string | null
+          comentarios?: string | null
+          competencias_avaliadas?: Json | null
+          created_at?: string
+          data_avaliacao?: string
+          elegivel_promocao?: boolean | null
+          funcionario_id?: string
+          id?: string
+          nota_geral?: number | null
+          objetivos_alcancados?: string[] | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          pontos_fortes?: string[] | null
+          pontos_melhoria?: string[] | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concrem_avaliacoes_desempenho_avaliador_id_fkey"
+            columns: ["avaliador_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_avaliacoes_desempenho_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concrem_base_premiacao: {
         Row: {
           ativo: boolean
@@ -288,6 +360,57 @@ export type Database = {
             columns: ["funcionario_id"]
             isOneToOne: false
             referencedRelation: "concrem_funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concrem_estrutura_hierarquica: {
+        Row: {
+          ativo: boolean
+          cargo_id: string
+          cargo_superior_id: string | null
+          created_at: string
+          id: string
+          nivel_hierarquico: number
+          pode_aprovar_mudancas: boolean | null
+          quantidade_subordinados_diretos: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo_id: string
+          cargo_superior_id?: string | null
+          created_at?: string
+          id?: string
+          nivel_hierarquico?: number
+          pode_aprovar_mudancas?: boolean | null
+          quantidade_subordinados_diretos?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo_id?: string
+          cargo_superior_id?: string | null
+          created_at?: string
+          id?: string
+          nivel_hierarquico?: number
+          pode_aprovar_mudancas?: boolean | null
+          quantidade_subordinados_diretos?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concrem_estrutura_hierarquica_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: true
+            referencedRelation: "concrem_cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_estrutura_hierarquica_cargo_superior_id_fkey"
+            columns: ["cargo_superior_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_cargos"
             referencedColumns: ["id"]
           },
         ]
@@ -605,6 +728,83 @@ export type Database = {
         }
         Relationships: []
       }
+      concrem_historico_cargos: {
+        Row: {
+          aprovado_por: string | null
+          cargo_anterior_id: string | null
+          cargo_id: string | null
+          created_at: string
+          data_mudanca: string
+          funcionario_id: string
+          id: string
+          motivo: string | null
+          observacoes: string | null
+          salario_anterior: number | null
+          salario_novo: number | null
+          tipo_mudanca: string
+          updated_at: string
+        }
+        Insert: {
+          aprovado_por?: string | null
+          cargo_anterior_id?: string | null
+          cargo_id?: string | null
+          created_at?: string
+          data_mudanca: string
+          funcionario_id: string
+          id?: string
+          motivo?: string | null
+          observacoes?: string | null
+          salario_anterior?: number | null
+          salario_novo?: number | null
+          tipo_mudanca: string
+          updated_at?: string
+        }
+        Update: {
+          aprovado_por?: string | null
+          cargo_anterior_id?: string | null
+          cargo_id?: string | null
+          created_at?: string
+          data_mudanca?: string
+          funcionario_id?: string
+          id?: string
+          motivo?: string | null
+          observacoes?: string | null
+          salario_anterior?: number | null
+          salario_novo?: number | null
+          tipo_mudanca?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concrem_historico_cargos_aprovado_por_fkey"
+            columns: ["aprovado_por"]
+            isOneToOne: false
+            referencedRelation: "concrem_funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_historico_cargos_cargo_anterior_id_fkey"
+            columns: ["cargo_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_historico_cargos_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_historico_cargos_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concrem_hr_applications: {
         Row: {
           code: string
@@ -791,6 +991,63 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      concrem_plano_carreira: {
+        Row: {
+          ativo: boolean
+          cargo_destino_id: string
+          cargo_origem_id: string
+          competencias_necessarias: string[] | null
+          created_at: string
+          descricao: string | null
+          id: string
+          requisitos: string[] | null
+          tempo_minimo_meses: number | null
+          tipo_progressao: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo_destino_id: string
+          cargo_origem_id: string
+          competencias_necessarias?: string[] | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          requisitos?: string[] | null
+          tempo_minimo_meses?: number | null
+          tipo_progressao: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo_destino_id?: string
+          cargo_origem_id?: string
+          competencias_necessarias?: string[] | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          requisitos?: string[] | null
+          tempo_minimo_meses?: number | null
+          tipo_progressao?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concrem_plano_carreira_cargo_destino_id_fkey"
+            columns: ["cargo_destino_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concrem_plano_carreira_cargo_origem_id_fkey"
+            columns: ["cargo_origem_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_cargos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       concrem_producao_setor: {
         Row: {
