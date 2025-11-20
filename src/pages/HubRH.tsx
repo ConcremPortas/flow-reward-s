@@ -57,8 +57,8 @@ export default function HubRH() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-red-500 to-purple-600">
-        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+      <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-700 to-emerald-600">
+        <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10">
           <header className="bg-background/95 backdrop-blur-sm border-b border-border">
             <div className="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -83,34 +83,34 @@ export default function HubRH() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-red-500 to-purple-600 relative">
+    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-700 to-emerald-600 relative">
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/10" />
       
       {/* Content */}
       <div className="relative z-10">
         {/* Header */}
-        <header className="bg-background/95 backdrop-blur-sm border-b border-border sticky top-0 z-20">
+        <header className="bg-green-900/95 backdrop-blur-sm border-b border-green-800 sticky top-0 z-20">
           <div className="container mx-auto px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <img src={logoImage} alt="Logo" className="h-12" />
+              <img src={logoImage} alt="Logo" className="h-12 bg-white/10 rounded-lg p-2" />
               <div>
-                <h1 className="text-xl font-bold text-foreground">Concrem</h1>
-                <p className="text-sm text-muted-foreground">Sistema de Gestão Integrada</p>
+                <h1 className="text-xl font-bold text-white">Concrem</h1>
+                <p className="text-sm text-white/70">Sistema de Gestão Integrada</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-sm font-medium text-white">
                   {isAdmin ? 'Administrador' : 'Usuário'}
                 </p>
-                <p className="text-xs text-muted-foreground">{userEmail}</p>
+                <p className="text-xs text-white/70">{userEmail}</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="gap-2"
+                className="gap-2 text-white hover:bg-white/10"
               >
                 <LogOut className="h-4 w-4" />
                 Sair
@@ -140,7 +140,8 @@ export default function HubRH() {
               return (
                 <Card
                   key={app.id}
-                  className="relative overflow-hidden backdrop-blur-md bg-white/90 border-white/20 shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-3xl"
+                  className="relative overflow-hidden bg-white border-green-100 shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-fade-in"
+                  style={{ animationDelay: `${applications.indexOf(app) * 100}ms` }}
                 >
                   <div className="p-8">
                     {/* Icon */}
@@ -166,14 +167,13 @@ export default function HubRH() {
                     {/* Action */}
                     {hasAccess ? (
                       <Button
-                        className="w-full"
-                        style={{ backgroundColor: app.color || '#10b981' }}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
                         onClick={() => handleAppClick(app.route, app.code)}
                       >
                         Acessar Módulo
                       </Button>
                     ) : (
-                      <Badge variant="secondary" className="w-full py-2 justify-center">
+                      <Badge variant="secondary" className="w-full py-2 justify-center bg-amber-100 text-amber-800">
                         Em breve
                       </Badge>
                     )}
@@ -185,9 +185,9 @@ export default function HubRH() {
 
           {/* Info Card */}
           {applications.some(app => !isAdmin && app.code !== 'premiacoes') && (
-            <Card className="max-w-6xl mx-auto backdrop-blur-md bg-white/90 border-white/20 shadow-xl">
+            <Card className="max-w-6xl mx-auto bg-amber-50 border-amber-200 shadow-lg animate-fade-in" style={{ animationDelay: '400ms' }}>
               <div className="p-6 flex gap-4">
-                <Info className="w-6 h-6 text-orange-500 flex-shrink-0 mt-1" />
+                <Info className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
                 <div>
                   <h4 className="font-semibold text-foreground mb-2">
                     Novos módulos em desenvolvimento
