@@ -36,7 +36,7 @@ export default function HubRH() {
   const loading = appsLoading || permLoading;
 
   const handleAppClick = (route: string, code: string) => {
-    if (isAdmin || code === 'premiacoes') {
+    if (isAdmin || code === 'premiacoes' || code === 'cargos_salarios') {
       navigate(route);
     }
   };
@@ -145,7 +145,7 @@ export default function HubRH() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-8">
             {applications.map((app) => {
               const IconComponent = iconMap[app.icon || 'Trophy'];
-              const hasAccess = isAdmin || app.code === 'premiacoes';
+              const hasAccess = isAdmin || app.code === 'premiacoes' || app.code === 'cargos_salarios';
 
               return (
                 <Card
@@ -194,7 +194,7 @@ export default function HubRH() {
           </div>
 
           {/* Info Card */}
-          {applications.some(app => !isAdmin && app.code !== 'premiacoes') && (
+          {applications.some(app => !isAdmin && app.code !== 'premiacoes' && app.code !== 'cargos_salarios') && (
             <Card className="max-w-6xl mx-auto bg-amber-50 border-amber-200 shadow-lg animate-fade-in" style={{ animationDelay: '400ms' }}>
               <div className="p-6 flex gap-4">
                 <Info className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
@@ -203,8 +203,8 @@ export default function HubRH() {
                     Novos módulos em desenvolvimento
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Os módulos de Cargos e Salários e Indicadores RH estão sendo desenvolvidos e estarão disponíveis em breve. 
-                    O módulo de Premiações já está completo e pronto para uso.
+                    O módulo de Indicadores RH está sendo desenvolvido e estará disponível em breve. 
+                    Os módulos de Premiações e Cargos e Salários já estão completos e prontos para uso.
                   </p>
                 </div>
               </div>
