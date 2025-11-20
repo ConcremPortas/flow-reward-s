@@ -33,7 +33,7 @@ import {
 const menuItems = [
   {
     title: "DASHBOARD",
-    href: "/",
+    href: "/premiacoes",
     icon: LayoutDashboard,
   },
 ];
@@ -41,12 +41,12 @@ const menuItems = [
 const rhItems = [
   {
     title: "Funcionários",
-    href: "/funcionarios",
+    href: "/premiacoes/funcionarios",
     icon: Users,
   },
   {
     title: "Faltas/Advertências",
-    href: "/faltas-advertencias",
+    href: "/premiacoes/faltas-advertencias",
     icon: AlertTriangle,
   },
 ];
@@ -54,12 +54,12 @@ const rhItems = [
 const sesmtItems = [
   {
     title: "DSS",
-    href: "/dss",
+    href: "/premiacoes/dss",
     icon: Shield,
   },
   {
     title: "EPI",
-    href: "/epi",
+    href: "/premiacoes/epi",
     icon: HardHat,
   },
 ];
@@ -67,17 +67,17 @@ const sesmtItems = [
 const producaoItems = [
   {
     title: "Produção por Setor",
-    href: "/producao-setor",
+    href: "/premiacoes/producao-setor",
     icon: BarChart3,
   },
   {
     title: "Indicadores por Setor",
-    href: "/indicadores-setor",
+    href: "/premiacoes/indicadores-setor",
     icon: TrendingUp,
   },
   {
     title: "Indicadores Gerais",
-    href: "/indicadores-gerais",
+    href: "/premiacoes/indicadores-gerais",
     icon: PieChart,
   },
 ];
@@ -85,7 +85,7 @@ const producaoItems = [
 const premiacoesItems = [
   {
     title: "Gerar Premiações",
-    href: "/gerar-premiacoes",
+    href: "/premiacoes/gerar-premiacoes",
     icon: Gift,
   },
 ];
@@ -93,52 +93,52 @@ const premiacoesItems = [
 const cadastrosItems = [
   {
     title: "Setores",
-    href: "/cadastros/setores",
+    href: "/premiacoes/cadastros/setores",
     icon: Building2,
   },
   {
     title: "Faixas",
-    href: "/cadastros/faixas",
+    href: "/premiacoes/cadastros/faixas",
     icon: Layers,
   },
   {
     title: "Funções",
-    href: "/cadastros/funcoes",
+    href: "/premiacoes/cadastros/funcoes",
     icon: UserCog,
   },
   {
     title: "Categorias",
-    href: "/cadastros/categorias",
+    href: "/premiacoes/cadastros/categorias",
     icon: Tag,
   },
   {
     title: "Base Premiação",
-    href: "/cadastros/base-premiacao",
+    href: "/premiacoes/cadastros/base-premiacao",
     icon: Target,
   },
   {
     title: "Empresas",
-    href: "/cadastros/empresas",
+    href: "/premiacoes/cadastros/empresas",
     icon: Factory,
   },
   {
     title: "Tipos de Indicadores",
-    href: "/cadastros/tipos-indicadores",
+    href: "/premiacoes/cadastros/tipos-indicadores",
     icon: BarChart4,
   },
   {
     title: "Tipos Indicadores Gerais",
-    href: "/cadastros/tipos-indicadores-gerais",
+    href: "/premiacoes/cadastros/tipos-indicadores-gerais",
     icon: PieChart,
   },
   {
     title: "Locais DSS",
-    href: "/cadastros/locais-dss",
+    href: "/premiacoes/cadastros/locais-dss",
     icon: Shield,
   },
   {
     title: "Fórmulas de Cálculo",
-    href: "/cadastros/formulas-calculo",
+    href: "/premiacoes/cadastros/formulas-calculo",
     icon: Settings,
   },
 ];
@@ -153,8 +153,8 @@ export const Sidebar = () => {
   const location = useLocation();
 
   const isActive = (href: string) => {
-    if (href === "/") {
-      return location.pathname === "/";
+    if (href === "/premiacoes") {
+      return location.pathname === "/premiacoes";
     }
     return location.pathname.startsWith(href);
   };
