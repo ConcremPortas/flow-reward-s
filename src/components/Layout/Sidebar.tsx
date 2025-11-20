@@ -27,8 +27,13 @@ import {
   Gift,
   UserCheck,
   HardHatIcon,
-  TrendingUpIcon
+  TrendingUpIcon,
+  Home,
+  LogOut
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const menuItems = [
   {
@@ -151,6 +156,23 @@ export const Sidebar = () => {
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const { isCollapsed, setIsCollapsed } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/");
+      toast({
+        title: "Logout realizado com sucesso",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao fazer logout",
+        variant: "destructive",
+      });
+    }
+  };
 
   const isActive = (href: string) => {
     if (href === "/premiacoes") {
@@ -487,6 +509,36 @@ export const Sidebar = () => {
           </Link>
         ))}
       </nav>
+
+      {/* Bottom actions */}
+      <div className="p-4 border-t border-primary-hover space-y-2">
+        <Link to="/">
+          <Button
+            variant="sidebar"
+            className={cn(
+              "gap-3 text-left",
+              isCollapsed && "justify-center px-0"
+            )}
+            title={isCollapsed ? "Voltar ao Hub" : undefined}
+          >
+            <Home className="h-5 w-5" />
+            {!isCollapsed && "Voltar ao Hub"}
+          </Button>
+        </Link>
+
+        <Button
+          variant="sidebar"
+          className={cn(
+            "gap-3 text-left",
+            isCollapsed && "justify-center px-0"
+          )}
+          onClick={handleLogout}
+          title={isCollapsed ? "Sair" : undefined}
+        >
+          <LogOut className="h-5 w-5" />
+          {!isCollapsed && "Sair"}
+        </Button>
+      </div>
     </div>
   );
 };
