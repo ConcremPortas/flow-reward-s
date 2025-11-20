@@ -93,7 +93,7 @@ export default function HubRH() {
         <header className="bg-green-900/95 backdrop-blur-sm border-b border-green-800 sticky top-0 z-20">
           <div className="container mx-auto px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <img src={logoImage} alt="Logo" className="h-12 bg-white/10 rounded-lg p-2" />
+              <img src={logoImage} alt="Logo" className="h-12" />
               <div>
                 <h1 className="text-xl font-bold text-white">Concrem</h1>
                 <p className="text-sm text-white/70">Sistema de Gestão Integrada</p>
