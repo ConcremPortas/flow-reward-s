@@ -27,7 +27,10 @@ export function useUserPermissions(userId?: string) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchUserRoles = async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -76,6 +79,8 @@ export function useUserPermissions(userId?: string) {
     if (userId) {
       fetchUserRoles();
       fetchUserPermissions();
+    } else {
+      setLoading(false);
     }
   }, [userId]);
 
