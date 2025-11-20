@@ -47,6 +47,68 @@ export type Database = {
         }
         Relationships: []
       }
+      concrem_cargos: {
+        Row: {
+          atividades: string[] | null
+          ativo: boolean
+          competencias: string[] | null
+          created_at: string
+          id: string
+          missao: string | null
+          nivel_hierarquico: number | null
+          nome: string
+          observacoes: string | null
+          requisitos: string | null
+          responsabilidades: string[] | null
+          salario_maximo: number | null
+          salario_minimo: number | null
+          setor_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          atividades?: string[] | null
+          ativo?: boolean
+          competencias?: string[] | null
+          created_at?: string
+          id?: string
+          missao?: string | null
+          nivel_hierarquico?: number | null
+          nome: string
+          observacoes?: string | null
+          requisitos?: string | null
+          responsabilidades?: string[] | null
+          salario_maximo?: number | null
+          salario_minimo?: number | null
+          setor_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          atividades?: string[] | null
+          ativo?: boolean
+          competencias?: string[] | null
+          created_at?: string
+          id?: string
+          missao?: string | null
+          nivel_hierarquico?: number | null
+          nome?: string
+          observacoes?: string | null
+          requisitos?: string | null
+          responsabilidades?: string[] | null
+          salario_maximo?: number | null
+          salario_minimo?: number | null
+          setor_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concrem_cargos_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "concrem_setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concrem_categorias: {
         Row: {
           ativo: boolean
