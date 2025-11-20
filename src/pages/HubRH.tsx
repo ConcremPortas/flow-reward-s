@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import logoImage from "@/assets/logo-concrem-hub.png";
+import backgroundImage from "@/assets/background-hub.png";
 
 const iconMap: Record<string, any> = {
   Trophy,
@@ -57,8 +58,12 @@ export default function HubRH() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-700 to-emerald-600">
-        <div className="absolute inset-0 bg-black/10" />
+      <div className="min-h-screen relative">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${backgroundImage})`, filter: 'blur(3px)' }}
+        />
+        <div className="absolute inset-0 bg-black/30" />
         <div className="relative z-10">
           <header className="bg-background/95 backdrop-blur-sm border-b border-border">
             <div className="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -83,9 +88,14 @@ export default function HubRH() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-700 to-emerald-600 relative">
+    <div className="min-h-screen relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${backgroundImage})`, filter: 'blur(3px)' }}
+      />
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/10" />
+      <div className="fixed inset-0 bg-black/30" />
       
       {/* Content */}
       <div className="relative z-10">
