@@ -24,7 +24,9 @@ import { TiposIndicadoresGerais } from "./pages/cadastros/TiposIndicadoresGerais
 import { LocaisDSS } from "./pages/cadastros/LocaisDSS";
 import FormulasCalculo from "./pages/cadastros/FormulasCalculo";
 import GerarPremiacoes from "./pages/GerarPremiacoes";
-import CargosSalarios from "./pages/CargosSalarios";
+import CargosSalariosDashboard from "./pages/cargos-salarios/Dashboard";
+import Cargos from "./pages/cargos-salarios/Cargos";
+import FuncionariosCargosSalarios from "./pages/cargos-salarios/Funcionarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,7 +63,10 @@ const App = () => (
           <Route path="/premiacoes/gerar-premiacoes" element={<MainLayout><GerarPremiacoes /></MainLayout>} />
           
           {/* Cargos e Salários App Routes */}
-          <Route path="/cargos-salarios" element={<CargosSalarios />} />
+          <Route path="/cargos-salarios" element={<MainLayout><CargosSalariosDashboard /></MainLayout>} />
+          <Route path="/cargos-salarios/cargos" element={<MainLayout><Cargos /></MainLayout>} />
+          <Route path="/cargos-salarios/funcionarios" element={<MainLayout><FuncionariosCargosSalarios /></MainLayout>} />
+          <Route path="/cargos-salarios/cadastros/setores" element={<MainLayout><Setores /></MainLayout>} />
           
           {/* Indicadores RH App Routes - TODO */}
           <Route path="/indicadores-rh" element={<MainLayout><NotFound /></MainLayout>} />
