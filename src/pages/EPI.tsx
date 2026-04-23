@@ -35,6 +35,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { parseDateSafe } from "@/lib/dateUtils";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Save, FileText, Edit, Trash2, Search } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
@@ -422,7 +423,7 @@ export const EPI = () => {
                         <h4 className="font-medium">{epi.tipo_epi}</h4>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
-                            {format(new Date(epi.data_entrega), "dd/MM/yyyy", { locale: ptBR })}
+                            {format(parseDateSafe(epi.data_entrega), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
                           <Button
                             variant="ghost"
@@ -476,7 +477,7 @@ export const EPI = () => {
                         )}
                         {epi.data_vencimento && (
                           <span>
-                            <strong>Vencimento:</strong> {format(new Date(epi.data_vencimento), "dd/MM/yyyy", { locale: ptBR })}
+                            <strong>Vencimento:</strong> {format(parseDateSafe(epi.data_vencimento), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
                         )}
                       </div>

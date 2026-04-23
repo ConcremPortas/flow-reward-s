@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Search, Save, Calendar, Edit, Trash2, Filter, Eye, Download, UploadCloud } from "lucide-react";
 import { format } from "date-fns";
+import { parseDateSafe } from "@/lib/dateUtils";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from "xlsx";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
@@ -674,7 +675,7 @@ export const FaltasAdvertencias = () => {
                             {registro.quantidade || 1}
                           </TableCell>
                           <TableCell>
-                            {format(new Date(registro.data_ocorrencia), "MM/yyyy", { locale: ptBR })}
+                            {format(parseDateSafe(registro.data_ocorrencia), "MM/yyyy", { locale: ptBR })}
                           </TableCell>
                           <TableCell className="max-w-xs">
                             {registro.descricao || registro.motivo}

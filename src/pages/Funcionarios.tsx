@@ -1010,7 +1010,7 @@ export const Funcionarios = () => {
                 <Label className="font-semibold">Data de Admissão</Label>
                 <p className="text-sm">
                   {selectedFuncionario.data_admissao 
-                    ? new Date(selectedFuncionario.data_admissao).toLocaleDateString('pt-BR')
+                    ? new Date(selectedFuncionario.data_admissao + 'T12:00:00').toLocaleDateString('pt-BR')
                     : "Não informado"
                   }
                 </p>

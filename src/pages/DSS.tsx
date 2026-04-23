@@ -27,7 +27,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/dateUtils";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Save, FileText, Edit, Trash2 } from "lucide-react";
 import { 
@@ -409,7 +409,7 @@ export const DSS = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
-                            {format(new Date(dss.data_realizacao), "dd/MM/yyyy", { locale: ptBR })}
+                            {formatDate(dss.data_realizacao)}
                           </span>
                           <Button
                             variant="ghost"
