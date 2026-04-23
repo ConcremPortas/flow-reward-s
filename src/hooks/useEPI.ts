@@ -25,7 +25,7 @@ export const useEPI = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_epi')
+        .from('concremrh_epi')
         .select('*')
         .order('data_entrega', { ascending: false });
 
@@ -46,7 +46,7 @@ export const useEPI = () => {
   const createEPI = async (epi: Omit<EPI, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_epi')
+        .from('concremrh_epi')
         .insert([epi])
         .select()
         .single();
@@ -76,7 +76,7 @@ export const useEPI = () => {
       console.log('Hook updateEPI - dados recebidos:', { id, epi });
       
       const { data, error } = await supabase
-        .from('concrem_epi')
+        .from('concremrh_epi')
         .update(epi)
         .eq('id', id)
         .select()
@@ -107,7 +107,7 @@ export const useEPI = () => {
   const deleteEPI = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_epi')
+        .from('concremrh_epi')
         .delete()
         .eq('id', id);
 

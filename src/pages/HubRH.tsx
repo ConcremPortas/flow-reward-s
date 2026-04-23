@@ -1,9 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { useHRApplications } from '@/hooks/useHRApplications';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
-import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Trophy, Briefcase, BarChart3, LogOut, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -22,37 +20,23 @@ export default function HubRH() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { applications, loading: appsLoading } = useHRApplications();
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string>('');
-  const { isAdmin, loading: permLoading } = useUserPermissions(userId || undefined);
+  const { profile, signOut, canAccessHub } = useAuth();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id || null);
-      setUserEmail(session?.user?.email || '');
-    });
-  }, []);
-
-  const loading = appsLoading || permLoading;
+  const loading = appsLoading;
+  const isAdmin = profile?.perfil === 'admin';
+  const userEmail = profile?.email ?? '';
 
   const handleAppClick = (route: string, code: string) => {
-    if (isAdmin || code === 'premiacoes' || code === 'cargos_salarios') {
-      navigate(route);
-    }
+    if (canAccessHub(code)) navigate(route);
   };
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      navigate("/");
-      toast({
-        title: "Logout realizado com sucesso",
-      });
+      await signOut();
+      navigate("/login");
+      toast({ title: "Logout realizado com sucesso" });
     } catch (error) {
-      toast({
-        title: "Erro ao fazer logout",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao fazer logout", variant: "destructive" });
     }
   };
 
@@ -112,7 +96,7 @@ export default function HubRH() {
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-white">
-                  {isAdmin ? 'Administrador' : 'Usuário'}
+                  {profile?.nome ?? (isAdmin ? 'Administrador' : 'Usuário')}
                 </p>
                 <p className="text-xs text-white/70">{userEmail}</p>
               </div>
@@ -145,7 +129,7 @@ export default function HubRH() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-8">
             {applications.map((app) => {
               const IconComponent = iconMap[app.icon || 'Trophy'];
-              const hasAccess = isAdmin || app.code === 'premiacoes' || app.code === 'cargos_salarios';
+              const hasAccess = canAccessHub(app.code);
 
               return (
                 <Card
@@ -194,7 +178,7 @@ export default function HubRH() {
           </div>
 
           {/* Info Card */}
-          {applications.some(app => !isAdmin && app.code !== 'premiacoes' && app.code !== 'cargos_salarios') && (
+          {applications.some(app => !canAccessHub(app.code)) && (
             <Card className="max-w-6xl mx-auto bg-amber-50 border-amber-200 shadow-lg animate-fade-in" style={{ animationDelay: '400ms' }}>
               <div className="p-6 flex gap-4">
                 <Info className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />

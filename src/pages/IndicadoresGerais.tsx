@@ -96,7 +96,7 @@ export const IndicadoresGerais = () => {
 
   const handleEdit = (indicador: any) => {
     setTipoIndicadorSelecionado(indicador.tipo_indicador_id);
-    setCompetencia(formatDateToInput(indicador.competencia));
+    setCompetencia(formatDateToInput(indicador.competencia).slice(0, 7));
     setMeta(indicador.meta.toString());
     setRealizado(indicador.realizado.toString());
     setEditingRecord(indicador.id);
@@ -156,7 +156,7 @@ export const IndicadoresGerais = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Competência *</label>
               <Input
-                type="date"
+                type="month"
                 value={competencia}
                 onChange={(e) => setCompetencia(e.target.value)}
               />

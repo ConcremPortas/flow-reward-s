@@ -30,18 +30,35 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
+import { Check, ChevronsUpDown, Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSetores } from "@/hooks/useSetores";
-import { useIndicadoresSetor } from "@/hooks/useIndicadoresSetor";
+import { useIndicadoresSetor, type IndicadorSetor } from "@/hooks/useIndicadoresSetor";
 import { formatDateToBrasilia, formatDateToBrazilian, formatDateToInput } from "@/lib/dateUtils";
 
 export const IndicadoresSetor = () => {
   const { setores, loading: setoresLoading } = useSetores();
-  const { indicadores, loading: indicadoresLoading, createIndicador, updateIndicador, deleteIndicador } = useIndicadoresSetor();
+  const {
+    indicadores,
+    loading: indicadoresLoading,
+    createIndicador,
+    createIndicadoresBulk,
+    updateIndicador,
+    deleteIndicador,
+  } = useIndicadoresSetor();
   const [searchTerm, setSearchTerm] = useState("");
   const [setorFilter, setSetorFilter] = useState("");
-  const [setorSelecionado, setSetorSelecionado] = useState("");
+  const [setoresSelecionados, setSetoresSelecionados] = useState<string[]>([]);
   const [competencia, setCompetencia] = useState("");
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
   
@@ -90,8 +107,13 @@ export const IndicadoresSetor = () => {
   };
 
   const handleSave = async () => {
-    if (!setorSelecionado || !competencia) {
-      alert("Por favor, selecione o setor e a competência");
+    if (!competencia) {
+      alert("Por favor, selecione a competência");
+      return;
+    }
+
+    if (setoresSelecionados.length !== 1) {
+      alert("Para lançar indicadores manualmente, selecione apenas 1 setor");
       return;
     }
 
@@ -105,7 +127,7 @@ export const IndicadoresSetor = () => {
     const dataFormatada = formatDateToBrasilia(competencia);
 
     const indicador = {
-      setor_id: setorSelecionado,
+      setor_id: setoresSelecionados[0],
       competencia: dataFormatada,
       hora_maquina_meta: horaMaquinaMeta ? parseFloat(horaMaquinaMeta) : undefined,
       hora_maquina_realizado: horaMaquinaRealizado ? parseFloat(horaMaquinaRealizado) : undefined,
@@ -128,9 +150,69 @@ export const IndicadoresSetor = () => {
     handleCancel();
   };
 
-  const handleEdit = (indicador: any) => {
+  const handleSemMedicao = async () => {
+    if (!competencia) {
+      alert("Por favor, selecione a competência");
+      return;
+    }
+
+    if (setoresSelecionados.length === 0) {
+      alert("Por favor, selecione pelo menos 1 setor");
+      return;
+    }
+
+    const dataFormatada = formatDateToBrasilia(competencia);
+
+    if (editingRecord) {
+      if (setoresSelecionados.length !== 1) {
+        alert("Ao editar um registro, selecione apenas 1 setor");
+        return;
+      }
+
+      const updates = {
+        competencia: dataFormatada,
+        hora_maquina_meta: 1,
+        hora_maquina_realizado: 1,
+        identificacao_nc_meta: 1,
+        identificacao_nc_realizado: 1,
+        limpeza_meta: 1,
+        limpeza_realizado: 1,
+        tratamento_nc_meta: 1,
+        tratamento_nc_realizado: 1,
+        operacao_segura_meta: 1,
+        operacao_segura_realizado: 1,
+      };
+
+      await updateIndicador(editingRecord, updates);
+    } else {
+      const rows = setoresSelecionados.map((setorId) => ({
+        setor_id: setorId,
+        competencia: dataFormatada,
+        hora_maquina_meta: 1,
+        hora_maquina_realizado: 1,
+        identificacao_nc_meta: 1,
+        identificacao_nc_realizado: 1,
+        limpeza_meta: 1,
+        limpeza_realizado: 1,
+        tratamento_nc_meta: 1,
+        tratamento_nc_realizado: 1,
+        operacao_segura_meta: 1,
+        operacao_segura_realizado: 1,
+      }));
+
+      if (rows.length === 1) {
+        await createIndicador(rows[0]);
+      } else {
+        await createIndicadoresBulk(rows);
+      }
+    }
+
+    handleCancel();
+  };
+
+  const handleEdit = (indicador: IndicadorSetor) => {
     setEditingRecord(indicador.id);
-    setSetorSelecionado(indicador.setor_id || "");
+    setSetoresSelecionados(indicador.setor_id ? [indicador.setor_id] : []);
     setCompetencia(formatDateToInput(indicador.competencia));
     setHoraMaquinaMeta(indicador.hora_maquina_meta?.toString() || "");
     setHoraMaquinaRealizado(indicador.hora_maquina_realizado?.toString() || "");
@@ -150,7 +232,7 @@ export const IndicadoresSetor = () => {
 
   const handleCancel = () => {
     setEditingRecord(null);
-    setSetorSelecionado("");
+    setSetoresSelecionados([]);
     setCompetencia("");
     setHoraMaquinaMeta("");
     setHoraMaquinaRealizado("");
@@ -163,6 +245,65 @@ export const IndicadoresSetor = () => {
     setOperacaoSeguraMeta("");
     setOperacaoSeguraRealizado("");
   };
+
+  const toggleSetorSelecionado = (setorId: string) => {
+    setSetoresSelecionados((current) =>
+      current.includes(setorId) ? current.filter((id) => id !== setorId) : [...current, setorId],
+    );
+  };
+
+  const indicadoresForm = [
+    {
+      key: "hora_maquina",
+      label: "Hora Máquina",
+      meta: horaMaquinaMeta,
+      setMeta: setHoraMaquinaMeta,
+      realizado: horaMaquinaRealizado,
+      setRealizado: setHoraMaquinaRealizado,
+      metaPlaceholder: "Ex: 100",
+      realizadoPlaceholder: "Ex: 95",
+    },
+    {
+      key: "identificacao_nc",
+      label: "Identificação de Não Conformidades",
+      meta: identificacaoNcMeta,
+      setMeta: setIdentificacaoNcMeta,
+      realizado: identificacaoNcRealizado,
+      setRealizado: setIdentificacaoNcRealizado,
+      metaPlaceholder: "Ex: 100",
+      realizadoPlaceholder: "Ex: 98",
+    },
+    {
+      key: "limpeza",
+      label: "Limpeza",
+      meta: limpezaMeta,
+      setMeta: setLimpezaMeta,
+      realizado: limpezaRealizado,
+      setRealizado: setLimpezaRealizado,
+      metaPlaceholder: "Ex: 100",
+      realizadoPlaceholder: "Ex: 100",
+    },
+    {
+      key: "tratamento_nc",
+      label: "Tratamento de Não Conformidades",
+      meta: tratamentoNcMeta,
+      setMeta: setTratamentoNcMeta,
+      realizado: tratamentoNcRealizado,
+      setRealizado: setTratamentoNcRealizado,
+      metaPlaceholder: "Ex: 100",
+      realizadoPlaceholder: "Ex: 95",
+    },
+    {
+      key: "operacao_segura",
+      label: "Operação Segura",
+      meta: operacaoSeguraMeta,
+      setMeta: setOperacaoSeguraMeta,
+      realizado: operacaoSeguraRealizado,
+      setRealizado: setOperacaoSeguraRealizado,
+      metaPlaceholder: "Ex: 100",
+      realizadoPlaceholder: "Ex: 100",
+    },
+  ] as const;
 
   if (setoresLoading || indicadoresLoading) {
     return (
@@ -186,19 +327,62 @@ export const IndicadoresSetor = () => {
           {/* Dados básicos */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Setor *</Label>
-              <Select value={setorSelecionado} onValueChange={setSetorSelecionado}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {setores.filter(s => s.ativo).map(setor => (
-                    <SelectItem key={setor.id} value={setor.id}>
-                      {setor.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Setor(es) *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className={cn("w-full justify-between", !setoresSelecionados.length && "text-muted-foreground")}
+                  >
+                    {setoresSelecionados.length
+                      ? setores
+                          .filter((s) => setoresSelecionados.includes(s.id))
+                          .map((s) => s.nome)
+                          .join(", ")
+                      : "Selecione o(s) setor(es)"}
+                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput placeholder="Buscar setor..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum setor encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {setores
+                          .filter((s) => s.ativo)
+                          .map((setor) => (
+                            <CommandItem
+                              key={setor.id}
+                              value={setor.nome}
+                              onSelect={() => toggleSetorSelecionado(setor.id)}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  setoresSelecionados.includes(setor.id) ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              {setor.nome}
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {setoresSelecionados.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {setores
+                    .filter((s) => setoresSelecionados.includes(s.id))
+                    .map((setor) => (
+                      <Badge key={setor.id} variant="secondary">
+                        {setor.nome}
+                      </Badge>
+                    ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -214,206 +398,83 @@ export const IndicadoresSetor = () => {
           {/* Indicadores */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Indicadores</h3>
-            
-            {/* Hora Máquina */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
-              <div className="col-span-2">
-                <h4 className="font-medium">Hora Máquina</h4>
-              </div>
-              <div className="space-y-2">
-                <Label>Meta</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 100"
-                  value={horaMaquinaMeta}
-                  onChange={(e) => setHoraMaquinaMeta(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Realizado</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 95"
-                  value={horaMaquinaRealizado}
-                  onChange={(e) => setHoraMaquinaRealizado(e.target.value)}
-                />
-              </div>
-              {horaMaquinaMeta && horaMaquinaRealizado && (
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(calcularPercentual(horaMaquinaRealizado, horaMaquinaMeta))}
-                    <span className={cn("font-medium", getStatusColor(calcularPercentual(horaMaquinaRealizado, horaMaquinaMeta)))}>
-                      {calcularPercentual(horaMaquinaRealizado, horaMaquinaMeta)}%
-                    </span>
-                  </div>
-                  <Progress value={Math.min(calcularPercentual(horaMaquinaRealizado, horaMaquinaMeta), 100)} className="mt-2" />
-                </div>
-              )}
-            </div>
 
-            {/* Identificação NC */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
-              <div className="col-span-2">
-                <h4 className="font-medium">Identificação de Não Conformidades</h4>
-              </div>
-              <div className="space-y-2">
-                <Label>Meta</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 100"
-                  value={identificacaoNcMeta}
-                  onChange={(e) => setIdentificacaoNcMeta(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Realizado</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 98"
-                  value={identificacaoNcRealizado}
-                  onChange={(e) => setIdentificacaoNcRealizado(e.target.value)}
-                />
-              </div>
-              {identificacaoNcMeta && identificacaoNcRealizado && (
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(calcularPercentual(identificacaoNcRealizado, identificacaoNcMeta))}
-                    <span className={cn("font-medium", getStatusColor(calcularPercentual(identificacaoNcRealizado, identificacaoNcMeta)))}>
-                      {calcularPercentual(identificacaoNcRealizado, identificacaoNcMeta)}%
-                    </span>
-                  </div>
-                  <Progress value={Math.min(calcularPercentual(identificacaoNcRealizado, identificacaoNcMeta), 100)} className="mt-2" />
-                </div>
-              )}
-            </div>
+            <div className="border rounded-lg overflow-x-auto">
+              <Table className="min-w-[880px]">
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[360px]">Indicador</TableHead>
+                    <TableHead className="w-[180px]">Meta</TableHead>
+                    <TableHead className="w-[180px]">Realizado</TableHead>
+                    <TableHead className="w-[160px]">% Ating.</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {indicadoresForm.map((row) => {
+                    const percentual =
+                      row.meta && row.realizado ? calcularPercentual(row.realizado, row.meta) : null;
 
-            {/* Limpeza */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
-              <div className="col-span-2">
-                <h4 className="font-medium">Limpeza</h4>
-              </div>
-              <div className="space-y-2">
-                <Label>Meta</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 100"
-                  value={limpezaMeta}
-                  onChange={(e) => setLimpezaMeta(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Realizado</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 100"
-                  value={limpezaRealizado}
-                  onChange={(e) => setLimpezaRealizado(e.target.value)}
-                />
-              </div>
-              {limpezaMeta && limpezaRealizado && (
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(calcularPercentual(limpezaRealizado, limpezaMeta))}
-                    <span className={cn("font-medium", getStatusColor(calcularPercentual(limpezaRealizado, limpezaMeta)))}>
-                      {calcularPercentual(limpezaRealizado, limpezaMeta)}%
-                    </span>
-                  </div>
-                  <Progress value={Math.min(calcularPercentual(limpezaRealizado, limpezaMeta), 100)} className="mt-2" />
-                </div>
-              )}
-            </div>
-
-            {/* Tratamento NC */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
-              <div className="col-span-2">
-                <h4 className="font-medium">Tratamento de Não Conformidades</h4>
-              </div>
-              <div className="space-y-2">
-                <Label>Meta</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 100"
-                  value={tratamentoNcMeta}
-                  onChange={(e) => setTratamentoNcMeta(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Realizado</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 95"
-                  value={tratamentoNcRealizado}
-                  onChange={(e) => setTratamentoNcRealizado(e.target.value)}
-                />
-              </div>
-              {tratamentoNcMeta && tratamentoNcRealizado && (
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(calcularPercentual(tratamentoNcRealizado, tratamentoNcMeta))}
-                    <span className={cn("font-medium", getStatusColor(calcularPercentual(tratamentoNcRealizado, tratamentoNcMeta)))}>
-                      {calcularPercentual(tratamentoNcRealizado, tratamentoNcMeta)}%
-                    </span>
-                  </div>
-                  <Progress value={Math.min(calcularPercentual(tratamentoNcRealizado, tratamentoNcMeta), 100)} className="mt-2" />
-                </div>
-              )}
-            </div>
-
-            {/* Operação Segura */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
-              <div className="col-span-2">
-                <h4 className="font-medium">Operação Segura</h4>
-              </div>
-              <div className="space-y-2">
-                <Label>Meta</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 100"
-                  value={operacaoSeguraMeta}
-                  onChange={(e) => setOperacaoSeguraMeta(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Realizado</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 100"
-                  value={operacaoSeguraRealizado}
-                  onChange={(e) => setOperacaoSeguraRealizado(e.target.value)}
-                />
-              </div>
-              {operacaoSeguraMeta && operacaoSeguraRealizado && (
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(calcularPercentual(operacaoSeguraRealizado, operacaoSeguraMeta))}
-                    <span className={cn("font-medium", getStatusColor(calcularPercentual(operacaoSeguraRealizado, operacaoSeguraMeta)))}>
-                      {calcularPercentual(operacaoSeguraRealizado, operacaoSeguraMeta)}%
-                    </span>
-                  </div>
-                  <Progress value={Math.min(calcularPercentual(operacaoSeguraRealizado, operacaoSeguraMeta), 100)} className="mt-2" />
-                </div>
-              )}
+                    return (
+                      <TableRow key={row.key} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium">{row.label}</TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder={row.metaPlaceholder}
+                            value={row.meta}
+                            onChange={(e) => row.setMeta(e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder={row.realizadoPlaceholder}
+                            value={row.realizado}
+                            onChange={(e) => row.setRealizado(e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {percentual === null ? (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(percentual)}
+                                <span className={cn("text-sm font-medium", getStatusColor(percentual))}>
+                                  {percentual}%
+                                </span>
+                              </div>
+                              <Progress value={Math.min(percentual, 100)} className="h-2" />
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
           </div>
 
           <div className="flex justify-end space-x-2">
+            <Button
+              variant="secondary"
+              className="gap-2"
+              onClick={handleSemMedicao}
+              disabled={!competencia || setoresSelecionados.length === 0 || (editingRecord && setoresSelecionados.length !== 1)}
+            >
+              <Minus className="h-4 w-4" />
+              Sem medição
+            </Button>
             <Button variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
             <Button 
               className="gap-2" 
               onClick={handleSave}
-              disabled={!setorSelecionado || !competencia}
+              disabled={!competencia || setoresSelecionados.length !== 1}
             >
               <Plus className="h-4 w-4" />
               {editingRecord ? "Atualizar" : "Adicionar"} Indicadores

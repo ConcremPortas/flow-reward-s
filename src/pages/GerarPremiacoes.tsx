@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Search, Download, Calculator } from 'lucide-react';
+import { Calculator, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useBasePremiacao } from '@/hooks/useBasePremiacao';
 import { useFuncionarios } from '@/hooks/useFuncionarios';
 import { useFormulasCalculo } from '@/hooks/useFormulasCalculo';
@@ -33,8 +34,8 @@ import { format } from 'date-fns';
 
 // Função para calcular comissão de Kits
 const calcularComissao = (realizado: number) => {
-  if (realizado >= 9000) {
-    const faixasCompletas = Math.floor((realizado - 9000) / 250);
+  if (realizado >= 10000) {
+    const faixasCompletas = Math.floor((realizado - 10000) / 250);
     const faixasLimitadas = Math.min(faixasCompletas, 44);
     const bonus = 100 + (faixasLimitadas * 25);
     return bonus;
@@ -87,13 +88,18 @@ interface FuncionarioPremiacao {
   nota_geral: number;
   bonus_possivel: number;
   bonus_alcancado: number;
+  resultado_id?: string;
+  valor_fixo?: number;
+  valor_ajustado?: number;
+  observacao_ajuste?: string;
 }
 
 const GerarPremiacoes = () => {
+  const navigate = useNavigate();
   const { bases } = useBasePremiacao();
   const { funcionarios } = useFuncionarios();
   const { formulas } = useFormulasCalculo();
-  const { salvarResultados, verificarResultadosExistentes, resultados } = useResultadosPremiacao();
+  const { salvarResultados, verificarResultadosExistentes, excluirResultados, resultados } = useResultadosPremiacao();
   const { registros: faltasAdvertencias } = useFaltasAdvertencias();
   const { epiRecords } = useEPI();
   const { dssRecords } = useDSS();
@@ -106,93 +112,28 @@ const GerarPremiacoes = () => {
   const [baseId, setBaseId] = useState('');
   const [competencia, setCompetencia] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
-  const [competenciaVisualizacao, setCompetenciaVisualizacao] = useState('');
-  const [baseVisualizacao, setBaseVisualizacao] = useState('');
-  const [categoriaVisualizacao, setCategoriaVisualizacao] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [premiacoes, setPremiacoes] = useState<FuncionarioPremiacao[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
 
+  const parametrosRef = useRef<HTMLDivElement | null>(null);
+
   const baseSelecionada = bases.find(b => b.id === baseId);
-  const baseVisualizacaoSelecionada = bases.find(b => b.id === baseVisualizacao);
 
   // Util: normalizar texto (remover acentos e deixar maiúsculo)
   const normalize = (s?: string) =>
     (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 
-  // Flags para visualização (baseadas na base de visualização)
-  const isProducao = normalize(baseVisualizacaoSelecionada?.nome) === 'PRODUCAO';
-  const isKits = normalize(baseVisualizacaoSelecionada?.nome) === 'KITS';
+  // Helper: extrai multiplicador KITS do nome da base ("KIT 25%" → 0.25, "KITS" → 1.0)
+  const extractKitsMultiplier = (baseName?: string): number => {
+    const normalized = normalize(baseName);
+    const match = normalized.match(/(\d+)%/);
+    if (match) return parseInt(match[1]) / 100;
+    return 1.0;
+  };
 
   // Flags para cálculo (baseadas na base de geração selecionada)
   const isProducaoGeracao = normalize(baseSelecionada?.nome) === 'PRODUCAO';
-  const isKitsGeracao = normalize(baseSelecionada?.nome) === 'KITS';
-
-  const filteredPremiacoes = premiacoes.filter(premiacao =>
-    premiacao.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    premiacao.setor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    premiacao.cod_funcionario.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Carregar resultados salvos quando mudar base/competência de visualização
-  const carregarResultadosSalvos = () => {
-    if (!baseVisualizacao || !competenciaVisualizacao) {
-      setPremiacoes([]);
-      return;
-    }
-
-    const mesCompetencia = competenciaVisualizacao + '-01';
-    let resultadosFiltrados = resultados.filter(r => 
-      r.mes_competencia === mesCompetencia && 
-      r.base_premiacao_id === baseVisualizacao
-    );
-
-    // Filtrar por categoria se selecionada
-    if (categoriaVisualizacao) {
-      resultadosFiltrados = resultadosFiltrados.filter(r => 
-        r.categoria?.toUpperCase().includes(categoriaVisualizacao.toUpperCase())
-      );
-    }
-
-    if (resultadosFiltrados.length > 0) {
-      const premiacoesCarregadas: FuncionarioPremiacao[] = resultadosFiltrados.map(r => ({
-        id: r.funcionario_id || r.id,
-        cod_funcionario: r.cod_funcionario || '',
-        nome: r.nome,
-        setor: r.setor || 'N/A',
-        funcao: r.funcao || 'N/A',
-        faixa: r.faixa || 'N/A',
-        categoria: r.categoria || 'N/A',
-        valor_faixa: r.valor_faixa || 0,
-        percentual_producao: r.percentual_producao || undefined,
-        nota_producao: r.nota_producao || undefined,
-        nota_epi: r.nota_epi,
-        nota_faltas: r.nota_faltas,
-        nota_advertencias: r.nota_advertencias,
-        nota_dss: r.nota_dss,
-        // Novos indicadores para Supervisor/Encarregado em Produção
-        nota_faturamento: r.nota_faturamento ?? undefined,
-        nota_itens_nc: r.nota_itens_nc ?? undefined,
-        nota_tratamento_nc: r.nota_tratamento_nc ?? undefined,
-        nota_hora_maquina: r.nota_hora_maquina ?? undefined,
-        nota_operacao_segura: r.nota_operacao_segura ?? undefined,
-        nota_limpeza: r.nota_limpeza ?? undefined,
-        valor_kits: r.valor_kits || undefined,
-        nota_geral: r.nota_geral,
-        bonus_possivel: r.bonus_possivel,
-        bonus_alcancado: r.bonus_alcancado
-      }));
-      setPremiacoes(premiacoesCarregadas);
-    } else {
-      setPremiacoes([]);
-    }
-  };
-
-  // Carregar resultados salvos quando base/competência/categoria de visualização mudar
-  React.useEffect(() => {
-    carregarResultadosSalvos();
-  }, [baseVisualizacao, competenciaVisualizacao, categoriaVisualizacao, resultados]);
+  const isKitsGeracao = normalize(baseSelecionada?.nome).startsWith('KIT');
 
   const iniciarGeracao = async () => {
     if (!baseId || !competencia) return;
@@ -209,7 +150,7 @@ const GerarPremiacoes = () => {
   };
 
   const gerarPremiacoes = async () => {
-    if (!baseId || !competencia || !categoriaId) return;
+    if (!baseId || !competencia) return;
     
     setIsCalculating(true);
     setShowOverwriteDialog(false);
@@ -221,19 +162,19 @@ const GerarPremiacoes = () => {
       console.log('Competência:', competencia);
       console.log('==============================================\n');
 
-      // Filtrar apenas funcionários com a base de premiação E categoria selecionadas
+      // Filtrar funcionários pela base e, opcionalmente, pela categoria
       const funcionariosAtivos = funcionarios.filter(f => 
         f.ativo && 
         f.base_premiacao_id === baseId &&
-        f.categoria_id === categoriaId
+        (categoriaId ? f.categoria_id === categoriaId : true)
       );
 
       console.log('🔍 Filtro de funcionários:', {
         totalFuncionarios: funcionarios.length,
         baseIdSelecionada: baseId,
         baseSelecionada: baseSelecionada?.nome,
-        categoriaIdSelecionada: categoriaId,
-        categoriaSelecionada: categorias.find(c => c.id === categoriaId)?.nome,
+        categoriaIdSelecionada: categoriaId || 'TODAS',
+        categoriaSelecionada: categoriaId ? categorias.find(c => c.id === categoriaId)?.nome : 'Todas',
         funcionariosAtivos: funcionariosAtivos.length,
         detalheFuncionarios: funcionarios.map(f => ({
           nome: f.nome,
@@ -247,18 +188,24 @@ const GerarPremiacoes = () => {
       });
 
       if (funcionariosAtivos.length === 0) {
-        alert('Nenhum funcionário encontrado com a base de premiação e categoria selecionadas.');
+        alert('Nenhum funcionário encontrado com a base de premiação selecionada (e categoria, se aplicável).');
         setIsCalculating(false);
         return;
       }
       
       const premiacoesCalculadas: FuncionarioPremiacao[] = funcionariosAtivos.map(funcionario => {
-        // Buscar fórmula pelo nome: "CATEGORIA - BASE"
+        // Buscar fórmula: 1) por categoria_id + base_premiacao_id, 2) por nome "CATEGORIA - BASE"
         const categoriaNome = funcionario.categoria?.nome?.toUpperCase() || '';
         const baseNome = baseSelecionada?.nome?.toUpperCase() || '';
         const nomeFormula = `${categoriaNome} - ${baseNome}`;
-        
-        const formula = formulas.find(f => 
+
+        const formula = formulas.find(f =>
+          f.categoria_id === funcionario.categoria_id &&
+          f.base_premiacao_id === baseId
+        ) || (isKitsGeracao ? formulas.find(f =>
+          f.categoria_id === funcionario.categoria_id &&
+          normalize(bases.find(b => b.id === f.base_premiacao_id)?.nome || '').startsWith('KIT')
+        ) : undefined) || formulas.find(f =>
           normalize(f.nome) === normalize(nomeFormula)
         );
         
@@ -378,9 +325,9 @@ const GerarPremiacoes = () => {
         if (isProducaoGeracao) {
           if (isSupervisorOrEncarregado) {
             // Para supervisores/encarregados, agregar produção de todos os setores que supervisionam
-            const setoresSupervisionados = setores.filter(s => 
-              s.supervisor_id === funcionario.id || s.encarregado_id === funcionario.id
-            );
+            const setoresSupervisionados = funcionario.setor_ids && funcionario.setor_ids.length > 0
+              ? setores.filter(s => funcionario.setor_ids!.includes(s.id))
+              : setores.filter(s => s.supervisor_id === funcionario.id || s.encarregado_id === funcionario.id);
             
             console.log(`📊 ${categoriaNome} ${funcionario.nome} - Buscando setores supervisionados:`, {
               funcionario_id: funcionario.id,
@@ -482,9 +429,9 @@ const GerarPremiacoes = () => {
           }
           
           // Buscar indicadores de setor (agregar dos setores supervisionados)
-          const setoresSupervisionados = setores.filter(s => 
-            s.supervisor_id === funcionario.id || s.encarregado_id === funcionario.id
-          );
+          const setoresSupervisionados = funcionario.setor_ids && funcionario.setor_ids.length > 0
+            ? setores.filter(s => funcionario.setor_ids!.includes(s.id))
+            : setores.filter(s => s.supervisor_id === funcionario.id || s.encarregado_id === funcionario.id);
           
           if (setoresSupervisionados.length > 0) {
             const setorIds = setoresSupervisionados.map(s => s.id);
@@ -533,20 +480,31 @@ const GerarPremiacoes = () => {
         
         // Para Supervisor/Encarregado em PRODUÇÃO, calcular SEM depender de fórmula no banco
         if (isProducaoGeracao && isSupervisorOrEncarregado) {
-          // Pesos fixos: Prod(20%), EPI(10%), Faltas(10%), Adv(3%), DSS(10%),
-          // Fat(30%), ItensNC(5%), TratNC(3%), HoraMaq(3%), OpSeg(3%), Limp(3%)
+          // Pesos da fórmula cadastrada ou fallback padrão
+          const pProd = formula ? (formula.peso_producao_setor || 0) / 100 : 0.20;
+          const pFat  = formula ? (formula.peso_faturamento    || 0) / 100 : 0.26;
+          const pEpi  = formula ? (formula.peso_epi            || 0) / 100 : 0.10;
+          const pFalt = formula ? (formula.peso_faltas         || 0) / 100 : 0.10;
+          const pDss  = formula ? (formula.peso_dss            || 0) / 100 : 0.10;
+          const pINC  = formula ? (formula.peso_itens_nc       || 0) / 100 : 0.05;
+          const pAdv  = formula ? (formula.peso_advertencias   || 0) / 100 : 0.03;
+          const pTNC  = formula ? (formula.peso_tratamento_nc  || 0) / 100 : 0.03;
+          const pHM   = formula ? (formula.peso_hora_maquina   || 0) / 100 : 0.03;
+          const pOS   = formula ? (formula.peso_operacao_segura|| 0) / 100 : 0.03;
+          const pLimp = formula ? (formula.peso_limpeza        || 0) / 100 : 0.07;
+
           notaGeral = (
-            (notaProducao * 0.20) +
-            (notaEpi * 0.10) +
-            (notaFaltas * 0.10) +
-            (notaAdvertencias * 0.03) +
-            (notaDss * 0.10) +
-            (notaFaturamento * 0.30) +
-            (notaItensNC * 0.05) +
-            (notaTratamentoNC * 0.03) +
-            (notaHoraMaquina * 0.03) +
-            (notaOperacaoSegura * 0.03) +
-            (notaLimpeza * 0.03)
+            (notaProducao    * pProd) +
+            (notaFaturamento * pFat)  +
+            (notaEpi         * pEpi)  +
+            (notaFaltas      * pFalt) +
+            (notaDss         * pDss)  +
+            (notaItensNC     * pINC)  +
+            (notaAdvertencias* pAdv)  +
+            (notaTratamentoNC* pTNC)  +
+            (notaHoraMaquina * pHM)   +
+            (notaOperacaoSegura * pOS)+
+            (notaLimpeza     * pLimp)
           );
           
           console.log(`\n=== NOTA GERAL ${categoriaNome} ${funcionario.nome} ===`);
@@ -569,12 +527,12 @@ const GerarPremiacoes = () => {
           console.log(`  Faltas: ${(notaFaltas * 100).toFixed(2)}% × 10% = ${(notaFaltas * 0.10 * 100).toFixed(2)}%`);
           console.log(`  Advertências: ${(notaAdvertencias * 100).toFixed(2)}% × 3% = ${(notaAdvertencias * 0.03 * 100).toFixed(2)}%`);
           console.log(`  DSS: ${(notaDss * 100).toFixed(2)}% × 10% = ${(notaDss * 0.10 * 100).toFixed(2)}%`);
-          console.log(`  Faturamento: ${(notaFaturamento * 100).toFixed(2)}% × 30% = ${(notaFaturamento * 0.30 * 100).toFixed(2)}%`);
+          console.log(`  Faturamento: ${(notaFaturamento * 100).toFixed(2)}% × 26% = ${(notaFaturamento * 0.26 * 100).toFixed(2)}%`);
           console.log(`  Itens NC: ${(notaItensNC * 100).toFixed(2)}% × 5% = ${(notaItensNC * 0.05 * 100).toFixed(2)}%`);
           console.log(`  Tratamento NC: ${(notaTratamentoNC * 100).toFixed(2)}% × 3% = ${(notaTratamentoNC * 0.03 * 100).toFixed(2)}%`);
           console.log(`  Hora Máquina: ${(notaHoraMaquina * 100).toFixed(2)}% × 3% = ${(notaHoraMaquina * 0.03 * 100).toFixed(2)}%`);
           console.log(`  Operação Segura: ${(notaOperacaoSegura * 100).toFixed(2)}% × 3% = ${(notaOperacaoSegura * 0.03 * 100).toFixed(2)}%`);
-          console.log(`  Limpeza: ${(notaLimpeza * 100).toFixed(2)}% × 3% = ${(notaLimpeza * 0.03 * 100).toFixed(2)}%`);
+          console.log(`  Limpeza: ${(notaLimpeza * 100).toFixed(2)}% × 7% = ${(notaLimpeza * 0.07 * 100).toFixed(2)}%`);
           console.log(`Nota Geral Final: ${(notaGeral * 100).toFixed(2)}%`);
           console.log(`---`);
         } else {
@@ -623,9 +581,19 @@ const GerarPremiacoes = () => {
 
         // 8. CALCULAR BÔNUS
         const valorFaixa = funcionario.faixa?.valor || 0;
-        const valorKits = isKitsGeracao ? calcularComissao(Math.floor(Math.random() * 5000) + 8000) : undefined;
+        const valorFixo = funcionario.valor_fixo || 0;
+        // KITS: buscar realizado nos indicadores gerais pelo código 'KITS'
+        const kitsMes = isKitsGeracao
+          ? indicadoresGerais.find(i =>
+              i.tipo_indicador?.codigo === 'KITS' &&
+              i.competencia === dataInicio
+            )
+          : null;
+        const realizadoKits = kitsMes?.realizado || 0;
+        const valorKits = isKitsGeracao ? calcularComissao(realizadoKits) : undefined;
         const bonusPossivel = isKitsGeracao ? (valorKits || 0) : valorFaixa;
-        const bonusAlcancado = bonusPossivel * notaGeral;
+        const multiplicadorKits = isKitsGeracao ? extractKitsMultiplier(baseSelecionada?.nome) : 1.0;
+        const bonusAlcancado = bonusPossivel * notaGeral * multiplicadorKits + valorFixo;
 
         return {
           id: funcionario.id,
@@ -651,18 +619,16 @@ const GerarPremiacoes = () => {
           valor_kits: valorKits,
           nota_geral: notaGeral,
           bonus_possivel: bonusPossivel,
-          bonus_alcancado: bonusAlcancado
+          bonus_alcancado: bonusAlcancado,
+          valor_fixo: valorFixo,
         };
       });
       
       // Salvar resultados na tabela
       const salvoComSucesso = await salvarResultados(competencia, baseId, premiacoesCalculadas);
-      
+
       if (salvoComSucesso) {
-        setPremiacoes(premiacoesCalculadas);
-        // Definir automaticamente os filtros de visualização para a competência recém-gerada
-        setCompetenciaVisualizacao(competencia);
-        setBaseVisualizacao(baseId);
+        navigate(`/premiacoes/relatorio-premiacoes?competencia=${competencia}&baseId=${baseId}`);
       }
       
     } catch (error) {
@@ -687,6 +653,78 @@ const GerarPremiacoes = () => {
 
   const formatPercentage = (value: number) => {
     return `${(value * 100).toFixed(1)}%`;
+  };
+
+  const scrollToRef = (ref: React.RefObject<HTMLDivElement | null>) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const calculosGerados = (() => {
+    const map = new Map<
+      string,
+      {
+        mes_competencia: string;
+        competencia: string;
+        base_premiacao_id: string;
+        total_funcionarios: number;
+        total_bonus_possivel: number;
+        total_bonus_alcancado: number;
+        categorias: string[];
+      }
+    >();
+
+    for (const r of resultados) {
+      if (!r.base_premiacao_id) continue;
+      const key = `${r.mes_competencia}|${r.base_premiacao_id}`;
+      const competencia = r.mes_competencia?.slice(0, 7);
+      if (!competencia) continue;
+
+      const current = map.get(key) || {
+        mes_competencia: r.mes_competencia,
+        competencia,
+        base_premiacao_id: r.base_premiacao_id,
+        total_funcionarios: 0,
+        total_bonus_possivel: 0,
+        total_bonus_alcancado: 0,
+        categorias: [],
+      };
+
+      current.total_funcionarios += 1;
+      current.total_bonus_possivel += r.bonus_possivel || 0;
+      current.total_bonus_alcancado += r.bonus_alcancado || 0;
+
+      if (r.categoria && !current.categorias.includes(r.categoria)) {
+        current.categorias.push(r.categoria);
+      }
+
+      map.set(key, current);
+    }
+
+    const baseNameById = new Map(bases.map((b) => [b.id, b.nome]));
+
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.mes_competencia !== b.mes_competencia) return a.mes_competencia < b.mes_competencia ? 1 : -1;
+      const nameA = baseNameById.get(a.base_premiacao_id) || '';
+      const nameB = baseNameById.get(b.base_premiacao_id) || '';
+      return nameA.localeCompare(nameB);
+    });
+  })();
+
+  const handleVisualizarGerado = (item: { competencia: string; base_premiacao_id: string }) => {
+    const base = bases.find(b => b.id === item.base_premiacao_id);
+    navigate(`/premiacoes/relatorio-premiacoes?competencia=${item.competencia}&baseId=${item.base_premiacao_id}`);
+  };
+
+  const handleEditarGerado = (item: { competencia: string; base_premiacao_id: string }) => {
+    setBaseId(item.base_premiacao_id);
+    setCompetencia(item.competencia);
+    setCategoriaId('');
+    setShowOverwriteDialog(true);
+    requestAnimationFrame(() => scrollToRef(parametrosRef));
+  };
+
+  const handleExcluirGerado = async (item: { competencia: string; base_premiacao_id: string }) => {
+    await excluirResultados(item.competencia, item.base_premiacao_id);
   };
 
   return (
@@ -714,6 +752,7 @@ const GerarPremiacoes = () => {
       </Card>
 
       {/* Filtros */}
+      <div ref={parametrosRef}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -740,12 +779,13 @@ const GerarPremiacoes = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="categoria">Categoria*</Label>
-              <Select value={categoriaId} onValueChange={setCategoriaId}>
+              <Label htmlFor="categoria">Categoria</Label>
+              <Select value={categoriaId || 'TODAS'} onValueChange={(v) => setCategoriaId(v === 'TODAS' ? '' : v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria" />
+                  <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="TODAS">Todas</SelectItem>
                   {categorias
                     .filter(c => ['AUXILIAR', 'SUPERVISOR', 'ENCARREGADO'].includes(c.nome.toUpperCase()))
                     .map((categoria) => (
@@ -772,7 +812,7 @@ const GerarPremiacoes = () => {
                 <AlertDialogTrigger asChild>
                   <Button 
                     onClick={iniciarGeracao} 
-                    disabled={!baseId || !categoriaId || !competencia || isCalculating}
+                    disabled={!baseId || !competencia || isCalculating}
                     className="w-full"
                   >
                     {isCalculating ? 'Calculando...' : 'Gerar Premiações'}
@@ -798,201 +838,125 @@ const GerarPremiacoes = () => {
           </div>
           
           {/* Informação sobre funcionários elegíveis */}
-          {baseId && categoriaId && (
+          {baseId && (
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="text-sm text-blue-800">
                 <strong>Funcionários elegíveis:</strong> {funcionarios.filter(f => 
                   f.ativo && 
                   f.base_premiacao_id === baseId && 
-                  f.categoria_id === categoriaId
-                ).length} funcionário(s) com base {baseSelecionada?.nome} e categoria {categorias.find(c => c.id === categoriaId)?.nome}
+                  (categoriaId ? f.categoria_id === categoriaId : true)
+                ).length} funcionário(s) com base {baseSelecionada?.nome} {categoriaId ? `e categoria ${categorias.find(c => c.id === categoriaId)?.nome}` : '(todas categorias)'}
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+      </div>
 
-      {/* Filtros de Visualização */}
       <Card>
         <CardHeader>
-          <CardTitle>Visualizar Premiações Salvas</CardTitle>
+          <CardTitle>Premiações Geradas</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="baseVisualizacao">Base de Premiação</Label>
-              <Select value={baseVisualizacao} onValueChange={setBaseVisualizacao}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma base" />
-                </SelectTrigger>
-                <SelectContent>
-                  {bases.map((base) => (
-                    <SelectItem key={base.id} value={base.id}>
-                      {base.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="categoriaVisualizacao">Categoria</Label>
-              <Select value={categoriaVisualizacao || "TODAS"} onValueChange={(value) => setCategoriaVisualizacao(value === "TODAS" ? "" : value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TODAS">Todas</SelectItem>
-                  {categorias
-                    .filter(c => ['AUXILIAR', 'SUPERVISOR', 'ENCARREGADO'].includes(c.nome.toUpperCase()))
-                    .map((categoria) => (
-                      <SelectItem key={categoria.id} value={categoria.nome}>
-                        {categoria.nome}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="competenciaVisualizacao">Mês Competência</Label>
-              <Input
-                id="competenciaVisualizacao"
-                type="month"
-                value={competenciaVisualizacao}
-                onChange={(e) => setCompetenciaVisualizacao(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="search">Buscar Funcionário</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  id="search"
-                  placeholder="Buscar funcionários..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </div>
-
-          {premiacoes.length > 0 && (
-            <div className="flex justify-between items-center pt-2">
-              <div className="text-sm text-muted-foreground">
-                Exibindo resultados de {formatCompetencia(competenciaVisualizacao)} - {baseVisualizacaoSelecionada?.nome}
-              </div>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Exportar
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Tabela de Resultados */}
-      {premiacoes.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Premiações - {baseVisualizacaoSelecionada?.nome} - {formatCompetencia(competenciaVisualizacao)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <CardContent>
+          {calculosGerados.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Nenhuma premiação gerada ainda.</div>
+          ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cód. Funcionário</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Setor</TableHead>
-                    <TableHead>Função</TableHead>
-                    <TableHead>Faixa</TableHead>
-                    {isProducao && <TableHead>% Produção</TableHead>}
-                    <TableHead>Nota DSS</TableHead>
-                    <TableHead>Nota EPI</TableHead>
-                    <TableHead>Nota Faltas</TableHead>
-                    <TableHead>Nota Advertências</TableHead>
-                    {isProducao && <TableHead>Faturamento</TableHead>}
-                    {isProducao && <TableHead>Itens NC</TableHead>}
-                    {isProducao && <TableHead>Trat. NC</TableHead>}
-                    {isProducao && <TableHead>Hora Máq.</TableHead>}
-                    {isProducao && <TableHead>Op. Segura</TableHead>}
-                    {isProducao && <TableHead>Limpeza</TableHead>}
-                    {isKits && <TableHead>Valor Kits</TableHead>}
-                    <TableHead>Nota Geral</TableHead>
-                    <TableHead>Bônus Possível</TableHead>
-                    <TableHead>Bônus Alcançado</TableHead>
+                    <TableHead>Competência</TableHead>
+                    <TableHead>Base</TableHead>
+                    <TableHead>Categorias</TableHead>
+                    <TableHead className="text-right">Funcionários</TableHead>
+                    <TableHead className="text-right">Bônus Alcançado</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPremiacoes.map((premiacao) => (
-                    <TableRow key={premiacao.id}>
-                      <TableCell className="font-mono">{premiacao.cod_funcionario}</TableCell>
-                      <TableCell className="font-medium">{premiacao.nome}</TableCell>
-                      <TableCell>{premiacao.setor}</TableCell>
-                      <TableCell>{premiacao.funcao}</TableCell>
-                      <TableCell>{premiacao.faixa}</TableCell>
-                      {isProducao && <TableCell>{formatPercentage(premiacao.percentual_producao || 0)}</TableCell>}
-                      <TableCell>{formatPercentage(premiacao.nota_dss)}</TableCell>
-                      <TableCell>{formatPercentage(premiacao.nota_epi)}</TableCell>
-                      <TableCell>{formatPercentage(premiacao.nota_faltas)}</TableCell>
-                      <TableCell>{formatPercentage(premiacao.nota_advertencias)}</TableCell>
-                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_faturamento || 0)}</TableCell>}
-                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_itens_nc || 0)}</TableCell>}
-                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_tratamento_nc || 0)}</TableCell>}
-                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_hora_maquina || 0)}</TableCell>}
-                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_operacao_segura || 0)}</TableCell>}
-                      {isProducao && <TableCell>{formatPercentage(premiacao.nota_limpeza || 0)}</TableCell>}
-                      {isKits && <TableCell>{formatCurrency(premiacao.valor_kits || 0)}</TableCell>}
-                      <TableCell className="font-bold">{formatPercentage(premiacao.nota_geral)}</TableCell>
-                      <TableCell>{formatCurrency(premiacao.bonus_possivel)}</TableCell>
-                      <TableCell className="font-bold text-green-600">
-                        {formatCurrency(premiacao.bonus_alcancado)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {calculosGerados.map((item, idx) => {
+                    const competenciaChanged =
+                      idx === 0 || item.competencia !== calculosGerados[idx - 1]?.competencia;
+                    const baseNome = bases.find((b) => b.id === item.base_premiacao_id)?.nome || '';
+
+                    return (
+                      <React.Fragment key={`${item.mes_competencia}-${item.base_premiacao_id}`}>
+                        {competenciaChanged && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="bg-muted/40 font-medium">
+                              {formatCompetencia(item.competencia)}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/30"
+                          onClick={() => handleVisualizarGerado(item)}
+                        >
+                          <TableCell className="font-medium">{formatCompetencia(item.competencia)}</TableCell>
+                          <TableCell>{baseNome}</TableCell>
+                          <TableCell>{item.categorias.length ? item.categorias.join(', ') : '—'}</TableCell>
+                          <TableCell className="text-right">{item.total_funcionarios}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(item.total_bonus_alcancado)}</TableCell>
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handleVisualizarGerado(item)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handleEditarGerado(item)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Excluir premiações</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Remover as premiações salvas de {formatCompetencia(item.competencia)} para a base{" "}
+                                      {baseNome}? Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleExcluirGerado(item)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Resumo */}
-      {filteredPremiacoes.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Total de Funcionários:</span>
-                <p className="text-lg font-bold">{filteredPremiacoes.length}</p>
-              </div>
-              <div>
-                <span className="font-medium">Total Bônus Possível:</span>
-                <p className="text-lg font-bold">
-                  {formatCurrency(filteredPremiacoes.reduce((acc, p) => acc + p.bonus_possivel, 0))}
-                </p>
-              </div>
-              <div>
-                <span className="font-medium">Total Bônus Alcançado:</span>
-                <p className="text-lg font-bold text-green-600">
-                  {formatCurrency(filteredPremiacoes.reduce((acc, p) => acc + p.bonus_alcancado, 0))}
-                </p>
-              </div>
-              <div>
-                <span className="font-medium">Eficiência Média:</span>
-                <p className="text-lg font-bold">
-                  {formatPercentage(filteredPremiacoes.reduce((acc, p) => acc + p.nota_geral, 0) / filteredPremiacoes.length)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

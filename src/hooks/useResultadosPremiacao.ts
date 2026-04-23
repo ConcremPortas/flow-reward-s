@@ -30,6 +30,9 @@ export interface ResultadoPremiacao {
   nota_geral: number;
   bonus_possivel: number;
   bonus_alcancado: number;
+  valor_fixo?: number;
+  valor_ajustado?: number;
+  observacao_ajuste?: string;
   created_at: string;
   updated_at: string;
 }
@@ -43,7 +46,7 @@ export const useResultadosPremiacao = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_resultados_premiacao')
+        .from('concremrh_resultados_premiacao')
         .select('*')
         .order('mes_competencia', { ascending: false })
         .order('nome');
@@ -72,7 +75,7 @@ export const useResultadosPremiacao = () => {
       
       // Primeiro, deletar resultados existentes para este mês e base
       const { error: deleteError } = await supabase
-        .from('concrem_resultados_premiacao')
+        .from('concremrh_resultados_premiacao')
         .delete()
         .eq('mes_competencia', mesCompetencia)
         .eq('base_premiacao_id', baseId);
@@ -90,28 +93,29 @@ export const useResultadosPremiacao = () => {
         funcao: premiacao.funcao,
         categoria: premiacao.categoria,
         faixa: premiacao.faixa,
-        valor_faixa: premiacao.valor_faixa || null,
-        percentual_producao: premiacao.percentual_producao || null,
-        nota_producao: premiacao.nota_producao || null,
+        valor_faixa: premiacao.valor_faixa ?? null,
+        percentual_producao: premiacao.percentual_producao ?? null,
+        nota_producao: premiacao.nota_producao ?? null,
         nota_epi: premiacao.nota_epi,
         nota_faltas: premiacao.nota_faltas,
         nota_advertencias: premiacao.nota_advertencias,
         nota_dss: premiacao.nota_dss,
-        nota_faturamento: premiacao.nota_faturamento || null,
-        nota_itens_nc: premiacao.nota_itens_nc || null,
-        nota_tratamento_nc: premiacao.nota_tratamento_nc || null,
-        nota_hora_maquina: premiacao.nota_hora_maquina || null,
-        nota_operacao_segura: premiacao.nota_operacao_segura || null,
-        nota_limpeza: premiacao.nota_limpeza || null,
-        valor_kits: premiacao.valor_kits || null,
+        nota_faturamento: premiacao.nota_faturamento ?? null,
+        nota_itens_nc: premiacao.nota_itens_nc ?? null,
+        nota_tratamento_nc: premiacao.nota_tratamento_nc ?? null,
+        nota_hora_maquina: premiacao.nota_hora_maquina ?? null,
+        nota_operacao_segura: premiacao.nota_operacao_segura ?? null,
+        nota_limpeza: premiacao.nota_limpeza ?? null,
+        valor_kits: premiacao.valor_kits ?? null,
         nota_geral: premiacao.nota_geral,
         bonus_possivel: premiacao.bonus_possivel,
-        bonus_alcancado: premiacao.bonus_alcancado
+        bonus_alcancado: premiacao.bonus_alcancado,
+        valor_fixo: premiacao.valor_fixo ?? null
       }));
 
       // Inserir novos resultados
       const { error: insertError } = await supabase
-        .from('concrem_resultados_premiacao')
+        .from('concremrh_resultados_premiacao')
         .insert(resultadosParaSalvar);
 
       if (insertError) throw insertError;
@@ -136,11 +140,28 @@ export const useResultadosPremiacao = () => {
     }
   };
 
+  const updateResultado = async (id: string, dados: { valor_ajustado?: number | null; observacao_ajuste?: string | null }) => {
+    try {
+      const { error } = await supabase
+        .from('concremrh_resultados_premiacao')
+        .update(dados)
+        .eq('id', id);
+      if (error) throw error;
+      toast({ title: "Sucesso", description: "Ajuste salvo com sucesso" });
+      fetchResultados();
+      return true;
+    } catch (error) {
+      console.error('Erro ao atualizar resultado:', error);
+      toast({ title: "Erro", description: "Não foi possível salvar o ajuste", variant: "destructive" });
+      return false;
+    }
+  };
+
   const verificarResultadosExistentes = async (competencia: string, baseId: string) => {
     try {
       const mesCompetencia = competencia + '-01';
       const { data, error } = await supabase
-        .from('concrem_resultados_premiacao')
+        .from('concremrh_resultados_premiacao')
         .select('id')
         .eq('mes_competencia', mesCompetencia)
         .eq('base_premiacao_id', baseId)
@@ -154,6 +175,35 @@ export const useResultadosPremiacao = () => {
     }
   };
 
+  const excluirResultados = async (competencia: string, baseId: string) => {
+    try {
+      const mesCompetencia = competencia + '-01';
+      const { error } = await supabase
+        .from('concremrh_resultados_premiacao')
+        .delete()
+        .eq('mes_competencia', mesCompetencia)
+        .eq('base_premiacao_id', baseId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Premiações removidas de ${competencia}`,
+      });
+
+      fetchResultados();
+      return true;
+    } catch (error) {
+      console.error('Erro ao excluir resultados de premiação:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir as premiações salvas",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchResultados();
   }, []);
@@ -163,6 +213,8 @@ export const useResultadosPremiacao = () => {
     loading,
     salvarResultados,
     verificarResultadosExistentes,
+    excluirResultados,
+    updateResultado,
     refetch: fetchResultados
   };
 };

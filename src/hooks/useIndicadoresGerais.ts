@@ -27,10 +27,10 @@ export const useIndicadoresGerais = () => {
   const fetchIndicadores = async () => {
     try {
       const { data, error } = await supabase
-        .from('concrem_indicadores_gerais')
+        .from('concremrh_indicadores_gerais')
         .select(`
           *,
-          tipo_indicador:concrem_tipos_indicadores_gerais(id, nome, codigo, descricao)
+          tipo_indicador:concremrh_tipos_indicadores_gerais(id, nome, codigo, descricao)
         `)
         .order('competencia', { ascending: false });
 
@@ -52,7 +52,7 @@ export const useIndicadoresGerais = () => {
       const percentual = Math.round((data.realizado / data.meta) * 100);
       
       const { error } = await supabase
-        .from('concrem_indicadores_gerais')
+        .from('concremrh_indicadores_gerais')
         .insert([{ ...data, percentual }]);
 
       if (error) throw error;
@@ -87,7 +87,7 @@ export const useIndicadoresGerais = () => {
       }
 
       const { error } = await supabase
-        .from('concrem_indicadores_gerais')
+        .from('concremrh_indicadores_gerais')
         .update(updateData)
         .eq('id', id);
 
@@ -111,7 +111,7 @@ export const useIndicadoresGerais = () => {
   const deleteIndicador = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_indicadores_gerais')
+        .from('concremrh_indicadores_gerais')
         .delete()
         .eq('id', id);
 

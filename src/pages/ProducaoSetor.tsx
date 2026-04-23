@@ -29,15 +29,19 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2, UploadCloud, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSetores } from "@/hooks/useSetores";
 import { useProducaoSetor } from "@/hooks/useProducaoSetor";
 import { formatDateToBrasilia, formatDateToBrazilian, formatDateToInput } from "@/lib/dateUtils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
+import { supabase } from "@/integrations/supabase/client";
 
 export const ProducaoSetor = () => {
   const { setores, loading: setoresLoading } = useSetores();
-  const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro } = useProducaoSetor();
+  const { registros, loading: registrosLoading, createRegistro, updateRegistro, deleteRegistro, refetch } = useProducaoSetor();
   const [searchTerm, setSearchTerm] = useState("");
   const [competenciaFilter, setCompetenciaFilter] = useState("all");
   const [setorFilter, setSetorFilter] = useState("");
@@ -48,6 +52,98 @@ export const ProducaoSetor = () => {
   const [unidadeMedida, setUnidadeMedida] = useState("unidades");
   const [observacoes, setObservacoes] = useState("");
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [skippedRows, setSkippedRows] = useState<{ setor_id: string; setor_nome: string; competencia: string }[]>([]);
+  const [insertedCount, setInsertedCount] = useState(0);
+  const [invalidRows, setInvalidRows] = useState<{ linha: number; setor_nome: string; competencia: string; motivo: string }[]>(
+    [],
+  );
+  const [competenciaDelete, setCompetenciaDelete] = useState("");
+  const { toast } = useToast();
+
+  const normalizeKey = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+  const normalizeName = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+
+  const toNumber = (value: unknown): number | null => {
+    if (typeof value === "number") return Number.isFinite(value) ? value : null;
+    const raw = String(value ?? "").trim();
+    if (!raw) return null;
+    const cleaned =
+      raw.includes(",") && raw.includes(".")
+        ? raw.replace(/\./g, "").replace(",", ".")
+        : raw.includes(",")
+          ? raw.replace(",", ".")
+          : raw;
+    const num = parseFloat(cleaned);
+    return Number.isFinite(num) ? num : null;
+  };
+
+  const parseCompetenciaToISO = (value: unknown): string => {
+    if (!value) return "";
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, "0");
+      return `${year}-${month}-01`;
+    }
+
+    if (typeof value === "number") {
+      const parsed = XLSX.SSF.parse_date_code(value);
+      if (parsed?.y && parsed?.m) {
+        const year = String(parsed.y).padStart(4, "0");
+        const month = String(parsed.m).padStart(2, "0");
+        return `${year}-${month}-01`;
+      }
+    }
+
+    const str = String(value).trim();
+    if (!str) return "";
+
+    const yyyyMm = str.match(/^(\d{4})-(\d{2})/);
+    if (yyyyMm) return `${yyyyMm[1]}-${yyyyMm[2]}-01`;
+
+    const mmYyyySlash = str.match(/^(\d{2})\/(\d{4})$/);
+    if (mmYyyySlash) return `${mmYyyySlash[2]}-${mmYyyySlash[1]}-01`;
+
+    const mmYyyyDash = str.match(/^(\d{2})-(\d{4})$/);
+    if (mmYyyyDash) return `${mmYyyyDash[2]}-${mmYyyyDash[1]}-01`;
+
+    const yyyyMmSlash = str.match(/^(\d{4})\/(\d{2})$/);
+    if (yyyyMmSlash) return `${yyyyMmSlash[1]}-${yyyyMmSlash[2]}-01`;
+
+    return "";
+  };
+
+  const resolveSetorId = (row: Record<string, unknown>) => {
+    const setorId = String(row.setor_id ?? "").trim();
+    if (setorId) return setorId;
+
+    const nameCandidate = String(row.setor_nome ?? row.setor ?? row.setor_name ?? "").trim();
+    if (!nameCandidate) return "";
+
+    const target = normalizeName(nameCandidate);
+    const found = setores.find((s) => normalizeName(s.nome) === target);
+    if (found) return found.id;
+
+    const foundPrefix = setores.find((s) => target.startsWith(normalizeName(s.nome)));
+    return foundPrefix?.id || "";
+  };
 
   // Obter competências únicas dos registros
   const competenciasDisponiveis = Array.from(
@@ -160,6 +256,154 @@ export const ProducaoSetor = () => {
     setEditingRecord(null);
   };
 
+  const downloadTemplate = () => {
+    const rows = setores.filter(s => s.ativo).map(s => ({
+      setor_id: s.id,
+      setor_nome: s.nome,
+      competencia: "",
+      meta_mensal: "",
+      producao_realizada: "",
+      unidade_medida: "unidades",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "template_producao_setor.xlsx");
+  };
+
+  const handleImport = async () => {
+    if (!importFile) return;
+    try {
+      setIsImporting(true);
+      setImportProgress(0);
+      setSkippedRows([]);
+      setInsertedCount(0);
+      setInvalidRows([]);
+      const buffer = await importFile.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: "array", cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      const rows: any[] = [];
+      const rawRows: { setor_id: string; setor_nome: string; competencia: string }[] = [];
+      const invalid: { linha: number; setor_nome: string; competencia: string; motivo: string }[] = [];
+
+      for (let i = 0; i < (data as any[]).length; i++) {
+        const row = (data as any[])[i] as Record<string, unknown>;
+        const normalized: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(row)) normalized[normalizeKey(k)] = v;
+
+        const setorId = resolveSetorId(normalized);
+        const setorNome = String(normalized.setor_nome ?? normalized.setor ?? "").trim();
+
+        const competenciaISO = parseCompetenciaToISO(normalized.competencia ?? normalized.data_producao ?? normalized.mes_ano);
+        const dataProducao = competenciaISO ? formatDateToBrasilia(competenciaISO) : "";
+
+        const meta = toNumber(normalized.meta_mensal ?? normalized.meta ?? normalized.meta_diaria);
+        const realizado = toNumber(normalized.producao_realizada ?? normalized.realizado ?? normalized.producao);
+        const unidade = String(normalized.unidade_medida ?? normalized.unidade ?? "unidades").trim() || "unidades";
+
+        const motivos: string[] = [];
+        if (!setorId) motivos.push("Setor não identificado (use setor_id ou setor_nome)");
+        if (!dataProducao) motivos.push("Competência inválida (use YYYY-MM)");
+        if (meta === null || meta <= 0) motivos.push("Meta mensal inválida");
+        if (realizado === null || realizado < 0) motivos.push("Produção realizada inválida");
+
+        if (motivos.length) {
+          invalid.push({
+            linha: i + 2,
+            setor_nome: setorNome || setores.find((s) => s.id === setorId)?.nome || "",
+            competencia: String(normalized.competencia ?? "").trim(),
+            motivo: motivos.join("; "),
+          });
+          continue;
+        }
+
+        const r = {
+          setor_id: setorId,
+          data_producao: dataProducao,
+          meta_diaria: meta,
+          producao_realizada: realizado,
+          unidade_medida: unidade,
+        };
+
+        rows.push(r);
+        rawRows.push({
+          setor_id: setorId,
+          setor_nome: setores.find((s) => s.id === setorId)?.nome || setorNome,
+          competencia: dataProducao,
+        });
+      }
+
+      setInvalidRows(invalid);
+
+      if (rows.length === 0) {
+        toast({
+          title: "Nenhuma linha válida",
+          description: invalid.length
+            ? `Arquivo lido, mas ${invalid.length} linha(s) foram rejeitadas. Confira a lista no modal.`
+            : "Arquivo lido, mas nenhuma linha foi reconhecida. Confira o template.",
+          variant: "destructive",
+        });
+        setIsImporting(false);
+        setImportProgress(0);
+        return;
+      }
+
+      const setoresImport = Array.from(new Set(rows.map(r => r.setor_id)));
+      const competenciasImport = Array.from(new Set(rows.map(r => r.data_producao)));
+      const existingSet = new Set<string>();
+      if (setoresImport.length && competenciasImport.length) {
+        const { data: existentes } = await supabase
+          .from('concremrh_producao_setor')
+          .select('setor_id,data_producao')
+          .in('setor_id', setoresImport)
+          .in('data_producao', competenciasImport);
+        for (const e of (existentes || []) as any[]) existingSet.add(`${e.setor_id}|${e.data_producao}`);
+      }
+      const toInsert = rows.filter(r => !existingSet.has(`${r.setor_id}|${r.data_producao}`));
+      const skipped = rawRows.filter(r => existingSet.has(`${r.setor_id}|${r.competencia}`));
+      setSkippedRows(skipped.map(s => ({ ...s, setor_nome: setores.find(st => st.id === s.setor_id)?.nome || s.setor_nome })));
+
+      let success = 0;
+      const chunkSize = 200;
+      if (toInsert.length === 0) setImportProgress(100);
+      for (let i = 0; i < toInsert.length; i += chunkSize) {
+        const chunk = toInsert.slice(i, i + chunkSize);
+        const { error } = await supabase.from('concremrh_producao_setor').insert(chunk);
+        if (!error) success += chunk.length;
+        setImportProgress(Math.round(((i + chunk.length) / toInsert.length) * 100));
+      }
+
+      toast({
+        title: "Importação concluída",
+        description: `${success} inserido(s), ${skipped.length} ignorado(s), ${invalid.length} inválido(s)`,
+      });
+      setInsertedCount(success);
+      setIsImporting(false);
+      setImportProgress(0);
+      refetch();
+    } catch (e: any) {
+      setIsImporting(false);
+      setImportProgress(0);
+      toast({ title: "Erro na importação", description: e?.message || "Falha ao importar arquivo", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteByCompetencia = async () => {
+    if (!competenciaDelete) return;
+    const iso = `${competenciaDelete}-01`;
+    const { error } = await supabase
+      .from('concremrh_producao_setor')
+      .delete()
+      .eq('data_producao', formatDateToBrasilia(iso));
+    if (!error) {
+      toast({ title: "Registros removidos", description: `Competência ${competenciaDelete}` });
+      refetch();
+    } else {
+      toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
+    }
+  };
+
   if (setoresLoading || registrosLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -223,11 +467,11 @@ export const ProducaoSetor = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Meta Diária *</label>
+              <label className="text-sm font-medium">Meta Mensal *</label>
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Ex: 1000"
+                placeholder="Ex: 30000"
                 value={metaDiaria}
                 onChange={(e) => setMetaDiaria(e.target.value)}
               />
@@ -302,6 +546,103 @@ export const ProducaoSetor = () => {
                 Histórico de metas e realizações por setor
               </CardDescription>
             </div>
+            <Dialog
+              open={importOpen}
+              onOpenChange={(v) => {
+                if (isImporting) return;
+                setImportOpen(v);
+                if (v) {
+                  setImportFile(null);
+                  setSkippedRows([]);
+                  setInsertedCount(0);
+                  setInvalidRows([]);
+                  setCompetenciaDelete("");
+                  setImportProgress(0);
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <UploadCloud className="h-4 w-4" />
+                  Importar Excel
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Importar Produção por Setor</DialogTitle>
+                  <DialogDescription>Baixe o template, preencha a competência (YYYY-MM), meta mensal e produção realizada, depois importe.</DialogDescription>
+                </DialogHeader>
+                {isImporting ? (
+                  <div className="space-y-4">
+                    <Progress value={importProgress} />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <Button variant="outline" className="gap-2" onClick={downloadTemplate}>
+                      <Download className="h-4 w-4" />
+                      Baixar Template
+                    </Button>
+                    <Input type="file" accept=".xlsx,.xls" onChange={(e) => setImportFile(e.target.files?.[0] || null)} />
+                    {skippedRows.length > 0 && (
+                      <div className="text-sm text-muted-foreground max-h-32 overflow-auto">
+                        Ignorados: {skippedRows.length}
+                        <ul>
+                          {skippedRows.slice(0, 50).map((s, idx) => (
+                            <li key={idx}>{s.setor_nome} - {s.competencia}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {invalidRows.length > 0 && (
+                      <div className="text-sm text-destructive max-h-32 overflow-auto">
+                        Inválidos: {invalidRows.length}
+                        <ul>
+                          {invalidRows.slice(0, 50).map((s, idx) => (
+                            <li key={idx}>
+                              Linha {s.linha}: {s.setor_nome || "Sem setor"} ({s.competencia || "Sem competência"}) -{" "}
+                              {s.motivo}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {insertedCount > 0 && (
+                      <div className="text-sm">Inseridos: {insertedCount}</div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-2 border-t">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Competência</label>
+                        <Input type="month" value={competenciaDelete} onChange={(e) => setCompetenciaDelete(e.target.value)} />
+                      </div>
+                      <div className="flex items-end">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" className="text-destructive hover:text-destructive" disabled={!competenciaDelete}>Apagar por competência</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover registros</AlertDialogTitle>
+                              <AlertDialogDescription>Esta ação removerá todos os registros da competência selecionada. Deseja continuar?</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDeleteByCompetencia}>Confirmar</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setImportOpen(false)} disabled={isImporting}>Cancelar</Button>
+                  <Button className="gap-2" onClick={handleImport} disabled={!importFile || isImporting}>
+                    <UploadCloud className="h-4 w-4" />
+                    Importar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

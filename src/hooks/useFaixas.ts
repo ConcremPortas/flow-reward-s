@@ -21,7 +21,7 @@ export const useFaixas = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_faixas')
+        .from('concremrh_faixas')
         .select('*')
         .eq('ativo', true)
         .order('nome');
@@ -43,7 +43,7 @@ export const useFaixas = () => {
   const createFaixa = async (faixa: Omit<Faixa, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_faixas')
+        .from('concremrh_faixas')
         .insert([faixa])
         .select()
         .single();
@@ -71,7 +71,7 @@ export const useFaixas = () => {
   const deleteFaixa = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_faixas')
+        .from('concremrh_faixas')
         .update({ ativo: false })
         .eq('id', id);
 
@@ -93,6 +93,31 @@ export const useFaixas = () => {
     }
   };
 
+  const updateFaixa = async (id: string, faixa: Partial<Omit<Faixa, 'id' | 'created_at' | 'updated_at'>>) => {
+    try {
+      const { error } = await supabase
+        .from('concremrh_faixas')
+        .update(faixa)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Faixa atualizada com sucesso",
+      });
+
+      fetchFaixas();
+    } catch (error) {
+      console.error('Erro ao atualizar faixa:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a faixa",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchFaixas();
   }, []);
@@ -102,6 +127,7 @@ export const useFaixas = () => {
     loading,
     createFaixa,
     deleteFaixa,
+    updateFaixa,
     refetch: fetchFaixas
   };
 };

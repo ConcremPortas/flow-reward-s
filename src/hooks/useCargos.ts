@@ -18,7 +18,7 @@ export interface Cargo {
   ativo: boolean;
   created_at: string;
   updated_at: string;
-  concrem_setores?: {
+  concremrh_setores?: {
     id: string;
     nome: string;
   };
@@ -33,10 +33,10 @@ export const useCargos = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_cargos')
+        .from('concremrh_cargos')
         .select(`
           *,
-          concrem_setores (
+          concremrh_setores (
             id,
             nome
           )
@@ -58,10 +58,10 @@ export const useCargos = () => {
     }
   };
 
-  const createCargo = async (cargo: Omit<Cargo, 'id' | 'created_at' | 'updated_at' | 'concrem_setores'>) => {
+  const createCargo = async (cargo: Omit<Cargo, 'id' | 'created_at' | 'updated_at' | 'concremrh_setores'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_cargos')
+        .from('concremrh_cargos')
         .insert([cargo])
         .select()
         .single();
@@ -89,7 +89,7 @@ export const useCargos = () => {
   const updateCargo = async (id: string, cargo: Partial<Cargo>) => {
     try {
       const { error } = await supabase
-        .from('concrem_cargos')
+        .from('concremrh_cargos')
         .update(cargo)
         .eq('id', id);
 
@@ -115,7 +115,7 @@ export const useCargos = () => {
     try {
       // Verificar se há funcionários vinculados
       const { data: funcionarios, error: checkError } = await supabase
-        .from('concrem_funcionarios')
+        .from('concremrh_funcionarios')
         .select('id')
         .eq('funcao_id', id)
         .eq('ativo', true);
@@ -132,7 +132,7 @@ export const useCargos = () => {
       }
 
       const { error } = await supabase
-        .from('concrem_cargos')
+        .from('concremrh_cargos')
         .update({ ativo: false })
         .eq('id', id);
 

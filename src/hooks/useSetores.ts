@@ -27,12 +27,12 @@ export const useSetores = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_setores')
+        .from('concremrh_setores')
         .select(`
           *,
-          empresa:concrem_empresas(nome),
-          supervisor:concrem_funcionarios!supervisor_id(nome),
-          encarregado:concrem_funcionarios!encarregado_id(nome)
+          empresa:concremrh_empresas(nome),
+          supervisor:concremrh_funcionarios!supervisor_id(nome),
+          encarregado:concremrh_funcionarios!encarregado_id(nome)
         `)
         .eq('ativo', true)
         .order('nome');
@@ -54,7 +54,7 @@ export const useSetores = () => {
   const createSetor = async (setor: Omit<Setor, 'id' | 'created_at' | 'updated_at' | 'empresa' | 'supervisor' | 'encarregado'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_setores')
+        .from('concremrh_setores')
         .insert([setor])
         .select()
         .single();
@@ -82,7 +82,7 @@ export const useSetores = () => {
   const updateSetor = async (id: string, setor: Partial<Setor>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_setores')
+        .from('concremrh_setores')
         .update(setor)
         .eq('id', id)
         .select()
@@ -111,7 +111,7 @@ export const useSetores = () => {
   const deleteSetor = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_setores')
+        .from('concremrh_setores')
         .update({ ativo: false })
         .eq('id', id);
 

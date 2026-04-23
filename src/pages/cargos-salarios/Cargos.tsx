@@ -27,7 +27,7 @@ export default function Cargos() {
 
   const filteredCargos = cargos.filter(cargo =>
     cargo.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cargo.concrem_setores?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
+    cargo.concremrh_setores?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatCurrency = (value?: number) => {
@@ -137,10 +137,10 @@ export default function Cargos() {
                           )}
                         </div>
                         <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                          {cargo.concrem_setores && (
+                          {cargo.concremrh_setores && (
                             <span className="flex items-center gap-1">
                               <Briefcase className="h-3 w-3" />
-                              {cargo.concrem_setores.nome}
+                              {cargo.concremrh_setores.nome}
                             </span>
                           )}
                           {(cargo.salario_minimo || cargo.salario_maximo) && (

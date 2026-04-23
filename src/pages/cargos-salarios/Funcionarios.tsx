@@ -11,13 +11,20 @@ export default function FuncionariosCargosSalarios() {
   const { funcionarios, loading } = useFuncionarios();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const funcionariosAtivos = funcionarios.filter(f => f.ativo);
+  const funcionariosAtivos = funcionarios.filter(f => {
+    const status = (f.status || '').toLowerCase();
+    return status !== 'rescisao' && status !== 'rescisão';
+  });
 
-  const filteredFuncionarios = funcionariosAtivos.filter(func =>
-    func.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    func.setor?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    func.funcao?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFuncionarios = funcionariosAtivos.filter(func => {
+    const term = searchTerm.toLowerCase();
+    return !term ||
+      func.nome.toLowerCase().includes(term) ||
+      (func.cpf || '').toLowerCase().includes(term) ||
+      (func.setor?.nome || '').toLowerCase().includes(term) ||
+      (func.categoria?.nome || '').toLowerCase().includes(term) ||
+      (func.funcao?.nome || '').toLowerCase().includes(term);
+  });
 
   const formatCurrency = (value?: number | null) => {
     if (!value) return 'Não definido';
@@ -52,7 +59,7 @@ export default function FuncionariosCargosSalarios() {
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar funcionários..."
+                placeholder="Buscar por nome, código, setor ou categoria..."
                 className="pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

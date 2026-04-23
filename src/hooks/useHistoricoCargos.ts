@@ -16,7 +16,7 @@ export interface HistoricoCargo {
   observacoes?: string;
   created_at: string;
   updated_at: string;
-  concrem_funcionarios?: {
+  concremrh_funcionarios?: {
     id: string;
     nome: string;
   };
@@ -39,18 +39,18 @@ export const useHistoricoCargos = (funcionarioId?: string) => {
     try {
       setLoading(true);
       let query = supabase
-        .from('concrem_historico_cargos')
+        .from('concremrh_historico_cargos')
         .select(`
           *,
-          concrem_funcionarios!concrem_historico_cargos_funcionario_id_fkey (
+          concremrh_funcionarios!concremrh_historico_cargos_funcionario_id_fkey (
             id,
             nome
           ),
-          cargo:concrem_cargos!concrem_historico_cargos_cargo_id_fkey (
+          cargo:concremrh_cargos!concremrh_historico_cargos_cargo_id_fkey (
             id,
             nome
           ),
-          cargo_anterior:concrem_cargos!concrem_historico_cargos_cargo_anterior_id_fkey (
+          cargo_anterior:concremrh_cargos!concremrh_historico_cargos_cargo_anterior_id_fkey (
             id,
             nome
           )
@@ -77,10 +77,10 @@ export const useHistoricoCargos = (funcionarioId?: string) => {
     }
   };
 
-  const createHistorico = async (historico: Omit<HistoricoCargo, 'id' | 'created_at' | 'updated_at' | 'concrem_funcionarios' | 'cargo' | 'cargo_anterior'>) => {
+  const createHistorico = async (historico: Omit<HistoricoCargo, 'id' | 'created_at' | 'updated_at' | 'concremrh_funcionarios' | 'cargo' | 'cargo_anterior'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_historico_cargos')
+        .from('concremrh_historico_cargos')
         .insert([historico])
         .select()
         .single();

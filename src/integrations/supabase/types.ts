@@ -14,7 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      concrem_avaliacoes_desempenho: {
+      concremrh_avaliacoes_desempenho: {
         Row: {
           avaliador_id: string | null
           comentarios: string | null
@@ -71,22 +71,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_avaliacoes_desempenho_avaliador_id_fkey"
+            foreignKeyName: "concremrh_avaliacoes_desempenho_avaliador_id_fkey"
             columns: ["avaliador_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_avaliacoes_desempenho_funcionario_id_fkey"
+            foreignKeyName: "concremrh_avaliacoes_desempenho_funcionario_id_fkey"
             columns: ["funcionario_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_base_premiacao: {
+      concremrh_base_premiacao: {
         Row: {
           ativo: boolean
           created_at: string
@@ -119,7 +119,7 @@ export type Database = {
         }
         Relationships: []
       }
-      concrem_cargos: {
+      concremrh_cargos: {
         Row: {
           atividades: string[] | null
           ativo: boolean
@@ -173,15 +173,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_cargos_setor_id_fkey"
+            foreignKeyName: "concremrh_cargos_setor_id_fkey"
             columns: ["setor_id"]
             isOneToOne: false
-            referencedRelation: "concrem_setores"
+            referencedRelation: "concremrh_setores"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_categorias: {
+      concremrh_categorias: {
         Row: {
           ativo: boolean
           cor: string | null
@@ -211,7 +211,7 @@ export type Database = {
         }
         Relationships: []
       }
-      concrem_dss: {
+      concremrh_dss: {
         Row: {
           created_at: string
           data_realizacao: string
@@ -256,29 +256,29 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_dss_local_dss_id_fkey"
+            foreignKeyName: "concremrh_dss_local_dss_id_fkey"
             columns: ["local_dss_id"]
             isOneToOne: false
-            referencedRelation: "concrem_locais_dss"
+            referencedRelation: "concremrh_locais_dss"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_dss_responsavel_id_fkey"
+            foreignKeyName: "concremrh_dss_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_dss_setor_id_fkey"
+            foreignKeyName: "concremrh_dss_setor_id_fkey"
             columns: ["setor_id"]
             isOneToOne: false
-            referencedRelation: "concrem_setores"
+            referencedRelation: "concremrh_setores"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_empresas: {
+      concremrh_empresas: {
         Row: {
           ativo: boolean
           cnpj: string | null
@@ -314,7 +314,40 @@ export type Database = {
         }
         Relationships: []
       }
-      concrem_epi: {
+      concremrh_funcionario_setores: {
+        Row: {
+          funcionario_id: string
+          setor_id: string
+          created_at: string
+        }
+        Insert: {
+          funcionario_id: string
+          setor_id: string
+          created_at?: string
+        }
+        Update: {
+          funcionario_id?: string
+          setor_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concremrh_funcionario_setores_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "concremrh_funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concremrh_funcionario_setores_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "concremrh_setores"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      concremrh_epi: {
         Row: {
           created_at: string
           data_entrega: string
@@ -356,15 +389,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_epi_funcionario_id_fkey"
+            foreignKeyName: "concremrh_epi_funcionario_id_fkey"
             columns: ["funcionario_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_estrutura_hierarquica: {
+      concremrh_estrutura_hierarquica: {
         Row: {
           ativo: boolean
           cargo_id: string
@@ -400,22 +433,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_estrutura_hierarquica_cargo_id_fkey"
+            foreignKeyName: "concremrh_estrutura_hierarquica_cargo_id_fkey"
             columns: ["cargo_id"]
             isOneToOne: true
-            referencedRelation: "concrem_cargos"
+            referencedRelation: "concremrh_cargos"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_estrutura_hierarquica_cargo_superior_id_fkey"
+            foreignKeyName: "concremrh_estrutura_hierarquica_cargo_superior_id_fkey"
             columns: ["cargo_superior_id"]
             isOneToOne: false
-            referencedRelation: "concrem_cargos"
+            referencedRelation: "concremrh_cargos"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_faixas: {
+      concremrh_faixas: {
         Row: {
           ativo: boolean
           categoria_id: string | null
@@ -445,15 +478,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_faixas_categoria_id_fkey"
+            foreignKeyName: "concremrh_faixas_categoria_id_fkey"
             columns: ["categoria_id"]
             isOneToOne: false
-            referencedRelation: "concrem_categorias"
+            referencedRelation: "concremrh_categorias"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_faltas_advertencias: {
+      concremrh_faltas_advertencias: {
         Row: {
           aplicado_por: string | null
           created_at: string
@@ -498,22 +531,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_faltas_advertencias_aplicado_por_fkey"
+            foreignKeyName: "concremrh_faltas_advertencias_aplicado_por_fkey"
             columns: ["aplicado_por"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_faltas_advertencias_funcionario_id_fkey"
+            foreignKeyName: "concremrh_faltas_advertencias_funcionario_id_fkey"
             columns: ["funcionario_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_formulas_calculo: {
+      concremrh_formulas_calculo: {
         Row: {
           ativo: boolean
           base_premiacao_id: string | null
@@ -561,22 +594,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_formulas_calculo_base_premiacao_id_fkey"
+            foreignKeyName: "concremrh_formulas_calculo_base_premiacao_id_fkey"
             columns: ["base_premiacao_id"]
             isOneToOne: false
-            referencedRelation: "concrem_base_premiacao"
+            referencedRelation: "concremrh_base_premiacao"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_formulas_calculo_categoria_id_fkey"
+            foreignKeyName: "concremrh_formulas_calculo_categoria_id_fkey"
             columns: ["categoria_id"]
             isOneToOne: false
-            referencedRelation: "concrem_categorias"
+            referencedRelation: "concremrh_categorias"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_funcionarios: {
+      concremrh_funcionarios: {
         Row: {
           ativo: boolean
           base_premiacao_id: string | null
@@ -599,6 +632,7 @@ export type Database = {
           telefone: string | null
           updated_at: string
           user_id: string | null
+          valor_fixo: number | null
         }
         Insert: {
           ativo?: boolean
@@ -622,6 +656,7 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id?: string | null
+          valor_fixo?: number | null
         }
         Update: {
           ativo?: boolean
@@ -645,60 +680,61 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id?: string | null
+          valor_fixo?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_funcionarios_base_premiacao_id_fkey"
+            foreignKeyName: "concremrh_funcionarios_base_premiacao_id_fkey"
             columns: ["base_premiacao_id"]
             isOneToOne: false
-            referencedRelation: "concrem_base_premiacao"
+            referencedRelation: "concremrh_base_premiacao"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_funcionarios_categoria_id_fkey"
+            foreignKeyName: "concremrh_funcionarios_categoria_id_fkey"
             columns: ["categoria_id"]
             isOneToOne: false
-            referencedRelation: "concrem_categorias"
+            referencedRelation: "concremrh_categorias"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_funcionarios_empresa_id_fkey"
+            foreignKeyName: "concremrh_funcionarios_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
-            referencedRelation: "concrem_empresas"
+            referencedRelation: "concremrh_empresas"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_funcionarios_faixa_id_fkey"
+            foreignKeyName: "concremrh_funcionarios_faixa_id_fkey"
             columns: ["faixa_id"]
             isOneToOne: false
-            referencedRelation: "concrem_faixas"
+            referencedRelation: "concremrh_faixas"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_funcionarios_funcao_id_fkey"
+            foreignKeyName: "concremrh_funcionarios_funcao_id_fkey"
             columns: ["funcao_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcoes"
+            referencedRelation: "concremrh_funcoes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_funcionarios_local_dss_id_fkey"
+            foreignKeyName: "concremrh_funcionarios_local_dss_id_fkey"
             columns: ["local_dss_id"]
             isOneToOne: false
-            referencedRelation: "concrem_locais_dss"
+            referencedRelation: "concremrh_locais_dss"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_funcionarios_setor_id_fkey"
+            foreignKeyName: "concremrh_funcionarios_setor_id_fkey"
             columns: ["setor_id"]
             isOneToOne: false
-            referencedRelation: "concrem_setores"
+            referencedRelation: "concremrh_setores"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_funcoes: {
+      concremrh_funcoes: {
         Row: {
           ativo: boolean
           created_at: string
@@ -728,7 +764,7 @@ export type Database = {
         }
         Relationships: []
       }
-      concrem_historico_cargos: {
+      concremrh_historico_cargos: {
         Row: {
           aprovado_por: string | null
           cargo_anterior_id: string | null
@@ -776,36 +812,36 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_historico_cargos_aprovado_por_fkey"
+            foreignKeyName: "concremrh_historico_cargos_aprovado_por_fkey"
             columns: ["aprovado_por"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_historico_cargos_cargo_anterior_id_fkey"
+            foreignKeyName: "concremrh_historico_cargos_cargo_anterior_id_fkey"
             columns: ["cargo_anterior_id"]
             isOneToOne: false
-            referencedRelation: "concrem_cargos"
+            referencedRelation: "concremrh_cargos"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_historico_cargos_cargo_id_fkey"
+            foreignKeyName: "concremrh_historico_cargos_cargo_id_fkey"
             columns: ["cargo_id"]
             isOneToOne: false
-            referencedRelation: "concrem_cargos"
+            referencedRelation: "concremrh_cargos"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_historico_cargos_funcionario_id_fkey"
+            foreignKeyName: "concremrh_historico_cargos_funcionario_id_fkey"
             columns: ["funcionario_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_hr_applications: {
+      concremrh_hr_applications: {
         Row: {
           code: string
           color: string | null
@@ -847,7 +883,7 @@ export type Database = {
         }
         Relationships: []
       }
-      concrem_indicadores_gerais: {
+      concremrh_indicadores_gerais: {
         Row: {
           competencia: string
           created_at: string
@@ -880,15 +916,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_indicadores_gerais_tipo_indicador_id_fkey"
+            foreignKeyName: "concremrh_indicadores_gerais_tipo_indicador_id_fkey"
             columns: ["tipo_indicador_id"]
             isOneToOne: false
-            referencedRelation: "concrem_tipos_indicadores_gerais"
+            referencedRelation: "concremrh_tipos_indicadores_gerais"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_indicadores_setor: {
+      concremrh_indicadores_setor: {
         Row: {
           competencia: string
           created_at: string
@@ -957,15 +993,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_indicadores_setor_setor_id_fkey"
+            foreignKeyName: "concremrh_indicadores_setor_setor_id_fkey"
             columns: ["setor_id"]
             isOneToOne: false
-            referencedRelation: "concrem_setores"
+            referencedRelation: "concremrh_setores"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_locais_dss: {
+      concremrh_locais_dss: {
         Row: {
           ativo: boolean
           created_at: string
@@ -992,7 +1028,7 @@ export type Database = {
         }
         Relationships: []
       }
-      concrem_plano_carreira: {
+      concremrh_plano_carreira: {
         Row: {
           ativo: boolean
           cargo_destino_id: string
@@ -1034,22 +1070,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_plano_carreira_cargo_destino_id_fkey"
+            foreignKeyName: "concremrh_plano_carreira_cargo_destino_id_fkey"
             columns: ["cargo_destino_id"]
             isOneToOne: false
-            referencedRelation: "concrem_cargos"
+            referencedRelation: "concremrh_cargos"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_plano_carreira_cargo_origem_id_fkey"
+            foreignKeyName: "concremrh_plano_carreira_cargo_origem_id_fkey"
             columns: ["cargo_origem_id"]
             isOneToOne: false
-            referencedRelation: "concrem_cargos"
+            referencedRelation: "concremrh_cargos"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_producao_setor: {
+      concremrh_producao_setor: {
         Row: {
           created_at: string
           data_producao: string
@@ -1085,15 +1121,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_producao_setor_setor_id_fkey"
+            foreignKeyName: "concremrh_producao_setor_setor_id_fkey"
             columns: ["setor_id"]
             isOneToOne: false
-            referencedRelation: "concrem_setores"
+            referencedRelation: "concremrh_setores"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_resultados_premiacao: {
+      concremrh_resultados_premiacao: {
         Row: {
           base_premiacao_id: string | null
           bonus_alcancado: number
@@ -1119,10 +1155,13 @@ export type Database = {
           nota_operacao_segura: number | null
           nota_producao: number | null
           nota_tratamento_nc: number | null
+          observacao_ajuste: string | null
           percentual_producao: number | null
           setor: string | null
           updated_at: string
+          valor_ajustado: number | null
           valor_faixa: number | null
+          valor_fixo: number | null
           valor_kits: number | null
         }
         Insert: {
@@ -1150,10 +1189,13 @@ export type Database = {
           nota_operacao_segura?: number | null
           nota_producao?: number | null
           nota_tratamento_nc?: number | null
+          observacao_ajuste?: string | null
           percentual_producao?: number | null
           setor?: string | null
           updated_at?: string
+          valor_ajustado?: number | null
           valor_faixa?: number | null
+          valor_fixo?: number | null
           valor_kits?: number | null
         }
         Update: {
@@ -1181,30 +1223,33 @@ export type Database = {
           nota_operacao_segura?: number | null
           nota_producao?: number | null
           nota_tratamento_nc?: number | null
+          observacao_ajuste?: string | null
           percentual_producao?: number | null
           setor?: string | null
           updated_at?: string
+          valor_ajustado?: number | null
           valor_faixa?: number | null
+          valor_fixo?: number | null
           valor_kits?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_resultados_premiacao_base_premiacao_id_fkey"
+            foreignKeyName: "concremrh_resultados_premiacao_base_premiacao_id_fkey"
             columns: ["base_premiacao_id"]
             isOneToOne: false
-            referencedRelation: "concrem_base_premiacao"
+            referencedRelation: "concremrh_base_premiacao"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_resultados_premiacao_funcionario_id_fkey"
+            foreignKeyName: "concremrh_resultados_premiacao_funcionario_id_fkey"
             columns: ["funcionario_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_setores: {
+      concremrh_setores: {
         Row: {
           ativo: boolean
           created_at: string
@@ -1240,29 +1285,29 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_setores_empresa_id_fkey"
+            foreignKeyName: "concremrh_setores_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
-            referencedRelation: "concrem_empresas"
+            referencedRelation: "concremrh_empresas"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_setores_encarregado_id_fkey"
+            foreignKeyName: "concremrh_setores_encarregado_id_fkey"
             columns: ["encarregado_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "concrem_setores_supervisor_id_fkey"
+            foreignKeyName: "concremrh_setores_supervisor_id_fkey"
             columns: ["supervisor_id"]
             isOneToOne: false
-            referencedRelation: "concrem_funcionarios"
+            referencedRelation: "concremrh_funcionarios"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_tipos_indicadores: {
+      concremrh_tipos_indicadores: {
         Row: {
           ativo: boolean
           codigo: string
@@ -1292,7 +1337,7 @@ export type Database = {
         }
         Relationships: []
       }
-      concrem_tipos_indicadores_gerais: {
+      concremrh_tipos_indicadores_gerais: {
         Row: {
           ativo: boolean
           codigo: string
@@ -1322,7 +1367,7 @@ export type Database = {
         }
         Relationships: []
       }
-      concrem_user_application_permissions: {
+      concremrh_user_application_permissions: {
         Row: {
           application_id: string
           created_at: string
@@ -1352,15 +1397,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "concrem_user_application_permissions_application_id_fkey"
+            foreignKeyName: "concremrh_user_application_permissions_application_id_fkey"
             columns: ["application_id"]
             isOneToOne: false
-            referencedRelation: "concrem_hr_applications"
+            referencedRelation: "concremrh_hr_applications"
             referencedColumns: ["id"]
           },
         ]
       }
-      concrem_user_roles: {
+      concremrh_user_roles: {
         Row: {
           created_at: string
           id: string
@@ -1381,6 +1426,39 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      concremrh_usuarios: {
+        Row: {
+          id: string
+          auth_user_id: string | null
+          email: string
+          nome: string | null
+          perfil: Database["public"]["Enums"]["user_perfil"]
+          ativo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          auth_user_id?: string | null
+          email: string
+          nome?: string | null
+          perfil: Database["public"]["Enums"]["user_perfil"]
+          ativo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          auth_user_id?: string | null
+          email?: string
+          nome?: string | null
+          perfil?: Database["public"]["Enums"]["user_perfil"]
+          ativo?: boolean
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2036,9 +2114,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_funcionario_setor_ids: {
+        Args: { p_id: string; p_setor_ids: string }
+        Returns: void
+      }
+      get_all_funcionario_setor_ids: {
+        Args: Record<string, never>
+        Returns: { funcionario_id: string; setor_ids: string }[]
+      }
     }
     Enums: {
       app_role: "admin" | "rh_manager" | "user"
+      user_perfil: "admin" | "rh" | "sesmt" | "producao"
     }
     CompositeTypes: {
       [_ in never]: never

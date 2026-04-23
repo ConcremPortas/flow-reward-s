@@ -24,7 +24,7 @@ export function useHRApplications() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_hr_applications')
+        .from('concremrh_hr_applications')
         .select('*')
         .eq('is_active', true)
         .order('display_order');

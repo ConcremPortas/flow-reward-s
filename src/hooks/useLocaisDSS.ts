@@ -20,7 +20,7 @@ export const useLocaisDSS = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_locais_dss')
+        .from('concremrh_locais_dss')
         .select('*')
         .eq('ativo', true)
         .order('nome');
@@ -42,7 +42,7 @@ export const useLocaisDSS = () => {
   const createLocal = async (local: Omit<LocalDSS, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_locais_dss')
+        .from('concremrh_locais_dss')
         .insert([local])
         .select()
         .single();
@@ -70,7 +70,7 @@ export const useLocaisDSS = () => {
   const updateLocal = async (id: string, local: Partial<LocalDSS>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_locais_dss')
+        .from('concremrh_locais_dss')
         .update(local)
         .eq('id', id)
         .select()
@@ -99,7 +99,7 @@ export const useLocaisDSS = () => {
   const deleteLocal = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_locais_dss')
+        .from('concremrh_locais_dss')
         .update({ ativo: false })
         .eq('id', id);
 

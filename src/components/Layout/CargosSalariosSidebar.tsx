@@ -16,7 +16,7 @@ import {
   ChevronRight,
   Settings
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -52,20 +52,12 @@ export const CargosSalariosSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signOut } = useAuth();
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate("/");
-      toast({
-        title: "Logout realizado com sucesso",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao fazer logout",
-        variant: "destructive",
-      });
-    }
+  const handleLogout = () => {
+    signOut();
+    navigate("/login");
+    toast({ title: "Logout realizado com sucesso" });
   };
 
   const handleBackToHub = () => {

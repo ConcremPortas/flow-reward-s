@@ -26,10 +26,10 @@ export function CargoDetails({ cargo }: CargoDetailsProps) {
             <Badge variant="outline">Nível {cargo.nivel_hierarquico}</Badge>
           )}
         </div>
-        {cargo.concrem_setores && (
+        {cargo.concremrh_setores && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Briefcase className="h-4 w-4" />
-            <span>{cargo.concrem_setores.nome}</span>
+            <span>{cargo.concremrh_setores.nome}</span>
           </div>
         )}
       </div>

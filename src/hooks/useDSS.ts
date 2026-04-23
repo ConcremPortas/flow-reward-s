@@ -28,10 +28,10 @@ export const useDSS = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_dss')
+        .from('concremrh_dss')
         .select(`
           *,
-          local_dss:concrem_locais_dss(nome)
+          local_dss:concremrh_locais_dss(nome)
         `)
         .order('data_realizacao', { ascending: false });
 
@@ -52,7 +52,7 @@ export const useDSS = () => {
   const createDSS = async (dss: Omit<DSS, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_dss')
+        .from('concremrh_dss')
         .insert([dss])
         .select()
         .single();
@@ -80,7 +80,7 @@ export const useDSS = () => {
   const updateDSS = async (id: string, dss: Partial<Omit<DSS, 'id' | 'created_at' | 'updated_at'>>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_dss')
+        .from('concremrh_dss')
         .update(dss)
         .eq('id', id)
         .select()
@@ -109,7 +109,7 @@ export const useDSS = () => {
   const deleteDSS = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_dss')
+        .from('concremrh_dss')
         .delete()
         .eq('id', id);
 

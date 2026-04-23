@@ -25,12 +25,12 @@ export const useProducaoSetor = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_producao_setor')
+        .from('concremrh_producao_setor')
         .select(`
           *,
-          setor:concrem_setores(
+          setor:concremrh_setores(
             nome,
-            empresa:concrem_empresas(nome)
+            empresa:concremrh_empresas(nome)
           )
         `)
         .order('data_producao', { ascending: false });
@@ -52,7 +52,7 @@ export const useProducaoSetor = () => {
   const createRegistro = async (registro: Omit<ProducaoSetor, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_producao_setor')
+        .from('concremrh_producao_setor')
         .insert([registro])
         .select()
         .single();
@@ -80,7 +80,7 @@ export const useProducaoSetor = () => {
   const updateRegistro = async (id: string, registro: Partial<ProducaoSetor>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_producao_setor')
+        .from('concremrh_producao_setor')
         .update(registro)
         .eq('id', id)
         .select()
@@ -109,7 +109,7 @@ export const useProducaoSetor = () => {
   const deleteRegistro = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_producao_setor')
+        .from('concremrh_producao_setor')
         .delete()
         .eq('id', id);
 

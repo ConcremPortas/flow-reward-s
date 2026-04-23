@@ -13,6 +13,13 @@ export interface FormulaCalculo {
   peso_faltas: number;
   peso_advertencias: number;
   peso_dss: number;
+  peso_faturamento: number;
+  peso_itens_nc: number;
+  peso_tratamento_nc: number;
+  peso_hora_maquina: number;
+  peso_operacao_segura: number;
+  peso_limpeza: number;
+  multiplicador_kits?: number;
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -33,7 +40,7 @@ export const useFormulasCalculo = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_formulas_calculo')
+        .from('concremrh_formulas_calculo')
         .select(`*`)
         .eq('ativo', true)
         .order('nome');
@@ -55,7 +62,7 @@ export const useFormulasCalculo = () => {
   const createFormula = async (formula: Omit<FormulaCalculo, 'id' | 'created_at' | 'updated_at' | 'categoria' | 'base_premiacao'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_formulas_calculo')
+        .from('concremrh_formulas_calculo')
         .insert([formula])
         .select()
         .single();
@@ -83,7 +90,7 @@ export const useFormulasCalculo = () => {
   const updateFormula = async (id: string, formula: Partial<Omit<FormulaCalculo, 'id' | 'created_at' | 'updated_at' | 'categoria' | 'base_premiacao'>>) => {
     try {
       const { error } = await supabase
-        .from('concrem_formulas_calculo')
+        .from('concremrh_formulas_calculo')
         .update(formula)
         .eq('id', id);
 
@@ -108,7 +115,7 @@ export const useFormulasCalculo = () => {
   const deleteFormula = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_formulas_calculo')
+        .from('concremrh_formulas_calculo')
         .update({ ativo: false })
         .eq('id', id);
 

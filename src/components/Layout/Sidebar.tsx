@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useSidebar } from "./MainLayout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
   Users,
@@ -29,9 +30,9 @@ import {
   HardHatIcon,
   TrendingUpIcon,
   Home,
-  LogOut
+  LogOut,
+  FileBarChart2
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -92,6 +93,11 @@ const premiacoesItems = [
     title: "Gerar Premiações",
     href: "/premiacoes/gerar-premiacoes",
     icon: Gift,
+  },
+  {
+    title: "Relatório de Premiações",
+    href: "/premiacoes/relatorio-premiacoes",
+    icon: FileBarChart2,
   },
 ];
 
@@ -158,19 +164,24 @@ export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { canAccess, signOut, profile } = useAuth();
+  const isAdmin = profile?.perfil === 'admin';
+  const isUsuariosActive = location.pathname === '/cadastros/usuarios';
+
+  const showDashboard = canAccess('dashboard');
+  const showRH = canAccess('rh');
+  const showSESMT = canAccess('sesmt');
+  const showProducao = canAccess('producao');
+  const showPremiacoes = canAccess('premiacoes');
+  const showCadastros = canAccess('cadastros');
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      navigate("/");
-      toast({
-        title: "Logout realizado com sucesso",
-      });
+      await signOut();
+      navigate("/login");
+      toast({ title: "Logout realizado com sucesso" });
     } catch (error) {
-      toast({
-        title: "Erro ao fazer logout",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao fazer logout", variant: "destructive" });
     }
   };
 
@@ -207,7 +218,7 @@ export const Sidebar = () => {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => (
+        {showDashboard && menuItems.map((item) => (
           <Link key={item.href} to={item.href}>
             <Button
               variant="sidebar"
@@ -225,7 +236,7 @@ export const Sidebar = () => {
         ))}
 
         {/* RH submenu */}
-        {!isCollapsed && (
+        {showRH && !isCollapsed && (
           <div>
             <Button
               variant="sidebar"
@@ -266,7 +277,7 @@ export const Sidebar = () => {
         )}
         
         {/* RH collapsed - show individual items */}
-        {isCollapsed && rhItems.map((item) => (
+        {showRH && isCollapsed && rhItems.map((item) => (
           <Link key={item.href} to={item.href}>
             <Button
               variant="sidebar"
@@ -282,7 +293,7 @@ export const Sidebar = () => {
         ))}
 
         {/* SESMT submenu */}
-        {!isCollapsed && (
+        {showSESMT && !isCollapsed && (
           <div>
             <Button
               variant="sidebar"
@@ -323,7 +334,7 @@ export const Sidebar = () => {
         )}
         
         {/* SESMT collapsed - show individual items */}
-        {isCollapsed && sesmtItems.map((item) => (
+        {showSESMT && isCollapsed && sesmtItems.map((item) => (
           <Link key={item.href} to={item.href}>
             <Button
               variant="sidebar"
@@ -339,7 +350,7 @@ export const Sidebar = () => {
         ))}
 
         {/* PRODUÇÃO submenu */}
-        {!isCollapsed && (
+        {showProducao && !isCollapsed && (
           <div>
             <Button
               variant="sidebar"
@@ -380,7 +391,7 @@ export const Sidebar = () => {
         )}
         
         {/* PRODUÇÃO collapsed - show individual items */}
-        {isCollapsed && producaoItems.map((item) => (
+        {showProducao && isCollapsed && producaoItems.map((item) => (
           <Link key={item.href} to={item.href}>
             <Button
               variant="sidebar"
@@ -396,7 +407,7 @@ export const Sidebar = () => {
         ))}
 
         {/* PREMIAÇÕES submenu */}
-        {!isCollapsed && (
+        {showPremiacoes && !isCollapsed && (
           <div>
             <Button
               variant="sidebar"
@@ -437,7 +448,7 @@ export const Sidebar = () => {
         )}
         
         {/* PREMIAÇÕES collapsed - show individual items */}
-        {isCollapsed && premiacoesItems.map((item) => (
+        {showPremiacoes && isCollapsed && premiacoesItems.map((item) => (
           <Link key={item.href} to={item.href}>
             <Button
               variant="sidebar"
@@ -453,7 +464,7 @@ export const Sidebar = () => {
         ))}
 
         {/* Cadastros submenu */}
-        {!isCollapsed && (
+        {showCadastros && !isCollapsed && (
           <div>
             <Button
               variant="sidebar"
@@ -493,8 +504,32 @@ export const Sidebar = () => {
           </div>
         )}
         
+        {/* Usuários - apenas admin */}
+        {isAdmin && !isCollapsed && (
+          <Link to="/cadastros/usuarios">
+            <Button
+              variant="sidebar"
+              className={cn("gap-3 text-left", isUsuariosActive && "bg-primary-hover")}
+            >
+              <Users className="h-5 w-5" />
+              USUÁRIOS
+            </Button>
+          </Link>
+        )}
+        {isAdmin && isCollapsed && (
+          <Link to="/cadastros/usuarios">
+            <Button
+              variant="sidebar"
+              className={cn("justify-center px-0", isUsuariosActive && "bg-primary-hover")}
+              title="Usuários"
+            >
+              <Users className="h-5 w-5" />
+            </Button>
+          </Link>
+        )}
+
         {/* Cadastros collapsed - show individual items */}
-        {isCollapsed && cadastrosItems.map((item) => (
+        {showCadastros && isCollapsed && cadastrosItems.map((item) => (
           <Link key={item.href} to={item.href}>
             <Button
               variant="sidebar"
@@ -512,19 +547,21 @@ export const Sidebar = () => {
 
       {/* Bottom actions */}
       <div className="p-4 border-t border-primary-hover space-y-2">
-        <Link to="/">
-          <Button
-            variant="sidebar"
-            className={cn(
-              "gap-3 text-left",
-              isCollapsed && "justify-center px-0"
-            )}
-            title={isCollapsed ? "Voltar ao Hub" : undefined}
-          >
-            <Home className="h-5 w-5" />
-            {!isCollapsed && "Voltar ao Hub"}
-          </Button>
-        </Link>
+        {showDashboard && (
+          <Link to="/">
+            <Button
+              variant="sidebar"
+              className={cn(
+                "gap-3 text-left",
+                isCollapsed && "justify-center px-0"
+              )}
+              title={isCollapsed ? "Voltar ao Hub" : undefined}
+            >
+              <Home className="h-5 w-5" />
+              {!isCollapsed && "Voltar ao Hub"}
+            </Button>
+          </Link>
+        )}
 
         <Button
           variant="sidebar"

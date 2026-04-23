@@ -22,7 +22,7 @@ export const useBasePremiacao = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_base_premiacao')
+        .from('concremrh_base_premiacao')
         .select('*')
         .eq('ativo', true)
         .order('nome');
@@ -44,7 +44,7 @@ export const useBasePremiacao = () => {
   const createBase = async (base: Omit<BasePremiacao, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_base_premiacao')
+        .from('concremrh_base_premiacao')
         .insert([base])
         .select()
         .single();
@@ -72,7 +72,7 @@ export const useBasePremiacao = () => {
   const deleteBase = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_base_premiacao')
+        .from('concremrh_base_premiacao')
         .update({ ativo: false })
         .eq('id', id);
 

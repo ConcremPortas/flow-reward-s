@@ -21,7 +21,7 @@ export const useCategorias = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_categorias')
+        .from('concremrh_categorias')
         .select('*')
         .eq('ativo', true)
         .order('nome');
@@ -43,7 +43,7 @@ export const useCategorias = () => {
   const createCategoria = async (categoria: Omit<Categoria, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_categorias')
+        .from('concremrh_categorias')
         .insert([categoria])
         .select()
         .single();
@@ -71,7 +71,7 @@ export const useCategorias = () => {
   const deleteCategoria = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_categorias')
+        .from('concremrh_categorias')
         .update({ ativo: false })
         .eq('id', id);
 

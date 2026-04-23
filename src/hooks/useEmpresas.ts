@@ -23,7 +23,7 @@ export const useEmpresas = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_empresas')
+        .from('concremrh_empresas')
         .select('*')
         .eq('ativo', true)
         .order('nome');
@@ -45,7 +45,7 @@ export const useEmpresas = () => {
   const createEmpresa = async (empresa: Omit<Empresa, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_empresas')
+        .from('concremrh_empresas')
         .insert([empresa])
         .select()
         .single();
@@ -73,7 +73,7 @@ export const useEmpresas = () => {
   const updateEmpresa = async (id: string, empresa: Partial<Empresa>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_empresas')
+        .from('concremrh_empresas')
         .update(empresa)
         .eq('id', id)
         .select()
@@ -102,7 +102,7 @@ export const useEmpresas = () => {
   const deleteEmpresa = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_empresas')
+        .from('concremrh_empresas')
         .update({ ativo: false })
         .eq('id', id);
 

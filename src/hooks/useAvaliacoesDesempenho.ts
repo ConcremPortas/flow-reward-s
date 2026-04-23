@@ -19,7 +19,7 @@ export interface AvaliacaoDesempenho {
   status: string;
   created_at: string;
   updated_at: string;
-  concrem_funcionarios?: {
+  concremrh_funcionarios?: {
     id: string;
     nome: string;
   };
@@ -38,14 +38,14 @@ export const useAvaliacoesDesempenho = (funcionarioId?: string) => {
     try {
       setLoading(true);
       let query = supabase
-        .from('concrem_avaliacoes_desempenho')
+        .from('concremrh_avaliacoes_desempenho')
         .select(`
           *,
-          concrem_funcionarios!concrem_avaliacoes_desempenho_funcionario_id_fkey (
+          concremrh_funcionarios!concremrh_avaliacoes_desempenho_funcionario_id_fkey (
             id,
             nome
           ),
-          avaliador:concrem_funcionarios!concrem_avaliacoes_desempenho_avaliador_id_fkey (
+          avaliador:concremrh_funcionarios!concremrh_avaliacoes_desempenho_avaliador_id_fkey (
             id,
             nome
           )
@@ -72,10 +72,10 @@ export const useAvaliacoesDesempenho = (funcionarioId?: string) => {
     }
   };
 
-  const createAvaliacao = async (avaliacao: Omit<AvaliacaoDesempenho, 'id' | 'created_at' | 'updated_at' | 'concrem_funcionarios' | 'avaliador'>) => {
+  const createAvaliacao = async (avaliacao: Omit<AvaliacaoDesempenho, 'id' | 'created_at' | 'updated_at' | 'concremrh_funcionarios' | 'avaliador'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_avaliacoes_desempenho')
+        .from('concremrh_avaliacoes_desempenho')
         .insert([avaliacao])
         .select()
         .single();
@@ -103,7 +103,7 @@ export const useAvaliacoesDesempenho = (funcionarioId?: string) => {
   const updateAvaliacao = async (id: string, avaliacao: Partial<AvaliacaoDesempenho>) => {
     try {
       const { error } = await supabase
-        .from('concrem_avaliacoes_desempenho')
+        .from('concremrh_avaliacoes_desempenho')
         .update(avaliacao)
         .eq('id', id);
 

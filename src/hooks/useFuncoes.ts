@@ -21,7 +21,7 @@ export const useFuncoes = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_funcoes')
+        .from('concremrh_funcoes')
         .select('*')
         .eq('ativo', true)
         .order('nome');
@@ -43,7 +43,7 @@ export const useFuncoes = () => {
   const createFuncao = async (funcao: Omit<Funcao, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_funcoes')
+        .from('concremrh_funcoes')
         .insert([funcao])
         .select()
         .single();
@@ -71,7 +71,7 @@ export const useFuncoes = () => {
   const deleteFuncao = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_funcoes')
+        .from('concremrh_funcoes')
         .update({ ativo: false })
         .eq('id', id);
 

@@ -12,7 +12,7 @@ export interface EstruturaHierarquica {
   ativo: boolean;
   created_at: string;
   updated_at: string;
-  concrem_cargos?: {
+  concremrh_cargos?: {
     id: string;
     nome: string;
   };
@@ -31,14 +31,14 @@ export const useEstruturaHierarquica = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_estrutura_hierarquica')
+        .from('concremrh_estrutura_hierarquica')
         .select(`
           *,
-          concrem_cargos!concrem_estrutura_hierarquica_cargo_id_fkey (
+          concremrh_cargos!concremrh_estrutura_hierarquica_cargo_id_fkey (
             id,
             nome
           ),
-          cargo_superior:concrem_cargos!concrem_estrutura_hierarquica_cargo_superior_id_fkey (
+          cargo_superior:concremrh_cargos!concremrh_estrutura_hierarquica_cargo_superior_id_fkey (
             id,
             nome
           )
@@ -60,10 +60,10 @@ export const useEstruturaHierarquica = () => {
     }
   };
 
-  const createEstrutura = async (estrutura: Omit<EstruturaHierarquica, 'id' | 'created_at' | 'updated_at' | 'concrem_cargos' | 'cargo_superior'>) => {
+  const createEstrutura = async (estrutura: Omit<EstruturaHierarquica, 'id' | 'created_at' | 'updated_at' | 'concremrh_cargos' | 'cargo_superior'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_estrutura_hierarquica')
+        .from('concremrh_estrutura_hierarquica')
         .insert([estrutura])
         .select()
         .single();
@@ -91,7 +91,7 @@ export const useEstruturaHierarquica = () => {
   const updateEstrutura = async (id: string, estrutura: Partial<EstruturaHierarquica>) => {
     try {
       const { error } = await supabase
-        .from('concrem_estrutura_hierarquica')
+        .from('concremrh_estrutura_hierarquica')
         .update(estrutura)
         .eq('id', id);
 

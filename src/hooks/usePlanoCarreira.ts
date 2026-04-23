@@ -33,14 +33,14 @@ export const usePlanoCarreira = (cargoId?: string) => {
     try {
       setLoading(true);
       let query = supabase
-        .from('concrem_plano_carreira')
+        .from('concremrh_plano_carreira')
         .select(`
           *,
-          cargo_origem:concrem_cargos!concrem_plano_carreira_cargo_origem_id_fkey (
+          cargo_origem:concremrh_cargos!concremrh_plano_carreira_cargo_origem_id_fkey (
             id,
             nome
           ),
-          cargo_destino:concrem_cargos!concrem_plano_carreira_cargo_destino_id_fkey (
+          cargo_destino:concremrh_cargos!concremrh_plano_carreira_cargo_destino_id_fkey (
             id,
             nome
           )
@@ -70,7 +70,7 @@ export const usePlanoCarreira = (cargoId?: string) => {
   const createPlano = async (plano: Omit<PlanoCarreira, 'id' | 'created_at' | 'updated_at' | 'cargo_origem' | 'cargo_destino'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_plano_carreira')
+        .from('concremrh_plano_carreira')
         .insert([plano])
         .select()
         .single();
@@ -98,7 +98,7 @@ export const usePlanoCarreira = (cargoId?: string) => {
   const updatePlano = async (id: string, plano: Partial<PlanoCarreira>) => {
     try {
       const { error } = await supabase
-        .from('concrem_plano_carreira')
+        .from('concremrh_plano_carreira')
         .update(plano)
         .eq('id', id);
 
@@ -123,7 +123,7 @@ export const usePlanoCarreira = (cargoId?: string) => {
   const deletePlano = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_plano_carreira')
+        .from('concremrh_plano_carreira')
         .update({ ativo: false })
         .eq('id', id);
 

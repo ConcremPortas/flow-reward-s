@@ -40,6 +40,16 @@ const FormulasCalculo = () => {
   const [pesoFaltas, setPesoFaltas] = useState('');
   const [pesoAdvertencias, setPesoAdvertencias] = useState('');
   const [pesoDss, setPesoDss] = useState('');
+  const [pesoFaturamento, setPesoFaturamento] = useState('');
+  const [pesoItensNC, setPesoItensNC] = useState('');
+  const [pesoTratamentoNC, setPesoTratamentoNC] = useState('');
+  const [pesoHoraMaquina, setPesoHoraMaquina] = useState('');
+  const [pesoOperacaoSegura, setPesoOperacaoSegura] = useState('');
+  const [pesoLimpeza, setPesoLimpeza] = useState('');
+  const [multiplicadorKits, setMultiplicadorKits] = useState('1');
+
+  const baseNomeSelecionada = bases.find(b => b.id === baseId)?.nome?.toUpperCase() || '';
+  const isKitsBase = baseNomeSelecionada.includes('KITS');
 
   const filteredFormulas = formulas.filter(formula =>
     formula.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -57,6 +67,13 @@ const FormulasCalculo = () => {
     setPesoFaltas('');
     setPesoAdvertencias('');
     setPesoDss('');
+    setPesoFaturamento('');
+    setPesoItensNC('');
+    setPesoTratamentoNC('');
+    setPesoHoraMaquina('');
+    setPesoOperacaoSegura('');
+    setPesoLimpeza('');
+    setMultiplicadorKits('1');
     setIsEditing(false);
     setEditingId(null);
   };
@@ -64,12 +81,18 @@ const FormulasCalculo = () => {
   const handleSave = async () => {
     if (!nome.trim()) return;
 
-    const totalPesos = 
-      Number(pesoProducao || 0) + 
-      Number(pesoEpi || 0) + 
-      Number(pesoFaltas || 0) + 
-      Number(pesoAdvertencias || 0) + 
-      Number(pesoDss || 0);
+    const totalPesos =
+      Number(pesoProducao || 0) +
+      Number(pesoEpi || 0) +
+      Number(pesoFaltas || 0) +
+      Number(pesoAdvertencias || 0) +
+      Number(pesoDss || 0) +
+      Number(pesoFaturamento || 0) +
+      Number(pesoItensNC || 0) +
+      Number(pesoTratamentoNC || 0) +
+      Number(pesoHoraMaquina || 0) +
+      Number(pesoOperacaoSegura || 0) +
+      Number(pesoLimpeza || 0);
 
     if (totalPesos !== 100) {
       alert('A soma dos pesos deve ser igual a 100%');
@@ -86,6 +109,13 @@ const FormulasCalculo = () => {
       peso_faltas: Number(pesoFaltas || 0),
       peso_advertencias: Number(pesoAdvertencias || 0),
       peso_dss: Number(pesoDss || 0),
+      peso_faturamento: Number(pesoFaturamento || 0),
+      peso_itens_nc: Number(pesoItensNC || 0),
+      peso_tratamento_nc: Number(pesoTratamentoNC || 0),
+      peso_hora_maquina: Number(pesoHoraMaquina || 0),
+      peso_operacao_segura: Number(pesoOperacaoSegura || 0),
+      peso_limpeza: Number(pesoLimpeza || 0),
+      multiplicador_kits: Number(multiplicadorKits || 1),
       ativo: true
     };
 
@@ -108,6 +138,13 @@ const FormulasCalculo = () => {
     setPesoFaltas(formula.peso_faltas.toString());
     setPesoAdvertencias(formula.peso_advertencias.toString());
     setPesoDss(formula.peso_dss.toString());
+    setPesoFaturamento((formula.peso_faturamento || 0).toString());
+    setPesoItensNC((formula.peso_itens_nc || 0).toString());
+    setPesoTratamentoNC((formula.peso_tratamento_nc || 0).toString());
+    setPesoHoraMaquina((formula.peso_hora_maquina || 0).toString());
+    setPesoOperacaoSegura((formula.peso_operacao_segura || 0).toString());
+    setPesoLimpeza((formula.peso_limpeza || 0).toString());
+    setMultiplicadorKits((formula.multiplicador_kits || 1).toString());
     setIsEditing(true);
     setEditingId(formula.id);
   };
@@ -117,11 +154,17 @@ const FormulasCalculo = () => {
   };
 
   const getTotalPesos = () => {
-    return Number(pesoProducao || 0) + 
-           Number(pesoEpi || 0) + 
-           Number(pesoFaltas || 0) + 
-           Number(pesoAdvertencias || 0) + 
-           Number(pesoDss || 0);
+    return Number(pesoProducao || 0) +
+           Number(pesoEpi || 0) +
+           Number(pesoFaltas || 0) +
+           Number(pesoAdvertencias || 0) +
+           Number(pesoDss || 0) +
+           Number(pesoFaturamento || 0) +
+           Number(pesoItensNC || 0) +
+           Number(pesoTratamentoNC || 0) +
+           Number(pesoHoraMaquina || 0) +
+           Number(pesoOperacaoSegura || 0) +
+           Number(pesoLimpeza || 0);
   };
 
   if (loading) {
@@ -203,70 +246,74 @@ const FormulasCalculo = () => {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pesoProducao">Produção Setor</Label>
-                <Input
-                  id="pesoProducao"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={pesoProducao}
-                  onChange={(e) => setPesoProducao(e.target.value)}
-                  placeholder="0"
-                />
+                <Input id="pesoProducao" type="number" min="0" max="100" value={pesoProducao} onChange={(e) => setPesoProducao(e.target.value)} placeholder="0" />
               </div>
-              
+              <div className="space-y-2">
+                <Label htmlFor="pesoFaturamento">Faturamento</Label>
+                <Input id="pesoFaturamento" type="number" min="0" max="100" value={pesoFaturamento} onChange={(e) => setPesoFaturamento(e.target.value)} placeholder="0" />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="pesoEpi">EPI</Label>
-                <Input
-                  id="pesoEpi"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={pesoEpi}
-                  onChange={(e) => setPesoEpi(e.target.value)}
-                  placeholder="0"
-                />
+                <Input id="pesoEpi" type="number" min="0" max="100" value={pesoEpi} onChange={(e) => setPesoEpi(e.target.value)} placeholder="0" />
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="pesoFaltas">Faltas</Label>
-                <Input
-                  id="pesoFaltas"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={pesoFaltas}
-                  onChange={(e) => setPesoFaltas(e.target.value)}
-                  placeholder="0"
-                />
+                <Input id="pesoFaltas" type="number" min="0" max="100" value={pesoFaltas} onChange={(e) => setPesoFaltas(e.target.value)} placeholder="0" />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="pesoAdvertencias">Advertências</Label>
-                <Input
-                  id="pesoAdvertencias"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={pesoAdvertencias}
-                  onChange={(e) => setPesoAdvertencias(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="pesoDss">DSS</Label>
-                <Input
-                  id="pesoDss"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={pesoDss}
-                  onChange={(e) => setPesoDss(e.target.value)}
-                  placeholder="0"
-                />
+                <Input id="pesoDss" type="number" min="0" max="100" value={pesoDss} onChange={(e) => setPesoDss(e.target.value)} placeholder="0" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pesoItensNC">Itens Não Conformes</Label>
+                <Input id="pesoItensNC" type="number" min="0" max="100" value={pesoItensNC} onChange={(e) => setPesoItensNC(e.target.value)} placeholder="0" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pesoAdvertencias">Advertências</Label>
+                <Input id="pesoAdvertencias" type="number" min="0" max="100" value={pesoAdvertencias} onChange={(e) => setPesoAdvertencias(e.target.value)} placeholder="0" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pesoTratamentoNC">Tratamento NC</Label>
+                <Input id="pesoTratamentoNC" type="number" min="0" max="100" value={pesoTratamentoNC} onChange={(e) => setPesoTratamentoNC(e.target.value)} placeholder="0" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pesoHoraMaquina">Hora Máquina</Label>
+                <Input id="pesoHoraMaquina" type="number" min="0" max="100" value={pesoHoraMaquina} onChange={(e) => setPesoHoraMaquina(e.target.value)} placeholder="0" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pesoOperacaoSegura">Operação Segura</Label>
+                <Input id="pesoOperacaoSegura" type="number" min="0" max="100" value={pesoOperacaoSegura} onChange={(e) => setPesoOperacaoSegura(e.target.value)} placeholder="0" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pesoLimpeza">Limpeza</Label>
+                <Input id="pesoLimpeza" type="number" min="0" max="100" value={pesoLimpeza} onChange={(e) => setPesoLimpeza(e.target.value)} placeholder="0" />
               </div>
             </div>
             
+            {isKitsBase && (
+              <div className="mt-4 p-4 border border-amber-200 bg-amber-50 rounded-lg dark:bg-amber-950/20 dark:border-amber-800">
+                <h4 className="font-semibold mb-3 text-amber-800 dark:text-amber-400">Configuração KITS</h4>
+                <div className="max-w-xs space-y-2">
+                  <Label htmlFor="multiplicadorKits">Multiplicador do Kit</Label>
+                  <Select value={multiplicadorKits} onValueChange={setMultiplicadorKits}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o multiplicador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0.25">25% do valor do kit</SelectItem>
+                      <SelectItem value="0.5">50% do valor do kit</SelectItem>
+                      <SelectItem value="0.75">75% do valor do kit</SelectItem>
+                      <SelectItem value="1">100% do valor do kit</SelectItem>
+                      <SelectItem value="2">200% do valor do kit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Valor do kit × nota dos indicadores × multiplicador = bônus alcançado
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 p-3 bg-muted rounded-lg">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Total dos pesos:</span>
@@ -350,36 +397,17 @@ const FormulasCalculo = () => {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                      {formula.peso_producao_setor > 0 && (
-                        <div>
-                          <span className="font-medium">Produção:</span>
-                          <span className="ml-1">{formula.peso_producao_setor}%</span>
-                        </div>
-                      )}
-                      {formula.peso_epi > 0 && (
-                        <div>
-                          <span className="font-medium">EPI:</span>
-                          <span className="ml-1">{formula.peso_epi}%</span>
-                        </div>
-                      )}
-                      {formula.peso_faltas > 0 && (
-                        <div>
-                          <span className="font-medium">Faltas:</span>
-                          <span className="ml-1">{formula.peso_faltas}%</span>
-                        </div>
-                      )}
-                      {formula.peso_advertencias > 0 && (
-                        <div>
-                          <span className="font-medium">Advertências:</span>
-                          <span className="ml-1">{formula.peso_advertencias}%</span>
-                        </div>
-                      )}
-                      {formula.peso_dss > 0 && (
-                        <div>
-                          <span className="font-medium">DSS:</span>
-                          <span className="ml-1">{formula.peso_dss}%</span>
-                        </div>
-                      )}
+                      {formula.peso_producao_setor > 0 && <div><span className="font-medium">Produção:</span><span className="ml-1">{formula.peso_producao_setor}%</span></div>}
+                      {formula.peso_faturamento > 0 && <div><span className="font-medium">Faturamento:</span><span className="ml-1">{formula.peso_faturamento}%</span></div>}
+                      {formula.peso_epi > 0 && <div><span className="font-medium">EPI:</span><span className="ml-1">{formula.peso_epi}%</span></div>}
+                      {formula.peso_faltas > 0 && <div><span className="font-medium">Faltas:</span><span className="ml-1">{formula.peso_faltas}%</span></div>}
+                      {formula.peso_dss > 0 && <div><span className="font-medium">DSS:</span><span className="ml-1">{formula.peso_dss}%</span></div>}
+                      {formula.peso_itens_nc > 0 && <div><span className="font-medium">Itens NC:</span><span className="ml-1">{formula.peso_itens_nc}%</span></div>}
+                      {formula.peso_advertencias > 0 && <div><span className="font-medium">Advertências:</span><span className="ml-1">{formula.peso_advertencias}%</span></div>}
+                      {formula.peso_tratamento_nc > 0 && <div><span className="font-medium">Tratamento NC:</span><span className="ml-1">{formula.peso_tratamento_nc}%</span></div>}
+                      {formula.peso_hora_maquina > 0 && <div><span className="font-medium">Hora Máq.:</span><span className="ml-1">{formula.peso_hora_maquina}%</span></div>}
+                      {formula.peso_operacao_segura > 0 && <div><span className="font-medium">Op. Segura:</span><span className="ml-1">{formula.peso_operacao_segura}%</span></div>}
+                      {formula.peso_limpeza > 0 && <div><span className="font-medium">Limpeza:</span><span className="ml-1">{formula.peso_limpeza}%</span></div>}
                     </div>
                   </div>
                   

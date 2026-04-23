@@ -35,7 +35,7 @@ export function useUserPermissions(userId?: string) {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_user_roles')
+        .from('concremrh_user_roles')
         .select('*')
         .eq('user_id', userId);
 
@@ -55,7 +55,7 @@ export function useUserPermissions(userId?: string) {
 
     try {
       const { data, error } = await supabase
-        .from('concrem_user_application_permissions')
+        .from('concremrh_user_application_permissions')
         .select('*')
         .eq('user_id', userId);
 

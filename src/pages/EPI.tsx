@@ -36,7 +36,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Save, FileText, Edit, Trash2 } from "lucide-react";
+import { CalendarIcon, Save, FileText, Edit, Trash2, Search } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useEPI } from "@/hooks/useEPI";
 
@@ -44,23 +44,47 @@ export const EPI = () => {
   const { funcionarios, loading } = useFuncionarios();
   const { epiRecords, loading: epiLoading, createEPI, updateEPI, deleteEPI } = useEPI();
   const [selectedDate, setSelectedDate] = useState<Date>();
-  const [statusEPI, setStatusEPI] = useState<Record<string, string>>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  // Armazena apenas os NÃO conformes; ausente = conforme por padrão
+  const [naoConformes, setNaoConformes] = useState<Set<string>>(new Set());
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<any>(null);
-  const [editStatusEPI, setEditStatusEPI] = useState<Record<string, string>>({});
+  const [editNaoConformes, setEditNaoConformes] = useState<Set<string>>(new Set());
 
-  const handleStatusChange = (funcionarioId: string, status: string) => {
-    setStatusEPI(prev => ({
-      ...prev,
-      [funcionarioId]: status
-    }));
+  const isFuncionarioAtivo = (f: { ativo?: boolean; status?: string }) => {
+    const status = (f.status || '').toLowerCase();
+    return status !== 'rescisao' && status !== 'rescisão';
   };
 
-  const handleEditStatusChange = (funcionarioId: string, status: string) => {
-    setEditStatusEPI(prev => ({
-      ...prev,
-      [funcionarioId]: status
-    }));
+  const funcionariosAtivos = funcionarios
+    .filter(isFuncionarioAtivo)
+    .sort((a, b) => a.nome.localeCompare(b.nome));
+
+  const filteredFuncionariosAtivos = funcionariosAtivos.filter(f => {
+    const term = searchTerm.toLowerCase();
+    return !term ||
+      f.nome.toLowerCase().includes(term) ||
+      (f.cpf || '').toLowerCase().includes(term) ||
+      (f.setor?.nome || '').toLowerCase().includes(term) ||
+      (f.categoria?.nome || '').toLowerCase().includes(term);
+  });
+
+  const handleStatusChange = (funcionarioId: string, conforme: boolean) => {
+    setNaoConformes(prev => {
+      const next = new Set(prev);
+      if (conforme) next.delete(funcionarioId);
+      else next.add(funcionarioId);
+      return next;
+    });
+  };
+
+  const handleEditStatusChange = (funcionarioId: string, conforme: boolean) => {
+    setEditNaoConformes(prev => {
+      const next = new Set(prev);
+      if (conforme) next.delete(funcionarioId);
+      else next.add(funcionarioId);
+      return next;
+    });
   };
 
   const handleSave = async () => {
@@ -68,68 +92,62 @@ export const EPI = () => {
       alert("Por favor, selecione a data da auditoria");
       return;
     }
-    
-    // Criar apenas uma auditoria geral contendo todos os funcionários
-    const funcionariosAuditados = Object.keys(statusEPI);
-    const funcionariosInfo = funcionariosAuditados.map(funcionarioId => {
-      const funcionario = funcionarios.find(f => f.id === funcionarioId);
-      const status = statusEPI[funcionarioId];
-      return `${funcionario?.nome}: ${status === 'conforme' ? 'Conforme' : 'Não conforme'}`;
-    }).join('\n');
 
-    const conformes = funcionariosAuditados.filter(id => statusEPI[id] === 'conforme').length;
-    const naoConformes = funcionariosAuditados.filter(id => statusEPI[id] === 'nao_conforme').length;
-    
+    const totalConformes = funcionariosAtivos.filter(f => !naoConformes.has(f.id)).length;
+    const totalNaoConformes = naoConformes.size;
+
+    const funcionariosInfo = funcionariosAtivos.map(f =>
+      `${f.nome}: ${naoConformes.has(f.id) ? 'Não conforme' : 'Conforme'}`
+    ).join('\n');
+
     await createEPI({
-      funcionario_id: null, // Não é específico de um funcionário
+      funcionario_id: null,
       tipo_epi: "Auditoria Geral de EPI",
       data_entrega: selectedDate.toISOString().split('T')[0],
-      status: conformes > naoConformes ? "conforme" : "nao_conforme",
-      descricao: `Auditoria de EPI realizada em ${selectedDate.toLocaleDateString()} - ${funcionariosAuditados.length} funcionários auditados`,
-      observacoes: `Resumo: ${conformes} conformes, ${naoConformes} não conformes\n\nDetalhes:\n${funcionariosInfo}`
+      status: totalNaoConformes === 0 ? "conforme" : "nao_conforme",
+      descricao: `Auditoria de EPI realizada em ${selectedDate.toLocaleDateString('pt-BR')} - ${funcionariosAtivos.length} funcionários auditados`,
+      observacoes: `Resumo: ${totalConformes} conformes, ${totalNaoConformes} não conformes\n\nDetalhes:\n${funcionariosInfo}`
     });
-    
-    // Reset form
+
     setSelectedDate(undefined);
-    setStatusEPI({});
-    setEditingRecord(null);
-    setEditingData(null);
+    setNaoConformes(new Set());
   };
 
   const handleEdit = (epi: any) => {
-    console.log('Editando EPI:', epi);
     setEditingRecord(epi.id);
     setEditingData(epi);
-    // Set up the status for the specific funcionario from the EPI record
-    const editStatus: Record<string, string> = {};
-    if (epi.funcionario_id) {
-      editStatus[epi.funcionario_id] = epi.status || "nao_conforme";
+    // Reconstrói os não-conformes a partir das observações salvas
+    const nc = new Set<string>();
+    if (epi.observacoes) {
+      funcionariosAtivos.forEach(f => {
+        if (epi.observacoes.includes(`${f.nome}: Não conforme`)) nc.add(f.id);
+      });
     }
-    setEditStatusEPI(editStatus);
-    console.log('Dados para edição:', { editingData: epi, editStatus });
+    setEditNaoConformes(nc);
   };
 
   const handleUpdate = async () => {
     if (!editingRecord || !editingData) return;
 
-    console.log('Atualizando EPI:', {
-      id: editingRecord,
-      dados: editingData
-    });
+    const totalConformes = funcionariosAtivos.filter(f => !editNaoConformes.has(f.id)).length;
+    const totalNaoConformes = editNaoConformes.size;
+    const funcionariosInfo = funcionariosAtivos.map(f =>
+      `${f.nome}: ${editNaoConformes.has(f.id) ? 'Não conforme' : 'Conforme'}`
+    ).join('\n');
 
     await updateEPI(editingRecord, {
       funcionario_id: editingData.funcionario_id,
       tipo_epi: editingData.tipo_epi,
-      status: editingData.status,
+      status: totalNaoConformes === 0 ? "conforme" : "nao_conforme",
       descricao: editingData.descricao,
-      observacoes: editingData.observacoes,
+      observacoes: `Resumo: ${totalConformes} conformes, ${totalNaoConformes} não conformes\n\nDetalhes:\n${funcionariosInfo}`,
       numero_ca: editingData.numero_ca,
       data_vencimento: editingData.data_vencimento
     });
 
     setEditingRecord(null);
     setEditingData(null);
-    setEditStatusEPI({});
+    setEditNaoConformes(new Set());
   };
 
   const handleDelete = async (id: string) => {
@@ -139,7 +157,7 @@ export const EPI = () => {
   const handleCancelEdit = () => {
     setEditingRecord(null);
     setEditingData(null);
-    setEditStatusEPI({});
+    setEditNaoConformes(new Set());
   };
 
   if (loading) {
@@ -192,9 +210,20 @@ export const EPI = () => {
 
           {/* Lista de auditoria */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Status dos EPIs por Funcionário</h3>
-            
-            {funcionarios.length > 0 ? (
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Status dos EPIs por Funcionário</h3>
+              <div className="relative w-72">
+                <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, código, setor ou categoria..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {funcionariosAtivos.length > 0 ? (
               <div className="border rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -206,7 +235,7 @@ export const EPI = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {funcionarios.filter(f => f.ativo).map((funcionario) => (
+                    {filteredFuncionariosAtivos.map((funcionario) => (
                       <TableRow key={funcionario.id}>
                         <TableCell className="font-medium">{funcionario.nome}</TableCell>
                         <TableCell>{funcionario.setor?.nome || "Não informado"}</TableCell>
@@ -215,9 +244,9 @@ export const EPI = () => {
                           <div className="flex items-center justify-center">
                             <Switch
                               className="switch-conforme"
-                              checked={statusEPI[funcionario.id] === "conforme"}
-                              onCheckedChange={(checked) => 
-                                handleStatusChange(funcionario.id, checked ? "conforme" : "nao_conforme")
+                              checked={!naoConformes.has(funcionario.id)}
+                              onCheckedChange={(checked) =>
+                                handleStatusChange(funcionario.id, checked)
                               }
                             />
                           </div>
@@ -238,14 +267,14 @@ export const EPI = () => {
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => {
               setSelectedDate(undefined);
-              setStatusEPI({});
+              setNaoConformes(new Set());
             }}>
               Cancelar
             </Button>
-            <Button 
-              className="gap-2" 
+            <Button
+              className="gap-2"
               onClick={handleSave}
-              disabled={!selectedDate || funcionarios.length === 0}
+              disabled={!selectedDate || funcionariosAtivos.length === 0}
             >
               <Save className="h-4 w-4" />
               Salvar Auditoria
@@ -336,8 +365,8 @@ export const EPI = () => {
                       {/* Lista de funcionários para auditoria */}
                       <div className="space-y-4">
                         <h4 className="text-lg font-medium">Status dos EPIs por Funcionário</h4>
-                        
-                        {funcionarios.length > 0 ? (
+
+                        {funcionariosAtivos.length > 0 ? (
                           <div className="border rounded-lg overflow-hidden">
                             <Table>
                               <TableHeader>
@@ -349,7 +378,7 @@ export const EPI = () => {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {funcionarios.filter(f => f.ativo).map((funcionario) => (
+                                {filteredFuncionariosAtivos.map((funcionario) => (
                                   <TableRow key={funcionario.id}>
                                     <TableCell className="font-medium">{funcionario.nome}</TableCell>
                                     <TableCell>{funcionario.setor?.nome || "Não informado"}</TableCell>
@@ -358,9 +387,9 @@ export const EPI = () => {
                                       <div className="flex items-center justify-center">
                                         <Switch
                                           className="switch-conforme"
-                                          checked={editStatusEPI[funcionario.id] === "conforme"}
-                                          onCheckedChange={(checked) => 
-                                            handleEditStatusChange(funcionario.id, checked ? "conforme" : "nao_conforme")
+                                          checked={!editNaoConformes.has(funcionario.id)}
+                                          onCheckedChange={(checked) =>
+                                            handleEditStatusChange(funcionario.id, checked)
                                           }
                                         />
                                       </div>

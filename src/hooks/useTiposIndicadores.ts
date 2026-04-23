@@ -21,7 +21,7 @@ export const useTiposIndicadores = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_tipos_indicadores')
+        .from('concremrh_tipos_indicadores')
         .select('*')
         .eq('ativo', true)
         .order('codigo');
@@ -43,7 +43,7 @@ export const useTiposIndicadores = () => {
   const createTipoIndicador = async (tipoIndicador: Omit<TipoIndicador, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_tipos_indicadores')
+        .from('concremrh_tipos_indicadores')
         .insert([tipoIndicador])
         .select()
         .single();
@@ -71,7 +71,7 @@ export const useTiposIndicadores = () => {
   const updateTipoIndicador = async (id: string, tipoIndicador: Partial<TipoIndicador>) => {
     try {
       const { data, error } = await supabase
-        .from('concrem_tipos_indicadores')
+        .from('concremrh_tipos_indicadores')
         .update(tipoIndicador)
         .eq('id', id)
         .select()
@@ -100,7 +100,7 @@ export const useTiposIndicadores = () => {
   const deleteTipoIndicador = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_tipos_indicadores')
+        .from('concremrh_tipos_indicadores')
         .update({ ativo: false })
         .eq('id', id);
 

@@ -1,0 +1,80 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { UserPerfil, SectionKey } from '@/contexts/AuthContext';
+
+export interface Usuario {
+  id: string;
+  email: string;
+  nome: string | null;
+  perfil: UserPerfil;
+  secoes: SectionKey[];
+  ativo: boolean;
+  created_at: string;
+}
+
+export function useUsuarios() {
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchUsuarios() {
+    setLoading(true);
+    const { data } = await supabase
+      .from('concremrh_usuarios')
+      .select('id, email, nome, perfil, secoes, ativo, created_at')
+      .order('nome');
+    setUsuarios((data ?? []) as unknown as Usuario[]);
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchUsuarios(); }, []);
+
+  async function createUsuario(payload: {
+    nome: string;
+    email: string;
+    senha: string;
+    perfil: UserPerfil;
+    secoes: SectionKey[];
+  }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('concremrh_create_user', {
+      p_nome: payload.nome,
+      p_email: payload.email,
+      p_senha: payload.senha,
+      p_perfil: payload.perfil,
+      p_secoes: payload.secoes,
+    });
+    if (error) throw new Error(error.message);
+    const result = data as { ok: boolean; error?: string };
+    if (!result.ok) throw new Error(result.error ?? 'Erro ao criar usuário');
+    await fetchUsuarios();
+  }
+
+  async function updateUsuario(id: string, payload: Partial<{
+    nome: string;
+    perfil: UserPerfil;
+    secoes: SectionKey[];
+    ativo: boolean;
+  }>) {
+    const { error } = await supabase
+      .from('concremrh_usuarios')
+      .update({ ...payload, updated_at: new Date().toISOString() } as never)
+      .eq('id', id);
+    if (error) throw new Error(error.message);
+    await fetchUsuarios();
+  }
+
+  async function updateSenha(id: string, senha: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).rpc('concremrh_update_user_password', {
+      p_id: id,
+      p_senha: senha,
+    });
+    if (error) throw new Error(error.message);
+  }
+
+  async function toggleAtivo(id: string, ativo: boolean) {
+    return updateUsuario(id, { ativo });
+  }
+
+  return { usuarios, loading, createUsuario, updateUsuario, updateSenha, toggleAtivo, refetch: fetchUsuarios };
+}

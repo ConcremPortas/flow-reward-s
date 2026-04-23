@@ -2,8 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/Layout/MainLayout";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Login from "./pages/Login";
 import HubRH from "./pages/HubRH";
 import { Dashboard } from "./pages/Dashboard";
 import { Funcionarios } from "./pages/Funcionarios";
@@ -24,10 +27,12 @@ import { TiposIndicadoresGerais } from "./pages/cadastros/TiposIndicadoresGerais
 import { LocaisDSS } from "./pages/cadastros/LocaisDSS";
 import FormulasCalculo from "./pages/cadastros/FormulasCalculo";
 import GerarPremiacoes from "./pages/GerarPremiacoes";
+import RelatorioPremiacao from "./pages/RelatorioPremiacao";
 import CargosSalariosDashboard from "./pages/cargos-salarios/Dashboard";
 import Cargos from "./pages/cargos-salarios/Cargos";
 import FuncionariosCargosSalarios from "./pages/cargos-salarios/Funcionarios";
 import NotFound from "./pages/NotFound";
+import Usuarios from "./pages/cadastros/Usuarios";
 
 const queryClient = new QueryClient();
 
@@ -37,43 +42,166 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Hub RH - Home */}
-          <Route path="/" element={<HubRH />} />
-          
-          {/* Premiações App Routes */}
-          <Route path="/premiacoes" element={<MainLayout><Dashboard /></MainLayout>} />
-          <Route path="/premiacoes/funcionarios" element={<MainLayout><Funcionarios /></MainLayout>} />
-          <Route path="/premiacoes/dss" element={<MainLayout><DSS /></MainLayout>} />
-          <Route path="/premiacoes/epi" element={<MainLayout><EPI /></MainLayout>} />
-          <Route path="/premiacoes/faltas-advertencias" element={<MainLayout><FaltasAdvertencias /></MainLayout>} />
-          <Route path="/premiacoes/producao-setor" element={<MainLayout><ProducaoSetor /></MainLayout>} />
-          <Route path="/premiacoes/indicadores-setor" element={<MainLayout><IndicadoresSetor /></MainLayout>} />
-          <Route path="/premiacoes/indicadores-gerais" element={<MainLayout><IndicadoresGerais /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/setores" element={<MainLayout><Setores /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/faixas" element={<MainLayout><Faixas /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/funcoes" element={<MainLayout><Funcoes /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/categorias" element={<MainLayout><Categorias /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/base-premiacao" element={<MainLayout><BasePremiacao /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/empresas" element={<MainLayout><Empresas /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/tipos-indicadores" element={<MainLayout><TiposIndicadores /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/tipos-indicadores-gerais" element={<MainLayout><TiposIndicadoresGerais /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/locais-dss" element={<MainLayout><LocaisDSS /></MainLayout>} />
-          <Route path="/premiacoes/cadastros/formulas-calculo" element={<MainLayout><FormulasCalculo /></MainLayout>} />
-          <Route path="/premiacoes/gerar-premiacoes" element={<MainLayout><GerarPremiacoes /></MainLayout>} />
-          
-          {/* Cargos e Salários App Routes */}
-          <Route path="/cargos-salarios" element={<MainLayout><CargosSalariosDashboard /></MainLayout>} />
-          <Route path="/cargos-salarios/cargos" element={<MainLayout><Cargos /></MainLayout>} />
-          <Route path="/cargos-salarios/funcionarios" element={<MainLayout><FuncionariosCargosSalarios /></MainLayout>} />
-          <Route path="/cargos-salarios/cadastros/setores" element={<MainLayout><Setores /></MainLayout>} />
-          
-          {/* Indicadores RH App Routes - TODO */}
-          <Route path="/indicadores-rh" element={<MainLayout><NotFound /></MainLayout>} />
-          
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            {/* Public */}
+            <Route path="/login" element={<Login />} />
+
+            {/* Hub - admin e rh apenas */}
+            <Route path="/" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <HubRH />
+              </ProtectedRoute>
+            } />
+
+            {/* Premiações - SESMT */}
+            <Route path="/premiacoes/dss" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh', 'sesmt']}>
+                <MainLayout><DSS /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/epi" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh', 'sesmt']}>
+                <MainLayout><EPI /></MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Premiações - PRODUÇÃO */}
+            <Route path="/premiacoes/producao-setor" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh', 'producao']}>
+                <MainLayout><ProducaoSetor /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/indicadores-setor" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh', 'producao']}>
+                <MainLayout><IndicadoresSetor /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/indicadores-gerais" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh', 'producao']}>
+                <MainLayout><IndicadoresGerais /></MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Premiações - RH/Admin */}
+            <Route path="/premiacoes" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><Dashboard /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/funcionarios" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><Funcionarios /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/faltas-advertencias" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><FaltasAdvertencias /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/gerar-premiacoes" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><GerarPremiacoes /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/relatorio-premiacoes" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><RelatorioPremiacao /></MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Cadastros - Admin/RH */}
+            <Route path="/premiacoes/cadastros/setores" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><Setores /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/faixas" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><Faixas /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/funcoes" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><Funcoes /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/categorias" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><Categorias /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/base-premiacao" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><BasePremiacao /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/empresas" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><Empresas /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/tipos-indicadores" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><TiposIndicadores /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/tipos-indicadores-gerais" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><TiposIndicadoresGerais /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/locais-dss" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><LocaisDSS /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/formulas-calculo" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><FormulasCalculo /></MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Cargos e Salários - Admin/RH */}
+            <Route path="/cargos-salarios" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><CargosSalariosDashboard /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/cargos-salarios/cargos" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><Cargos /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/cargos-salarios/funcionarios" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><FuncionariosCargosSalarios /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/cargos-salarios/cadastros/setores" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><Setores /></MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Usuários - Admin apenas */}
+            <Route path="/cadastros/usuarios" element={
+              <ProtectedRoute allowedPerfis={['admin']}>
+                <MainLayout><Usuarios /></MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Indicadores RH - TODO */}
+            <Route path="/indicadores-rh" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><NotFound /></MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

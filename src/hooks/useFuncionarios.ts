@@ -20,6 +20,7 @@ export interface Funcionario {
   faixa_id?: string;
   local_dss_id?: string;
   status?: string;
+  valor_fixo?: number;
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -31,6 +32,7 @@ export interface Funcionario {
   base_premiacao?: { nome: string };
   faixa?: { nome: string; valor: number };
   local_dss?: { nome: string };
+  setor_ids?: string[];
 }
 
 export const useFuncionarios = () => {
@@ -42,21 +44,42 @@ export const useFuncionarios = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('concrem_funcionarios')
+        .from('concremrh_funcionarios')
         .select(`
           *,
-          empresa:concrem_empresas(nome),
-          setor:concrem_setores!concrem_funcionarios_setor_id_fkey(nome),
-          funcao:concrem_funcoes(nome),
-          categoria:concrem_categorias(nome),
-          base_premiacao:concrem_base_premiacao(nome),
-          faixa:concrem_faixas(nome, valor),
-          local_dss:concrem_locais_dss(nome)
+          empresa:concremrh_empresas(nome),
+          setor:concremrh_setores!concremrh_funcionarios_setor_id_fkey(nome),
+          funcao:concremrh_funcoes(nome),
+          categoria:concremrh_categorias(nome),
+          base_premiacao:concremrh_base_premiacao(nome),
+          faixa:concremrh_faixas(nome, valor),
+          local_dss:concremrh_locais_dss(nome)
         `)
         .order('nome');
 
       if (error) throw error;
-      setFuncionarios((data as any) || []);
+
+      // Buscar setor_ids via RPC (contorna schema cache do PostgREST)
+      let setorIdsMap: Record<string, string[]> = {};
+      try {
+        const { data: setorIdsData } = await supabase.rpc('get_all_funcionario_setor_ids');
+        if (setorIdsData) {
+          for (const row of setorIdsData as { funcionario_id: string; setor_ids: string }[]) {
+            if (row.setor_ids) {
+              setorIdsMap[row.funcionario_id] = row.setor_ids.split(',').filter(Boolean);
+            }
+          }
+        }
+      } catch {
+        // Ignora silenciosamente se a função ainda não existir
+      }
+
+      const funcionariosComSetorIds = (data || []).map((f: any) => ({
+        ...f,
+        setor_ids: setorIdsMap[f.id] || null,
+      }));
+
+      setFuncionarios(funcionariosComSetorIds as any);
     } catch (error) {
       console.error('Erro ao carregar funcionários:', error);
       toast({
@@ -71,9 +94,10 @@ export const useFuncionarios = () => {
 
   const createFuncionario = async (funcionario: Omit<Funcionario, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      const { setor_ids: _setor_ids, ...funcionarioSemSetorIds } = funcionario as any;
       const { data, error } = await supabase
-        .from('concrem_funcionarios')
-        .insert([funcionario])
+        .from('concremrh_funcionarios')
+        .insert([funcionarioSemSetorIds])
         .select()
         .single();
 
@@ -110,9 +134,10 @@ export const useFuncionarios = () => {
 
   const updateFuncionario = async (id: string, funcionario: Partial<Funcionario>) => {
     try {
+      const { setor_ids: _setor_ids, ...funcionarioSemSetorIds } = funcionario as any;
       const { data, error } = await supabase
-        .from('concrem_funcionarios')
-        .update(funcionario)
+        .from('concremrh_funcionarios')
+        .update(funcionarioSemSetorIds)
         .eq('id', id)
         .select()
         .single();
@@ -151,8 +176,8 @@ export const useFuncionarios = () => {
   const deleteFuncionario = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('concrem_funcionarios')
-        .update({ ativo: false })
+        .from('concremrh_funcionarios')
+        .update({ ativo: false, status: 'Rescisão' })
         .eq('id', id);
 
       if (error) throw error;

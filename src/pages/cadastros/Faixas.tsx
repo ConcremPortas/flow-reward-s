@@ -26,10 +26,11 @@ import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { useFaixas } from "@/hooks/useFaixas";
 
 export const Faixas = () => {
-  const { faixas, loading, createFaixa, deleteFaixa } = useFaixas();
+  const { faixas, loading, createFaixa, updateFaixa, deleteFaixa } = useFaixas();
   const [searchTerm, setSearchTerm] = useState("");
   const [nomeFaixa, setNomeFaixa] = useState("");
   const [valor, setValor] = useState("");
+  const [editingRecord, setEditingRecord] = useState<string | null>(null);
 
   const filteredFaixas = faixas.filter(faixa =>
     faixa.nome.toLowerCase().includes(searchTerm.toLowerCase())
@@ -43,17 +44,38 @@ export const Faixas = () => {
     }).format(value);
   };
 
-  const handleAddFaixa = async () => {
+  const handleSaveFaixa = async () => {
     if (!nomeFaixa.trim() || !valor) return;
-    
-    await createFaixa({
-      nome: nomeFaixa,
-      valor: parseFloat(valor),
-      ativo: true
-    });
-    
+
+    if (editingRecord) {
+      await updateFaixa(editingRecord, {
+        nome: nomeFaixa,
+        valor: parseFloat(valor),
+        ativo: true,
+      });
+    } else {
+      await createFaixa({
+        nome: nomeFaixa,
+        valor: parseFloat(valor),
+        ativo: true,
+      });
+    }
+
     setNomeFaixa("");
     setValor("");
+    setEditingRecord(null);
+  };
+
+  const handleEditFaixa = (faixa: any) => {
+    setNomeFaixa(faixa.nome);
+    setValor(String(faixa.valor ?? ""));
+    setEditingRecord(faixa.id);
+  };
+
+  const handleCancel = () => {
+    setNomeFaixa("");
+    setValor("");
+    setEditingRecord(null);
   };
 
   const handleDeleteFaixa = async (id: string) => {
@@ -73,7 +95,7 @@ export const Faixas = () => {
       {/* Nova Faixa */}
       <Card className="card-elegant">
         <CardHeader>
-          <CardTitle>Nova Faixa de Categoria Bônus</CardTitle>
+          <CardTitle>{editingRecord ? "Editar" : "Nova"} Faixa de Categoria Bônus</CardTitle>
           <CardDescription>
             Cadastre uma nova faixa de categoria bônus
           </CardDescription>
@@ -114,15 +136,12 @@ export const Faixas = () => {
           )}
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => {
-              setNomeFaixa("");
-              setValor("");
-            }}>
+            <Button variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
-            <Button className="gap-2" onClick={handleAddFaixa} disabled={!nomeFaixa.trim() || !valor}>
+            <Button className="gap-2" onClick={handleSaveFaixa} disabled={!nomeFaixa.trim() || !valor}>
               <Plus className="h-4 w-4" />
-              Adicionar Faixa
+              {editingRecord ? "Atualizar Faixa" : "Adicionar Faixa"}
             </Button>
           </div>
         </CardContent>
@@ -174,7 +193,7 @@ export const Faixas = () => {
                     </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
-                          <Button variant="ghost" size="sm" className="gap-1">
+                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => handleEditFaixa(faixa)}>
                             <Edit className="h-3 w-3" />
                             Editar
                           </Button>

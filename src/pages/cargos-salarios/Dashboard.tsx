@@ -151,7 +151,7 @@ export default function CargosSalariosDashboard() {
                     <div className="flex-1">
                       <h4 className="font-semibold">{cargo.nome}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {cargo.concrem_setores?.nome || 'Setor não definido'} • {funcionariosNoCargo} colaborador(es)
+                        {cargo.concremrh_setores?.nome || 'Setor não definido'} • {funcionariosNoCargo} colaborador(es)
                       </p>
                     </div>
                     {(cargo.salario_minimo || cargo.salario_maximo) && (
