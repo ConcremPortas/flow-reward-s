@@ -32,17 +32,20 @@ import { useCategorias } from '@/hooks/useCategorias';
 import { useSetores } from '@/hooks/useSetores';
 import { useIndicadoresSetor } from '@/hooks/useIndicadoresSetor';
 import { useIndicadoresGerais } from '@/hooks/useIndicadoresGerais';
+import { useConfiguracoesKits, ConfiguracaoKits } from '@/hooks/useConfiguracoesKits';
 
-// Função para calcular comissão de Kits
-const calcularComissao = (realizado: number) => {
-  if (realizado >= 10000) {
-    const faixasCompletas = Math.floor((realizado - 10000) / 250);
-    const faixasLimitadas = Math.min(faixasCompletas, 44);
-    const bonus = 100 + (faixasLimitadas * 25);
-    return bonus;
-  } else {
-    return 0;
+const FALLBACK_CONFIG: ConfiguracaoKits = {
+  id: '', vigencia_inicio: '2000-01', minimo_kits: 10000,
+  incremento_faixa: 250, bonus_base: 100,
+  bonus_por_faixa: 25, ativo: true, created_at: '', updated_at: '',
+};
+
+const calcularComissao = (realizado: number, config: ConfiguracaoKits) => {
+  if (realizado >= config.minimo_kits) {
+    const faixasCompletas = Math.floor((realizado - config.minimo_kits) / config.incremento_faixa);
+    return config.bonus_base + (faixasCompletas * config.bonus_por_faixa);
   }
+  return 0;
 };
 
 // Funções para calcular notas
@@ -107,6 +110,7 @@ const GerarPremiacoes = () => {
   const { setores } = useSetores();
   const { indicadores: indicadoresSetor } = useIndicadoresSetor();
   const { indicadores: indicadoresGerais } = useIndicadoresGerais();
+  const { getConfigParaCompetencia } = useConfiguracoesKits();
 
   const [baseIds, setBaseIds] = useState<string[]>([]);
   const [competencia, setCompetencia] = useState('');
@@ -442,7 +446,8 @@ const GerarPremiacoes = () => {
               )
             : null;
           const realizadoKits = kitsMes?.realizado || 0;
-          const valorKits = isKitsGeracao ? calcularComissao(realizadoKits) : undefined;
+          const configKits = getConfigParaCompetencia(competencia) || FALLBACK_CONFIG;
+          const valorKits = isKitsGeracao ? calcularComissao(realizadoKits, configKits) : undefined;
           const multiplicadorKits = isKitsGeracao ? extractKitsMultiplier(baseSelecionada?.nome) : 1.0;
           const bonusBase = isKitsGeracao ? (valorKits || 0) * multiplicadorKits : valorFaixa;
           const bonusPossivel = bonusBase + valorFixo;

@@ -152,6 +152,11 @@ const cadastrosItems = [
     href: "/premiacoes/cadastros/formulas-calculo",
     icon: Settings,
   },
+  {
+    title: "Configurações Kits",
+    href: "/premiacoes/cadastros/configuracoes-kits",
+    icon: TrendingUpIcon,
+  },
 ];
 
 export const Sidebar = () => {

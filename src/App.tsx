@@ -26,6 +26,7 @@ import { TiposIndicadores } from "./pages/cadastros/TiposIndicadores";
 import { TiposIndicadoresGerais } from "./pages/cadastros/TiposIndicadoresGerais";
 import { LocaisDSS } from "./pages/cadastros/LocaisDSS";
 import FormulasCalculo from "./pages/cadastros/FormulasCalculo";
+import ConfiguracoesKits from "./pages/cadastros/ConfiguracoesKits";
 import GerarPremiacoes from "./pages/GerarPremiacoes";
 import RelatorioPremiacao from "./pages/RelatorioPremiacao";
 import CargosSalariosDashboard from "./pages/cargos-salarios/Dashboard";
@@ -159,6 +160,11 @@ const App = () => (
             <Route path="/premiacoes/cadastros/formulas-calculo" element={
               <ProtectedRoute allowedPerfis={['admin', 'rh']}>
                 <MainLayout><FormulasCalculo /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/premiacoes/cadastros/configuracoes-kits" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ConfiguracoesKits /></MainLayout>
               </ProtectedRoute>
             } />
 
