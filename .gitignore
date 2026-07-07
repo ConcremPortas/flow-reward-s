@@ -26,3 +26,11 @@ dist-ssr
 # Environment variables
 .env
 .env.*
+
+# Migracao de dados V2 — NUNCA commitar dados reais nem credenciais
+scripts/migration/.env.migration
+*.data.sql
+*.data.json
+*.dump
+schema_data*.sql
+db_dados_*.sql
