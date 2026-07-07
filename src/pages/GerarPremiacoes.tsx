@@ -33,6 +33,20 @@ import { useSetores } from '@/hooks/useSetores';
 import { useIndicadoresSetor } from '@/hooks/useIndicadoresSetor';
 import { useIndicadoresGerais } from '@/hooks/useIndicadoresGerais';
 import { useConfiguracoesKits, ConfiguracaoKits } from '@/hooks/useConfiguracoesKits';
+import {
+  calcularComissao,
+  calcularNotaFaltas,
+  calcularNotaAdvertencias,
+  calcularNotaEpi,
+  calcularNotaDss,
+  calcularNotaProducao,
+  calcularNotaGeral,
+  calcularBonus,
+  extractKitsMultiplier,
+  isProducaoBase,
+  isKitsBase,
+  normalize,
+} from '@/domain/premiacao/calculoPremiacao';
 
 const FALLBACK_CONFIG: ConfiguracaoKits = {
   id: '', vigencia_inicio: '2000-01', minimo_kits: 10000,
@@ -40,30 +54,8 @@ const FALLBACK_CONFIG: ConfiguracaoKits = {
   bonus_por_faixa: 25, ativo: true, created_at: '', updated_at: '',
 };
 
-const calcularComissao = (realizado: number, config: ConfiguracaoKits) => {
-  if (realizado >= config.minimo_kits) {
-    const faixasCompletas = Math.floor((realizado - config.minimo_kits) / config.incremento_faixa);
-    return config.bonus_base + (faixasCompletas * config.bonus_por_faixa);
-  }
-  return 0;
-};
-
-// Funções para calcular notas
-const calcularNotaFaltas = (quantidade: number) => {
-  if (quantidade >= 4) return 0;
-  if (quantidade === 3) return 0.25;
-  if (quantidade === 2) return 0.50;
-  if (quantidade === 1) return 0.75;
-  return 1.0;
-};
-
-const calcularNotaAdvertencias = (quantidade: number) => {
-  if (quantidade >= 4) return 0;
-  if (quantidade === 3) return 0.25;
-  if (quantidade === 2) return 0.50;
-  if (quantidade === 1) return 0.75;
-  return 1.0;
-};
+// calcularComissao, calcularNotaFaltas e calcularNotaAdvertencias foram extraídos
+// para @/domain/premiacao/calculoPremiacao (Etapa 3 da Reforma V2).
 
 interface FuncionarioPremiacao {
   id: string;
@@ -127,15 +119,8 @@ const GerarPremiacoes = () => {
   const toggleCategoria = (id: string) =>
     setCategoriaIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
-  const normalize = (s?: string) =>
-    (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
-
-  const extractKitsMultiplier = (baseName?: string): number => {
-    const normalized = normalize(baseName);
-    const match = normalized.match(/(\d+)%/);
-    if (match) return parseInt(match[1]) / 100;
-    return 1.0;
-  };
+  // normalize e extractKitsMultiplier foram extraídos para
+  // @/domain/premiacao/calculoPremiacao (Etapa 3 da Reforma V2).
 
   const iniciarGeracao = async () => {
     if (baseIds.length === 0 || !competencia) return;
@@ -160,9 +145,8 @@ const GerarPremiacoes = () => {
     try {
       for (const currentBaseId of baseIds) {
         const baseSelecionada = bases.find(b => b.id === currentBaseId);
-        const baseNomeNorm = normalize(baseSelecionada?.nome);
-        const isProducaoGeracao = baseNomeNorm.includes('PRODUCAO') || baseNomeNorm.includes('PRODUCAO');
-        const isKitsGeracao = baseNomeNorm.startsWith('KIT');
+        const isProducaoGeracao = isProducaoBase(baseSelecionada?.nome);
+        const isKitsGeracao = isKitsBase(baseSelecionada?.nome);
 
         console.log('\n🎯 ===== INICIANDO GERAÇÃO DE PREMIAÇÕES =====');
         console.log('Base utilizada para cálculo:', baseSelecionada?.nome);
@@ -261,9 +245,7 @@ const GerarPremiacoes = () => {
           );
           const totalAuditorias = episDoMes.length;
           const naoConformidades = episDoMes.filter(e => e.status === 'nao_conforme').length;
-          const notaEpi = totalAuditorias > 0
-            ? (totalAuditorias - naoConformidades) / totalAuditorias
-            : 1.0;
+          const notaEpi = calcularNotaEpi(totalAuditorias, naoConformidades);
 
           // 4. DSS
           const dssDoLocalNoMes = dssRecords.filter(d =>
@@ -275,7 +257,7 @@ const GerarPremiacoes = () => {
           const presencasDss = dssDoLocalNoMes.filter(d =>
             d.participantes_ids?.includes(funcionario.id)
           ).length;
-          const notaDss = totalDssLocal > 0 ? presencasDss / totalDssLocal : 1.0;
+          const notaDss = calcularNotaDss(totalDssLocal, presencasDss);
 
           // 5. PRODUÇÃO
           let notaProducao = 0;
@@ -299,8 +281,9 @@ const GerarPremiacoes = () => {
                 if (producaoDosSetores.length > 0) {
                   const totalMeta = producaoDosSetores.reduce((acc, p) => acc + (p.meta_diaria || 0), 0);
                   const totalRealizado = producaoDosSetores.reduce((acc, p) => acc + (p.producao_realizada || 0), 0);
-                  percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
-                  notaProducao = Math.min(percentualProducao, 1.0);
+                  const producao = calcularNotaProducao(totalMeta, totalRealizado);
+                  percentualProducao = producao.percentual;
+                  notaProducao = producao.nota;
                 }
               }
             } else {
@@ -313,8 +296,9 @@ const GerarPremiacoes = () => {
                 if (producaoDoSetor.length > 0) {
                   const totalMeta = producaoDoSetor.reduce((acc, p) => acc + (p.meta_diaria || 0), 0);
                   const totalRealizado = producaoDoSetor.reduce((acc, p) => acc + (p.producao_realizada || 0), 0);
-                  percentualProducao = totalMeta > 0 ? totalRealizado / totalMeta : 0;
-                  notaProducao = Math.min(percentualProducao, 1.0);
+                  const producao = calcularNotaProducao(totalMeta, totalRealizado);
+                  percentualProducao = producao.percentual;
+                  notaProducao = producao.nota;
                 }
               }
             }
@@ -371,69 +355,25 @@ const GerarPremiacoes = () => {
             }
           }
 
-          // 7. NOTA GERAL
-          let notaGeral = 0;
-
-          if (isProducaoGeracao && isSupervisorOrEncarregado) {
-            const pProd = formula ? (formula.peso_producao_setor || 0) / 100 : 0.20;
-            const pFat  = formula ? (formula.peso_faturamento    || 0) / 100 : 0.26;
-            const pEpi  = formula ? (formula.peso_epi            || 0) / 100 : 0.10;
-            const pFalt = formula ? (formula.peso_faltas         || 0) / 100 : 0.10;
-            const pDss  = formula ? (formula.peso_dss            || 0) / 100 : 0.10;
-            const pINC  = formula ? (formula.peso_itens_nc       || 0) / 100 : 0.05;
-            const pAdv  = formula ? (formula.peso_advertencias   || 0) / 100 : 0.03;
-            const pTNC  = formula ? (formula.peso_tratamento_nc  || 0) / 100 : 0.03;
-            const pHM   = formula ? (formula.peso_hora_maquina   || 0) / 100 : 0.03;
-            const pOS   = formula ? (formula.peso_operacao_segura|| 0) / 100 : 0.03;
-            const pLimp = formula ? (formula.peso_limpeza        || 0) / 100 : 0.07;
-
-            notaGeral = (
-              (notaProducao       * pProd) +
-              (notaFaturamento    * pFat)  +
-              (notaEpi            * pEpi)  +
-              (notaFaltas         * pFalt) +
-              (notaDss            * pDss)  +
-              (notaItensNC        * pINC)  +
-              (notaAdvertencias   * pAdv)  +
-              (notaTratamentoNC   * pTNC)  +
-              (notaHoraMaquina    * pHM)   +
-              (notaOperacaoSegura * pOS)   +
-              (notaLimpeza        * pLimp)
-            );
-          } else {
-            if (!formula) {
-              notaGeral = 0;
-            } else {
-              const pesoProducao    = (formula.peso_producao_setor || 0) / 100;
-              const pesoEpi         = (formula.peso_epi            || 0) / 100;
-              const pesoDss         = (formula.peso_dss            || 0) / 100;
-              const pesoFaltas      = (formula.peso_faltas         || 0) / 100;
-              const pesoAdvertencias= (formula.peso_advertencias   || 0) / 100;
-
-              if (isProducaoGeracao) {
-                notaGeral = (
-                  (notaProducao    * pesoProducao)     +
-                  (notaEpi         * pesoEpi)          +
-                  (notaDss         * pesoDss)          +
-                  (notaFaltas      * pesoFaltas)       +
-                  (notaAdvertencias* pesoAdvertencias)
-                );
-              } else {
-                // KITS: usa pesos da fórmula ou distribui igualmente se não configurados
-                const somaKits = pesoEpi + pesoDss + pesoFaltas + pesoAdvertencias;
-                if (somaKits > 0.01) {
-                  notaGeral = (
-                    (notaEpi         * pesoEpi)          +
-                    (notaDss         * pesoDss)          +
-                    (notaFaltas      * pesoFaltas)       +
-                    (notaAdvertencias* pesoAdvertencias)
-                  );
-                } else {
-                  notaGeral = (notaEpi + notaDss + notaFaltas + notaAdvertencias) / 4;
-                }
-              }
-            }
-          }
+          // 7. NOTA GERAL (extraída para @/domain/premiacao/calculoPremiacao — Etapa 3)
+          const notaGeral = calcularNotaGeral({
+            notas: {
+              notaProducao,
+              notaEpi,
+              notaFaltas,
+              notaDss,
+              notaAdvertencias,
+              notaFaturamento,
+              notaItensNC,
+              notaTratamentoNC,
+              notaHoraMaquina,
+              notaOperacaoSegura,
+              notaLimpeza,
+            },
+            formula,
+            isProducaoGeracao,
+            isSupervisorOrEncarregado,
+          });
 
           // 8. BÔNUS
           const valorFaixa = funcionario.faixa?.valor || 0;
@@ -449,9 +389,14 @@ const GerarPremiacoes = () => {
           const configKits = getConfigParaCompetencia(competencia) || FALLBACK_CONFIG;
           const valorKits = isKitsGeracao ? calcularComissao(realizadoKits, configKits) : undefined;
           const multiplicadorKits = isKitsGeracao ? extractKitsMultiplier(baseSelecionada?.nome) : 1.0;
-          const bonusBase = isKitsGeracao ? (valorKits || 0) * multiplicadorKits : valorFaixa;
-          const bonusPossivel = bonusBase + valorFixo;
-          const bonusAlcancado = bonusBase * notaGeral + valorFixo;
+          const { bonusPossivel, bonusAlcancado } = calcularBonus({
+            notaGeral,
+            valorFaixa,
+            valorFixo,
+            isKitsGeracao,
+            valorKits,
+            multiplicadorKits,
+          });
 
           return {
             id: funcionario.id,
