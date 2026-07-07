@@ -1,11 +1,13 @@
 # Plano de Reforma V2 — ConcremRH / Recompensa-Flow
 
-**Versão:** 1.2 (Etapa 2 concluída — testes de caracterização do motor)
+**Versão:** 1.4 (Etapa 4 concluída — auditoria de schema/migrations)
 **Data:** 2026-07-07
-**Base de referência:** [SDD.md](SDD.md)
+**Base de referência:** [SDD.md](SDD.md) · [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md)
 **Princípio norteador:** *reaproveitar o sistema existente e reformar de forma estrutural e segura, sem quebrar regra de negócio nem dados em produção.*
 
-> **Progresso:** Etapas 0 (diagnóstico), **1 (rede de segurança e tooling)** e **2 (testes de caracterização) concluídas**. Ver §1-A (Etapa 1) e §1-B (Etapa 2) para os relatórios de conclusão.
+> **Progresso:** Etapas 0 (diagnóstico), **1 (rede de segurança e tooling)**, **2 (testes de caracterização)**, **3 (extração do motor)** e **4 (auditoria de schema/migrations) concluídas**. Ver §1-A a §1-D para os relatórios de conclusão.
+>
+> **⚠️ Mudança de rumo (2026-07-07):** a aplicação será **migrada para um novo projeto Supabase**. A prioridade a partir de agora passa a ser **preparar schema/migrations completas** para recriar o banco no novo projeto (ver §1-C, §1-D e "Reordenação de prioridades"). Etapas visuais/UX ficam **depois** da estabilização do schema.
 
 ---
 
@@ -98,6 +100,84 @@
 
 ---
 
+## 1-C. Relatório de conclusão da Etapa 3 (2026-07-07)
+
+*Escopo: fazer o componente usar o módulo puro, removendo a duplicação de cálculo, sem alterar comportamento. Inclui a investigação do banco real (achado crítico da Etapa 2).*
+
+### Status da Etapa 3 — ✅ concluída
+| Item | Resultado |
+|------|-----------|
+| [GerarPremiacoes.tsx](src/pages/GerarPremiacoes.tsx) usa [calculoPremiacao.ts](src/domain/premiacao/calculoPremiacao.ts) | ✅ |
+| Lógicas duplicadas de cálculo removidas do componente | ✅ (−110 / +55 linhas) |
+| Busca por hooks, filtros, agregação, persistência, navegação, toasts e UI | ✅ **preservados** |
+| Regra de cálculo | ✅ **não alterada** (extração 1:1 verbatim) |
+| Banco | ✅ **não alterado** |
+| Layout | ✅ **não alterado** |
+| `typecheck` / `build` / `test` | ✅ Todos passando |
+| Suíte de caracterização | ✅ **32 testes continuam passando** |
+
+### Funções extraídas / passadas a serem usadas pelo componente
+`calcularComissao` · `calcularNotaFaltas` · `calcularNotaAdvertencias` · `calcularNotaEpi` · `calcularNotaDss` · `calcularNotaProducao` · `calcularNotaGeral` · `calcularBonus` · `extractKitsMultiplier` · `isProducaoBase` · `isKitsBase` · `normalize`.
+
+> Observação: `calcularMediaIndicador` foi **mantido inline** no componente de propósito — seu tratamento de `null` (`realizado/meta` → `NaN`) diverge do módulo (`(realizado||0)/meta` → `0`); extraí-lo mudaria comportamento. Fica para a reforma da regra (Etapa 8).
+
+### 🔴→🟢 Achado crítico REBAIXADO (investigação no banco real via API REST)
+- **Confirmado:** as **6 colunas extras de peso existem** no banco real (`concremrh_formulas_calculo`).
+- As fórmulas **`SUPERVISÃO PRODUCAO`** e **`ENCARREGADO PRODUCAO`** têm os pesos preenchidos e **somam 100** (`prod 30 · fat 20 · epi 10 · falt 10 · dss 10 · i_nc 5 · adv 3 · t_nc 3 · h_maq 3 · op_seg 3 · limp 3`).
+- **Conclusão:** o risco de subpagamento (~0.53) **por colunas inexistentes NÃO se materializa** no banco atual — supervisor/encarregado com desempenho perfeito atinge nota 1.0.
+
+### 🟠 Novos achados (da investigação do banco)
+1. **`types.ts` desatualizado** em relação ao banco real. O banco tem colunas que **não aparecem** no `types.ts` gerado: `peso_faturamento`, `peso_itens_nc`, `peso_tratamento_nc`, `peso_hora_maquina`, `peso_operacao_segura`, `peso_limpeza` e `multiplicador_kits`.
+2. **Estruturas `concremrh_` no banco real não cobertas pelas migrations versionadas** (schema criado fora do controle de migrations — provavelmente via dashboard/Lovable).
+3. **Possível descasamento de fórmula (a validar):** as fórmulas têm `categoria_id`/`base_premiacao_id` = `null`, então o match cai no **fallback por nome**. O banco usa `"SUPERVISÃO PRODUCAO"` / `"ENCARREGADO PRODUCAO"`, mas o componente tenta casar `"SUPERVISOR - PRODUÇÃO"` (`categoria - base` normalizado) — que **não bate**. Nesse caso o supervisor cairia nos **pesos-padrão hardcoded** (0.20/0.26/…) em vez dos pesos configurados no banco (0.30/0.20/…).
+   - **Precisa ser validado com dados reais** de `concremrh_funcionarios`, `concremrh_categorias` e `concremrh_base_premiacao` antes de qualquer conclusão. **Nada foi alterado.**
+
+### Mudança de prioridade
+- A aplicação será **migrada para um novo projeto Supabase**. Por isso, a próxima etapa passa a ser **preparar schema/migrations completas** para recriar o banco no novo projeto (capturando inclusive as colunas/estruturas hoje fora das migrations).
+- **Etapas visuais/UX ficam depois** da estabilização do schema.
+
+---
+
+## 1-D. Relatório de conclusão da Etapa 4 (2026-07-07)
+
+*Escopo: auditar schema/migrations e preparar a proposta de migrations para o novo projeto Supabase, sem alterar banco, migrations, regra ou UI. Relatório completo em [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md).*
+
+### Status da Etapa 4 — ✅ concluída
+| Item | Resultado |
+|------|-----------|
+| Auditoria de schema/migrations | ✅ concluída |
+| Documento de auditoria | ✅ criado — [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md) |
+| Tabelas `concremrh_` mapeadas (usadas pelo app) | ✅ **29** |
+| Tabelas `concremrh_` **sem** migration | ⚠️ **28 de 29** |
+| Única com migration | `concremrh_configuracoes_kits` — **incompleta** (falta `max_faixas`) |
+| Origem do schema | ⚠️ criado **majoritariamente fora do versionamento** (dashboard/Lovable) |
+| `typecheck` / `build` / `test` | ✅ Todos passando (nenhum código alterado) |
+
+### Achados principais
+- **`types.ts` defasado** em relação ao banco real (múltiplas tabelas).
+- **`concremrh_formulas_calculo`** tem colunas reais ausentes no `types.ts` (`peso_faturamento`, `peso_itens_nc`, `peso_tratamento_nc`, `peso_hora_maquina`, `peso_operacao_segura`, `peso_limpeza`, `multiplicador_kits`).
+- **`concremrh_configuracoes_kits`** ausente do `types.ts` e com **`max_faixas`** fora da migration.
+- **`concremrh_usuarios`** tem campos usados pelo app (**`secoes`** e a coluna de **senha/hash**) não refletidos corretamente no `types.ts`.
+- **RPCs críticas fora do `types.ts`:** `concremrh_verify_login`, `concremrh_create_user`, `concremrh_update_user_password`.
+- **`update_funcionario_setor_ids`** e **`get_all_funcionario_setor_ids`** também precisam ser preservadas.
+- **RLS, triggers, enums, helpers e policies** precisam ser recriados no novo projeto (enums `app_role`/`user_perfil`; helpers `has_role`/`has_app_permission`; trigger `update_updated_at_column`).
+- **Risco de inconsistência em `funcionario_setores`:** o código cita o nome **singular** (inexistente no banco); o banco real usa **`concremrh_funcionarios_setores` (plural)**, vazio, e o vínculo real parece estar em **`setor_ids` + RPCs**.
+
+### Impacto da migração para o novo Supabase
+- Antes de criar telas novas ou mudar regras, é necessário **obter um dump autoritativo** do banco atual.
+- As **migrations antigas do repositório não são suficientes** para recriar o banco no novo projeto.
+- O **novo Supabase deve nascer a partir de migrations completas e versionadas**.
+- **Não alterar o `.env`** para o novo projeto até o schema estar validado.
+
+### Próximo passo
+1. Obter **dump completo/autoritativo** do banco atual (credenciais adequadas).
+2. **Regenerar `types.ts`** a partir do banco real.
+3. Criar as **migrations `0001`–`0010`** (ver §8 do [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md)) para recriar o schema no novo Supabase.
+4. Aplicar as migrations primeiro em **ambiente novo/staging**.
+5. **Validar login, permissões, premiações, relatórios e cadastros** antes de trocar a Vercel para o novo projeto.
+
+---
+
 ## 1. Diagnóstico do estado atual (executado em 2026-07-07)
 
 ### 1.1 Build de produção — ✅ **PASSA**
@@ -181,13 +261,13 @@ npm run build  →  ✓ built in ~10s
 
 ---
 
-### Etapa 3 — Extrair o motor de cálculo para um módulo puro e testável
-*Objetivo: separar regra de negócio da UI, sem alterar resultados.*
-- [ ] Mover a lógica de [GerarPremiacoes.tsx](src/pages/GerarPremiacoes.tsx) (funções `calcularComissao`, `calcularNotaFaltas`, cálculo de nota geral, bônus) para `src/domain/premiacao/` como funções puras.
-- [ ] A página passa a **orquestrar** (buscar dados + chamar o domínio + salvar), sem lógica de cálculo embutida.
-- [ ] Garantir que os testes da Etapa 2 continuam **idênticos** (refator sem mudança de comportamento).
-- [ ] Extrair regras hoje acopladas a strings (`startsWith('KIT')`, regex de `%`) para funções nomeadas isoladas — **mantendo o comportamento**, apenas isolando para reforma futura.
-- **Critério de saída:** UI e domínio separados; testes verdes; zero mudança de resultado.
+### Etapa 3 — Extrair o motor de cálculo para um módulo puro e testável — ✅ **CONCLUÍDA (2026-07-07)**
+*Objetivo: separar regra de negócio da UI, sem alterar resultados. Ver relatório completo em §1-C.*
+- [x] Mover a lógica de [GerarPremiacoes.tsx](src/pages/GerarPremiacoes.tsx) (funções `calcularComissao`, `calcularNotaFaltas`, cálculo de nota geral, bônus) para `src/domain/premiacao/` como funções puras. — **componente passou a importar do módulo**
+- [x] A página passa a **orquestrar** (buscar dados + chamar o domínio + salvar), sem lógica de cálculo embutida. — **atingido** (exceto `calcularMediaIndicador`, mantido inline por divergência com `null`)
+- [x] Garantir que os testes da Etapa 2 continuam **idênticos** (refator sem mudança de comportamento). — **32 testes verdes**
+- [x] Extrair regras hoje acopladas a strings (`startsWith('KIT')`, regex de `%`) para funções nomeadas isoladas — **mantendo o comportamento**, apenas isolando para reforma futura. — **`isProducaoBase`/`isKitsBase`/`extractKitsMultiplier`**
+- **Critério de saída:** UI e domínio separados; testes verdes; zero mudança de resultado. — *atingido*.
 
 ---
 
@@ -210,12 +290,17 @@ npm run build  →  ✓ built in ~10s
 
 ---
 
-### Etapa 6 — Banco de dados: consolidação de schema
-*Objetivo: resolver a dupla nomenclatura e o legado órfão.*
-- [ ] Confirmar (já verificado no código) que a aplicação usa **exclusivamente** tabelas `concremrh_*`; as `concrem_*` são **legado das migrações antigas, sem referência no app**.
-- [ ] Alinhar `supabase/config.toml` (`project_id`) ao projeto ativo do `.env`.
+### Etapa 6 — Banco de dados: consolidação de schema — 🟡 **EM ANDAMENTO** (auditoria feita na Etapa 4)
+*Objetivo: resolver a dupla nomenclatura e o legado órfão + recriar o schema `concremrh_` versionado no novo projeto.*
+- [x] Confirmar que a aplicação usa **exclusivamente** tabelas `concremrh_*`; as `concrem_*` são **legado das migrações antigas, sem referência no app**. — **confirmado (Etapa 4)**
+- [x] Auditar cobertura de migrations e drift de `types.ts`. — **feito, ver [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md)**
+- [ ] Obter **dump autoritativo** do banco atual (credenciais adequadas).
+- [ ] Regenerar `types.ts` a partir do banco real.
+- [ ] Escrever as migrations `0001`–`0010` (ver §8 do audit) para recriar o schema no novo projeto.
+- [ ] Aplicar em **staging/novo projeto**, validar, e só então apontar `.env`/Vercel.
+- [ ] Alinhar `supabase/config.toml` (`project_id`) ao projeto ativo.
 - [ ] Planejar depreciação/arquivamento das tabelas `concrem_*` órfãs — via migração, com backup.
-- **Critério de saída:** schema consolidado e documentado, sem tabelas fantasma referenciadas.
+- **Critério de saída:** schema `concremrh_` recriado por migrations versionadas no novo projeto, validado ponta a ponta.
 
 ---
 
@@ -235,6 +320,19 @@ npm run build  →  ✓ built in ~10s
 - [ ] Cada mudança de regra atualiza os testes de forma explícita (o "antes/depois" fica documentado).
 - [ ] Considerar versionamento das fórmulas/configs para não afetar competências passadas (padrão já existente em `concremrh_configuracoes_kits`).
 - **Critério de saída:** V2 do motor com comportamento novo, auditável e testado.
+
+---
+
+## 3-A. Reordenação de prioridades (2026-07-07)
+
+Com a decisão de **migrar a aplicação para um novo projeto Supabase**, a ordem prática das próximas etapas muda:
+
+1. **Prioridade imediata — Schema/migrations completas (adianta a Etapa 6):** capturar o schema real do projeto atual (incluindo colunas e estruturas `concremrh_` hoje **fora** das migrations versionadas — ver §1-C) e produzir um conjunto de migrations que **recrie o banco do zero** no novo projeto. Inclui regenerar o `types.ts` a partir do schema real.
+2. Em seguida, **Etapa 4 (tipos/dados)** já sobre o `types.ts` regenerado.
+3. **Etapa 5 (segurança/RLS)** sobre o novo projeto.
+4. **Etapas visuais/UX (Etapa 7)** ficam **depois** da estabilização do schema.
+
+> As Etapas 4-8 abaixo permanecem válidas; muda apenas a **ordem de ataque**: schema primeiro, visual por último.
 
 ---
 
