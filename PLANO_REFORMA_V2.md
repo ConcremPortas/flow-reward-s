@@ -294,9 +294,9 @@ npm run build  →  ✓ built in ~10s
 *Objetivo: resolver a dupla nomenclatura e o legado órfão + recriar o schema `concremrh_` versionado no novo projeto.*
 - [x] Confirmar que a aplicação usa **exclusivamente** tabelas `concremrh_*`; as `concrem_*` são **legado das migrações antigas, sem referência no app**. — **confirmado (Etapa 4)**
 - [x] Auditar cobertura de migrations e drift de `types.ts`. — **feito, ver [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md)**
-- [ ] Obter **dump autoritativo** do banco atual (credenciais adequadas).
-- [ ] Regenerar `types.ts` a partir do banco real.
-- [ ] Escrever as migrations `0001`–`0010` (ver §8 do audit) para recriar o schema no novo projeto.
+- [x] Obter **dump autoritativo** do banco atual. — **feito via introspecção `pg` (pooler sa-east-1); gerado [schema_atual.sql](schema_atual.sql)**
+- [x] Escrever as migrations `0001`–`0010` para recriar o schema no novo projeto. — **feito em [supabase/migrations-v2/](supabase/migrations-v2/) (29 tabelas, 38 FKs, 30 policies, 26 triggers, 5 RPCs, seed de config)**
+- [ ] Regenerar `types.ts` a partir do banco real. — **bloqueado: `supabase gen types` exige Docker/podman (indisponível). Fazer em ambiente com container.**
 - [ ] Aplicar em **staging/novo projeto**, validar, e só então apontar `.env`/Vercel.
 - [ ] Alinhar `supabase/config.toml` (`project_id`) ao projeto ativo.
 - [ ] Planejar depreciação/arquivamento das tabelas `concrem_*` órfãs — via migração, com backup.

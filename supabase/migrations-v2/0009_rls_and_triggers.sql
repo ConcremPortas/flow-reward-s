@@ -1,0 +1,95 @@
+-- 0009_rls_and_triggers.sql
+-- Habilita RLS, cria policies e triggers de updated_at
+-- Projeto NOVO Supabase (Reforma V2). Gerado por introspeccao em 2026-07-07 do projeto ctntlgvoefdbjxvfkahp.
+-- Revisar antes de aplicar. Aplicar em ordem 0001..0010.
+
+-- RLS enable
+alter table public.concremrh_avaliacoes_desempenho enable row level security;
+alter table public.concremrh_base_premiacao enable row level security;
+alter table public.concremrh_cargos enable row level security;
+alter table public.concremrh_categorias enable row level security;
+alter table public.concremrh_configuracoes_kits enable row level security;
+alter table public.concremrh_dss enable row level security;
+alter table public.concremrh_empresas enable row level security;
+alter table public.concremrh_epi enable row level security;
+alter table public.concremrh_estrutura_hierarquica enable row level security;
+alter table public.concremrh_faixas enable row level security;
+alter table public.concremrh_faltas_advertencias enable row level security;
+alter table public.concremrh_formulas_calculo enable row level security;
+alter table public.concremrh_funcionarios enable row level security;
+alter table public.concremrh_funcionarios_setores enable row level security;
+alter table public.concremrh_funcoes enable row level security;
+alter table public.concremrh_historico_cargos enable row level security;
+alter table public.concremrh_hr_applications enable row level security;
+alter table public.concremrh_indicadores_gerais enable row level security;
+alter table public.concremrh_indicadores_setor enable row level security;
+alter table public.concremrh_locais_dss enable row level security;
+alter table public.concremrh_plano_carreira enable row level security;
+alter table public.concremrh_producao_setor enable row level security;
+alter table public.concremrh_resultados_premiacao enable row level security;
+alter table public.concremrh_setores enable row level security;
+alter table public.concremrh_tipos_indicadores enable row level security;
+alter table public.concremrh_tipos_indicadores_gerais enable row level security;
+alter table public.concremrh_user_application_permissions enable row level security;
+alter table public.concremrh_user_roles enable row level security;
+alter table public.concremrh_usuarios enable row level security;
+
+-- Policies
+create policy "allow_all_concremrh_avaliacoes_desempenho" on public.concremrh_avaliacoes_desempenho as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_base_premiacao" on public.concremrh_base_premiacao as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_cargos" on public.concremrh_cargos as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_categorias" on public.concremrh_categorias as permissive for all to public using (true) with check (true);
+create policy "Acesso total para usuários autenticados" on public.concremrh_configuracoes_kits as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_dss" on public.concremrh_dss as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_empresas" on public.concremrh_empresas as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_epi" on public.concremrh_epi as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_estrutura_hierarquica" on public.concremrh_estrutura_hierarquica as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_faixas" on public.concremrh_faixas as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_faltas_advertencias" on public.concremrh_faltas_advertencias as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_formulas_calculo" on public.concremrh_formulas_calculo as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_funcionarios" on public.concremrh_funcionarios as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_funcionarios_setores" on public.concremrh_funcionarios_setores as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_funcoes" on public.concremrh_funcoes as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_historico_cargos" on public.concremrh_historico_cargos as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_hr_applications" on public.concremrh_hr_applications as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_indicadores_gerais" on public.concremrh_indicadores_gerais as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_indicadores_setor" on public.concremrh_indicadores_setor as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_locais_dss" on public.concremrh_locais_dss as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_plano_carreira" on public.concremrh_plano_carreira as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_producao_setor" on public.concremrh_producao_setor as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_resultados_premiacao" on public.concremrh_resultados_premiacao as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_setores" on public.concremrh_setores as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_tipos_indicadores" on public.concremrh_tipos_indicadores as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_tipos_indicadores_gerais" on public.concremrh_tipos_indicadores_gerais as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_user_application_permissions" on public.concremrh_user_application_permissions as permissive for all to public using (true) with check (true);
+create policy "allow_all_concremrh_user_roles" on public.concremrh_user_roles as permissive for all to public using (true) with check (true);
+create policy "Admin gerencia usuarios" on public.concremrh_usuarios as permissive for all to authenticated using ((get_my_perfil() = 'admin'::text)) with check ((get_my_perfil() = 'admin'::text));
+create policy "Autenticados podem ler" on public.concremrh_usuarios as permissive for select to authenticated using (true);
+
+-- Triggers updated_at
+CREATE TRIGGER update_concremrh_avaliacoes_desempenho_updated_at BEFORE UPDATE ON public.concremrh_avaliacoes_desempenho FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_base_premiacao_updated_at BEFORE UPDATE ON public.concremrh_base_premiacao FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_cargos_updated_at BEFORE UPDATE ON public.concremrh_cargos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_categorias_updated_at BEFORE UPDATE ON public.concremrh_categorias FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_dss_updated_at BEFORE UPDATE ON public.concremrh_dss FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_empresas_updated_at BEFORE UPDATE ON public.concremrh_empresas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_epi_updated_at BEFORE UPDATE ON public.concremrh_epi FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_estrutura_hierarquica_updated_at BEFORE UPDATE ON public.concremrh_estrutura_hierarquica FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_faixas_updated_at BEFORE UPDATE ON public.concremrh_faixas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_faltas_advertencias_updated_at BEFORE UPDATE ON public.concremrh_faltas_advertencias FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_formulas_calculo_updated_at BEFORE UPDATE ON public.concremrh_formulas_calculo FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_funcionarios_updated_at BEFORE UPDATE ON public.concremrh_funcionarios FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_funcoes_updated_at BEFORE UPDATE ON public.concremrh_funcoes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_historico_cargos_updated_at BEFORE UPDATE ON public.concremrh_historico_cargos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_hr_applications_updated_at BEFORE UPDATE ON public.concremrh_hr_applications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_indicadores_gerais_updated_at BEFORE UPDATE ON public.concremrh_indicadores_gerais FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_indicadores_setor_updated_at BEFORE UPDATE ON public.concremrh_indicadores_setor FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_locais_dss_updated_at BEFORE UPDATE ON public.concremrh_locais_dss FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_plano_carreira_updated_at BEFORE UPDATE ON public.concremrh_plano_carreira FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_producao_setor_updated_at BEFORE UPDATE ON public.concremrh_producao_setor FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_resultados_premiacao_updated_at BEFORE UPDATE ON public.concremrh_resultados_premiacao FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_setores_updated_at BEFORE UPDATE ON public.concremrh_setores FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_tipos_indicadores_updated_at BEFORE UPDATE ON public.concremrh_tipos_indicadores FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_tipos_indicadores_gerais_updated_at BEFORE UPDATE ON public.concremrh_tipos_indicadores_gerais FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_user_application_permissions_updated_at BEFORE UPDATE ON public.concremrh_user_application_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_concremrh_user_roles_updated_at BEFORE UPDATE ON public.concremrh_user_roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
