@@ -1,9 +1,45 @@
 -- 0008_functions_rpc.sql
--- Funcoes/RPCs usadas pelo app (login, criacao de usuario, setor_ids)
--- Projeto NOVO Supabase (Reforma V2). Gerado por introspeccao em 2026-07-07 do projeto ctntlgvoefdbjxvfkahp.
--- Revisar antes de aplicar. Aplicar em ordem 0001..0010.
+-- Funcoes/RPCs do app + helper de policy (get_my_perfil).
+-- Regenerado em 2026-07-07. Deve rodar ANTES do 0009 (as policies chamam get_my_perfil()).
+-- NOTA: o banco atual e compartilhado com outros apps; aqui incluimos SOMENTE as funcoes do concremrh.
 
 set check_function_bodies = off;
+
+CREATE OR REPLACE FUNCTION public.get_my_perfil()
+ RETURNS text
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+AS $function$
+  SELECT perfil FROM concremrh_usuarios WHERE auth_user_id = auth.uid() AND ativo = true LIMIT 1;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.concremrh_verify_login(p_email text, p_password text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE rec RECORD;
+BEGIN
+  SELECT id, email, nome, perfil, secoes, senha_hash INTO rec
+  FROM concremrh_usuarios
+  WHERE email = p_email AND ativo = true AND senha_hash IS NOT NULL;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false);
+  END IF;
+
+  IF rec.senha_hash = crypt(p_password, rec.senha_hash) THEN
+    RETURN jsonb_build_object(
+      'ok', true, 'id', rec.id::text, 'email', rec.email,
+      'nome', rec.nome, 'perfil', rec.perfil, 'secoes', rec.secoes
+    );
+  END IF;
+
+  RETURN jsonb_build_object('ok', false);
+END;
+$function$
+;
 
 CREATE OR REPLACE FUNCTION public.concremrh_create_user(p_nome text, p_email text, p_senha text, p_perfil text, p_secoes jsonb)
  RETURNS jsonb
@@ -35,44 +71,6 @@ END;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.concremrh_verify_login(p_email text, p_password text)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
-AS $function$
-DECLARE rec RECORD;
-BEGIN
-  SELECT id, email, nome, perfil, secoes, senha_hash INTO rec
-  FROM concremrh_usuarios
-  WHERE email = p_email AND ativo = true AND senha_hash IS NOT NULL;
-
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('ok', false);
-  END IF;
-
-  IF rec.senha_hash = crypt(p_password, rec.senha_hash) THEN
-    RETURN jsonb_build_object(
-      'ok', true, 'id', rec.id::text, 'email', rec.email,
-      'nome', rec.nome, 'perfil', rec.perfil, 'secoes', rec.secoes
-    );
-  END IF;
-
-  RETURN jsonb_build_object('ok', false);
-END;
-$function$
-;
-
-CREATE OR REPLACE FUNCTION public.get_all_funcionario_setor_ids()
- RETURNS TABLE(funcionario_id uuid, setor_ids text)
- LANGUAGE sql
- SECURITY DEFINER
-AS $function$
-  SELECT id, array_to_string(setor_ids, ',') 
-  FROM concremrh_funcionarios 
-  WHERE setor_ids IS NOT NULL AND array_length(setor_ids, 1) > 0;
-$function$
-;
-
 CREATE OR REPLACE FUNCTION public.update_funcionario_setor_ids(p_id uuid, p_setor_ids text)
  RETURNS void
  LANGUAGE plpgsql
@@ -86,6 +84,17 @@ BEGIN
   END
   WHERE id = p_id;
 END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.get_all_funcionario_setor_ids()
+ RETURNS TABLE(funcionario_id uuid, setor_ids text)
+ LANGUAGE sql
+ SECURITY DEFINER
+AS $function$
+  SELECT id, array_to_string(setor_ids, ',') 
+  FROM concremrh_funcionarios 
+  WHERE setor_ids IS NOT NULL AND array_length(setor_ids, 1) > 0;
 $function$
 ;
 

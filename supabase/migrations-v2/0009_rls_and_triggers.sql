@@ -1,7 +1,7 @@
 -- 0009_rls_and_triggers.sql
--- Habilita RLS, cria policies e triggers de updated_at
--- Projeto NOVO Supabase (Reforma V2). Gerado por introspeccao em 2026-07-07 do projeto ctntlgvoefdbjxvfkahp.
--- Revisar antes de aplicar. Aplicar em ordem 0001..0010.
+-- Habilita RLS, cria policies e triggers de updated_at. IDEMPOTENTE (drop if exists antes de cada objeto).
+-- Projeto NOVO Supabase (Reforma V2). Regenerado em 2026-07-07.
+-- Requer 0008 (funcao get_my_perfil) aplicado antes.
 
 -- RLS enable
 alter table public.concremrh_avaliacoes_desempenho enable row level security;
@@ -34,62 +34,118 @@ alter table public.concremrh_user_application_permissions enable row level secur
 alter table public.concremrh_user_roles enable row level security;
 alter table public.concremrh_usuarios enable row level security;
 
--- Policies
+-- Policies (idempotente)
+drop policy if exists "allow_all_concremrh_avaliacoes_desempenho" on public.concremrh_avaliacoes_desempenho;
 create policy "allow_all_concremrh_avaliacoes_desempenho" on public.concremrh_avaliacoes_desempenho as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_base_premiacao" on public.concremrh_base_premiacao;
 create policy "allow_all_concremrh_base_premiacao" on public.concremrh_base_premiacao as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_cargos" on public.concremrh_cargos;
 create policy "allow_all_concremrh_cargos" on public.concremrh_cargos as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_categorias" on public.concremrh_categorias;
 create policy "allow_all_concremrh_categorias" on public.concremrh_categorias as permissive for all to public using (true) with check (true);
+drop policy if exists "Acesso total para usuários autenticados" on public.concremrh_configuracoes_kits;
 create policy "Acesso total para usuários autenticados" on public.concremrh_configuracoes_kits as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_dss" on public.concremrh_dss;
 create policy "allow_all_concremrh_dss" on public.concremrh_dss as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_empresas" on public.concremrh_empresas;
 create policy "allow_all_concremrh_empresas" on public.concremrh_empresas as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_epi" on public.concremrh_epi;
 create policy "allow_all_concremrh_epi" on public.concremrh_epi as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_estrutura_hierarquica" on public.concremrh_estrutura_hierarquica;
 create policy "allow_all_concremrh_estrutura_hierarquica" on public.concremrh_estrutura_hierarquica as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_faixas" on public.concremrh_faixas;
 create policy "allow_all_concremrh_faixas" on public.concremrh_faixas as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_faltas_advertencias" on public.concremrh_faltas_advertencias;
 create policy "allow_all_concremrh_faltas_advertencias" on public.concremrh_faltas_advertencias as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_formulas_calculo" on public.concremrh_formulas_calculo;
 create policy "allow_all_concremrh_formulas_calculo" on public.concremrh_formulas_calculo as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_funcionarios" on public.concremrh_funcionarios;
 create policy "allow_all_concremrh_funcionarios" on public.concremrh_funcionarios as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_funcionarios_setores" on public.concremrh_funcionarios_setores;
 create policy "allow_all_concremrh_funcionarios_setores" on public.concremrh_funcionarios_setores as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_funcoes" on public.concremrh_funcoes;
 create policy "allow_all_concremrh_funcoes" on public.concremrh_funcoes as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_historico_cargos" on public.concremrh_historico_cargos;
 create policy "allow_all_concremrh_historico_cargos" on public.concremrh_historico_cargos as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_hr_applications" on public.concremrh_hr_applications;
 create policy "allow_all_concremrh_hr_applications" on public.concremrh_hr_applications as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_indicadores_gerais" on public.concremrh_indicadores_gerais;
 create policy "allow_all_concremrh_indicadores_gerais" on public.concremrh_indicadores_gerais as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_indicadores_setor" on public.concremrh_indicadores_setor;
 create policy "allow_all_concremrh_indicadores_setor" on public.concremrh_indicadores_setor as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_locais_dss" on public.concremrh_locais_dss;
 create policy "allow_all_concremrh_locais_dss" on public.concremrh_locais_dss as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_plano_carreira" on public.concremrh_plano_carreira;
 create policy "allow_all_concremrh_plano_carreira" on public.concremrh_plano_carreira as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_producao_setor" on public.concremrh_producao_setor;
 create policy "allow_all_concremrh_producao_setor" on public.concremrh_producao_setor as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_resultados_premiacao" on public.concremrh_resultados_premiacao;
 create policy "allow_all_concremrh_resultados_premiacao" on public.concremrh_resultados_premiacao as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_setores" on public.concremrh_setores;
 create policy "allow_all_concremrh_setores" on public.concremrh_setores as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_tipos_indicadores" on public.concremrh_tipos_indicadores;
 create policy "allow_all_concremrh_tipos_indicadores" on public.concremrh_tipos_indicadores as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_tipos_indicadores_gerais" on public.concremrh_tipos_indicadores_gerais;
 create policy "allow_all_concremrh_tipos_indicadores_gerais" on public.concremrh_tipos_indicadores_gerais as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_user_application_permissions" on public.concremrh_user_application_permissions;
 create policy "allow_all_concremrh_user_application_permissions" on public.concremrh_user_application_permissions as permissive for all to public using (true) with check (true);
+drop policy if exists "allow_all_concremrh_user_roles" on public.concremrh_user_roles;
 create policy "allow_all_concremrh_user_roles" on public.concremrh_user_roles as permissive for all to public using (true) with check (true);
+drop policy if exists "Admin gerencia usuarios" on public.concremrh_usuarios;
 create policy "Admin gerencia usuarios" on public.concremrh_usuarios as permissive for all to authenticated using ((get_my_perfil() = 'admin'::text)) with check ((get_my_perfil() = 'admin'::text));
+drop policy if exists "Autenticados podem ler" on public.concremrh_usuarios;
 create policy "Autenticados podem ler" on public.concremrh_usuarios as permissive for select to authenticated using (true);
 
--- Triggers updated_at
+-- Triggers updated_at (idempotente)
+drop trigger if exists update_concremrh_avaliacoes_desempenho_updated_at on public.concremrh_avaliacoes_desempenho;
 CREATE TRIGGER update_concremrh_avaliacoes_desempenho_updated_at BEFORE UPDATE ON public.concremrh_avaliacoes_desempenho FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_base_premiacao_updated_at on public.concremrh_base_premiacao;
 CREATE TRIGGER update_concremrh_base_premiacao_updated_at BEFORE UPDATE ON public.concremrh_base_premiacao FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_cargos_updated_at on public.concremrh_cargos;
 CREATE TRIGGER update_concremrh_cargos_updated_at BEFORE UPDATE ON public.concremrh_cargos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_categorias_updated_at on public.concremrh_categorias;
 CREATE TRIGGER update_concremrh_categorias_updated_at BEFORE UPDATE ON public.concremrh_categorias FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_dss_updated_at on public.concremrh_dss;
 CREATE TRIGGER update_concremrh_dss_updated_at BEFORE UPDATE ON public.concremrh_dss FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_empresas_updated_at on public.concremrh_empresas;
 CREATE TRIGGER update_concremrh_empresas_updated_at BEFORE UPDATE ON public.concremrh_empresas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_epi_updated_at on public.concremrh_epi;
 CREATE TRIGGER update_concremrh_epi_updated_at BEFORE UPDATE ON public.concremrh_epi FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_estrutura_hierarquica_updated_at on public.concremrh_estrutura_hierarquica;
 CREATE TRIGGER update_concremrh_estrutura_hierarquica_updated_at BEFORE UPDATE ON public.concremrh_estrutura_hierarquica FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_faixas_updated_at on public.concremrh_faixas;
 CREATE TRIGGER update_concremrh_faixas_updated_at BEFORE UPDATE ON public.concremrh_faixas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_faltas_advertencias_updated_at on public.concremrh_faltas_advertencias;
 CREATE TRIGGER update_concremrh_faltas_advertencias_updated_at BEFORE UPDATE ON public.concremrh_faltas_advertencias FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_formulas_calculo_updated_at on public.concremrh_formulas_calculo;
 CREATE TRIGGER update_concremrh_formulas_calculo_updated_at BEFORE UPDATE ON public.concremrh_formulas_calculo FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_funcionarios_updated_at on public.concremrh_funcionarios;
 CREATE TRIGGER update_concremrh_funcionarios_updated_at BEFORE UPDATE ON public.concremrh_funcionarios FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_funcoes_updated_at on public.concremrh_funcoes;
 CREATE TRIGGER update_concremrh_funcoes_updated_at BEFORE UPDATE ON public.concremrh_funcoes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_historico_cargos_updated_at on public.concremrh_historico_cargos;
 CREATE TRIGGER update_concremrh_historico_cargos_updated_at BEFORE UPDATE ON public.concremrh_historico_cargos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_hr_applications_updated_at on public.concremrh_hr_applications;
 CREATE TRIGGER update_concremrh_hr_applications_updated_at BEFORE UPDATE ON public.concremrh_hr_applications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_indicadores_gerais_updated_at on public.concremrh_indicadores_gerais;
 CREATE TRIGGER update_concremrh_indicadores_gerais_updated_at BEFORE UPDATE ON public.concremrh_indicadores_gerais FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_indicadores_setor_updated_at on public.concremrh_indicadores_setor;
 CREATE TRIGGER update_concremrh_indicadores_setor_updated_at BEFORE UPDATE ON public.concremrh_indicadores_setor FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_locais_dss_updated_at on public.concremrh_locais_dss;
 CREATE TRIGGER update_concremrh_locais_dss_updated_at BEFORE UPDATE ON public.concremrh_locais_dss FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_plano_carreira_updated_at on public.concremrh_plano_carreira;
 CREATE TRIGGER update_concremrh_plano_carreira_updated_at BEFORE UPDATE ON public.concremrh_plano_carreira FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_producao_setor_updated_at on public.concremrh_producao_setor;
 CREATE TRIGGER update_concremrh_producao_setor_updated_at BEFORE UPDATE ON public.concremrh_producao_setor FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_resultados_premiacao_updated_at on public.concremrh_resultados_premiacao;
 CREATE TRIGGER update_concremrh_resultados_premiacao_updated_at BEFORE UPDATE ON public.concremrh_resultados_premiacao FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_setores_updated_at on public.concremrh_setores;
 CREATE TRIGGER update_concremrh_setores_updated_at BEFORE UPDATE ON public.concremrh_setores FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_tipos_indicadores_updated_at on public.concremrh_tipos_indicadores;
 CREATE TRIGGER update_concremrh_tipos_indicadores_updated_at BEFORE UPDATE ON public.concremrh_tipos_indicadores FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_tipos_indicadores_gerais_updated_at on public.concremrh_tipos_indicadores_gerais;
 CREATE TRIGGER update_concremrh_tipos_indicadores_gerais_updated_at BEFORE UPDATE ON public.concremrh_tipos_indicadores_gerais FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_user_application_permissions_updated_at on public.concremrh_user_application_permissions;
 CREATE TRIGGER update_concremrh_user_application_permissions_updated_at BEFORE UPDATE ON public.concremrh_user_application_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+drop trigger if exists update_concremrh_user_roles_updated_at on public.concremrh_user_roles;
 CREATE TRIGGER update_concremrh_user_roles_updated_at BEFORE UPDATE ON public.concremrh_user_roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
