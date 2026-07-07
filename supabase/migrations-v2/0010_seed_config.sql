@@ -1,8 +1,6 @@
 -- 0010_seed_config.sql
--- Seed de tabelas de configuracao/referencia (sem dados pessoais/transacionais)
--- Projeto NOVO Supabase (Reforma V2). Gerado por introspeccao em 2026-07-07 do projeto ctntlgvoefdbjxvfkahp.
--- Revisar antes de aplicar. Aplicar em ordem 0001..0010.
-
+-- Seed de tabelas de configuracao/referencia (sem dados pessoais/transacionais).
+-- Regenerado em 2026-07-07: inclui categorias e base_premiacao ANTES de formulas_calculo (dependencia de FK).
 -- NAO inclui funcionarios, usuarios, faltas, epi, dss, producao, indicadores, resultados (dados sensiveis/transacionais).
 -- Esses devem vir de uma migracao de dados controlada (--data-only) do projeto atual.
 
@@ -25,6 +23,22 @@ insert into public.concremrh_tipos_indicadores_gerais (id, nome, codigo, descric
 -- concremrh_configuracoes_kits (2 linhas)
 insert into public.concremrh_configuracoes_kits (id, vigencia_inicio, minimo_kits, incremento_faixa, max_faixas, bonus_base, bonus_por_faixa, ativo, created_at, updated_at) values ('395ce7c6-2729-444a-84e0-2b9f1827536a', '2000-01', 10000, 250, 44, '100', '25', true, '2026-06-24T17:28:56.205Z', '2026-06-24T17:28:56.205Z') on conflict (id) do nothing;
 insert into public.concremrh_configuracoes_kits (id, vigencia_inicio, minimo_kits, incremento_faixa, max_faixas, bonus_base, bonus_por_faixa, ativo, created_at, updated_at) values ('982e8384-d877-4f1d-b685-7eda74461d53', '2026-05', 11000, 250, 44, '100', '25', true, '2026-06-24T17:29:54.210Z', '2026-06-24T17:29:54.210Z') on conflict (id) do nothing;
+
+-- concremrh_categorias (5 linhas)
+insert into public.concremrh_categorias (id, nome, descricao, cor, ativo, created_at, updated_at) values ('698f39c8-8627-4c31-8696-78ebb0e28b0b', 'SUPERVISOR', NULL, NULL, true, '2026-03-23T19:38:47.241Z', '2026-03-23T19:38:47.241Z') on conflict (id) do nothing;
+insert into public.concremrh_categorias (id, nome, descricao, cor, ativo, created_at, updated_at) values ('72a66207-7adb-4ecf-9029-58ee8c80fa51', 'GERENTE', NULL, NULL, true, '2026-03-23T19:38:40.001Z', '2026-03-23T19:38:40.001Z') on conflict (id) do nothing;
+insert into public.concremrh_categorias (id, nome, descricao, cor, ativo, created_at, updated_at) values ('91942dcc-e13d-4009-9d4c-6b9b13da44b3', 'AUXILIAR', NULL, NULL, true, '2026-03-23T19:38:31.768Z', '2026-03-23T19:38:31.768Z') on conflict (id) do nothing;
+insert into public.concremrh_categorias (id, nome, descricao, cor, ativo, created_at, updated_at) values ('bab556fe-804a-43d4-935d-27e251fe3e43', 'ENCARREGADO', NULL, NULL, true, '2026-03-23T19:38:35.841Z', '2026-03-23T19:38:35.841Z') on conflict (id) do nothing;
+insert into public.concremrh_categorias (id, nome, descricao, cor, ativo, created_at, updated_at) values ('da27e7ca-0a37-47aa-b376-43fc09f685de', 'SUBGERENTE', NULL, NULL, true, '2026-03-23T19:38:43.893Z', '2026-03-23T19:38:43.893Z') on conflict (id) do nothing;
+
+-- concremrh_base_premiacao (7 linhas)
+insert into public.concremrh_base_premiacao (id, nome, descricao, valor_base, tipo, ativo, created_at, updated_at) values ('3d17c2a8-fb56-4dd1-b247-efc45c15ed85', 'KIT 200%', NULL, '100.00', 'percentual', true, '2026-03-24T22:05:48.393Z', '2026-03-24T22:05:48.393Z') on conflict (id) do nothing;
+insert into public.concremrh_base_premiacao (id, nome, descricao, valor_base, tipo, ativo, created_at, updated_at) values ('7b9b4c0a-b11a-4d73-aa15-fbb8980e0122', 'KIT 50%', NULL, '100.00', 'percentual', true, '2026-03-24T17:23:34.163Z', '2026-03-24T17:23:34.163Z') on conflict (id) do nothing;
+insert into public.concremrh_base_premiacao (id, nome, descricao, valor_base, tipo, ativo, created_at, updated_at) values ('ac48c880-d0bd-4eb9-ad5a-d684ca6da14c', 'KIT 75%', NULL, '100.00', 'percentual', true, '2026-03-24T17:43:06.557Z', '2026-03-24T17:43:06.557Z') on conflict (id) do nothing;
+insert into public.concremrh_base_premiacao (id, nome, descricao, valor_base, tipo, ativo, created_at, updated_at) values ('accd9ee7-b6e1-47e6-ae18-2ce479605075', 'KIT 100%', NULL, '100.00', 'percentual', true, '2026-03-24T17:43:15.785Z', '2026-03-24T17:43:15.785Z') on conflict (id) do nothing;
+insert into public.concremrh_base_premiacao (id, nome, descricao, valor_base, tipo, ativo, created_at, updated_at) values ('ca0f1a66-4710-4a33-937f-098dd9b5bc6f', 'KIT 25%', NULL, '100.00', 'percentual', true, '2026-03-24T17:42:55.426Z', '2026-03-24T17:42:55.426Z') on conflict (id) do nothing;
+insert into public.concremrh_base_premiacao (id, nome, descricao, valor_base, tipo, ativo, created_at, updated_at) values ('e9730339-374d-414e-a662-da225270b115', 'PRODUÇÃO', NULL, '100.00', 'percentual', true, '2026-03-23T20:16:26.885Z', '2026-03-23T20:16:26.885Z') on conflict (id) do nothing;
+insert into public.concremrh_base_premiacao (id, nome, descricao, valor_base, tipo, ativo, created_at, updated_at) values ('f4bc6884-03a2-4ca9-92ef-1adf2063af23', 'KITS', NULL, '100.00', 'percentual', true, '2026-03-23T20:16:18.099Z', '2026-03-23T20:16:18.099Z') on conflict (id) do nothing;
 
 -- concremrh_formulas_calculo (7 linhas)
 insert into public.concremrh_formulas_calculo (id, categoria_id, base_premiacao_id, nome, descricao, peso_producao_setor, peso_epi, peso_faltas, peso_advertencias, peso_dss, ativo, created_at, updated_at, peso_faturamento, peso_itens_nc, peso_tratamento_nc, peso_hora_maquina, peso_operacao_segura, peso_limpeza, multiplicador_kits) values ('0461688d-4c1e-4f03-ad21-564fdd6a4679', 'bab556fe-804a-43d4-935d-27e251fe3e43', '3d17c2a8-fb56-4dd1-b247-efc45c15ed85', 'ENCARREGADO KIT', NULL, '0', '35', '25', '15', '25', true, '2026-04-27T14:26:10.973Z', '2026-04-27T14:26:26.000Z', '0', '0', '0', '0', '0', '0', '1') on conflict (id) do nothing;
