@@ -1,6 +1,6 @@
 # Plano de Reforma V2 — ConcremRH / Recompensa-Flow
 
-**Versão:** 1.9 (Etapa 8C — Fase 1 de segurança: frontend pronto; SQL a aplicar)
+**Versão:** 2.0 (Etapa 8D — proposta de migração para Supabase Auth / Fase 2)
 **Data:** 2026-07-07
 **Base de referência:** [SDD.md](SDD.md) · [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md) · [MIGRATION_DATA_PLAN_V2.md](MIGRATION_DATA_PLAN_V2.md)
 **Princípio norteador:** *reaproveitar o sistema existente e reformar de forma estrutural e segura, sem quebrar regra de negócio nem dados em produção.*
@@ -345,8 +345,9 @@ npm run build  →  ✓ built in ~10s
   - **Frontend adaptado** (feito): [useUsuarios.ts](src/hooks/useUsuarios.ts) envia `p_admin_email`/`p_admin_password` para `concremrh_create_user` e `concremrh_update_user_password`; [Usuarios.tsx](src/pages/cadastros/Usuarios.tsx) pede a **senha do admin logado** (via `profile.email`) antes de criar usuário e de resetar senha, com toast amigável para "Não autorizado" e limpeza do campo. `typecheck/test/build` verdes.
   - **SQL da Fase 1 — aplicado e corrigido.** A 1ª versão tinha `set search_path = public`, mas o `pgcrypto` vive no schema `extensions` no Supabase → `crypt`/`gen_salt` não resolviam (erro 42883). Os **testes de segurança via REST detectaram o bug**; corrigido para `set search_path = public, extensions` em [0001_phase1_harden_user_rpcs.sql](supabase/security-hardening-proposals/0001_phase1_harden_user_rpcs.sql) e **re-aplicado**.
   - **Status: ✅ VALIDADA (2026-07-08).** Testes de segurança via REST: **12/12 PASS** — (1) admin cria com senha correta ✅; (2) admin com senha errada → "Não autorizado", nada criado ✅; (3) **não-admin com senha própria correta** → "Não autorizado", nada criado ✅ (prova o gate de `perfil`, não só de senha); (4) admin reseta com senha correta ✅ (nova senha loga, antiga não); (5) admin com senha errada → "Não autorizado", senha inalterada ✅. Frontend `typecheck/test/build` verdes.
-  - **Risco C1 fechado:** anon não consegue mais criar admin nem resetar senha. Pronto para **merge em `main`**.
+  - **Risco C1 fechado:** anon não consegue mais criar admin nem resetar senha. **Mergeado em `main`** (merge `52f59d5`).
   - **RLS aberta (C2)** e **Supabase Auth (M1/M4)** seguem **pendentes** para as Fases 2/3. **Nada de RLS/policies/AuthContext foi tocado.**
+- [x] **Etapa 8D — Proposta de migração para Supabase Auth / Fase 2 (2026-07-08).** [SECURITY_AUTH_MIGRATION_PLAN_V2.md](SECURITY_AUTH_MIGRATION_PLAN_V2.md) + propostas em [supabase/security-hardening-proposals/phase2-auth/](supabase/security-hardening-proposals/phase2-auth/) (SQL de vínculo `auth_user_id`↔`auth.users` + RPC `get_my_profile`, script `link-migrate-users.mjs`, Edge Function `auth-bridge`). **Estratégia de senha recomendada: bridge no 1º login** (sem SMTP, sem fricção). Migração via **feature flag `VITE_AUTH_MODE`** (custom↔supabase) com fallback. **Nada aplicado** — sem tocar AuthContext/RLS/Vercel.
 - [ ] Revisar RLS: substituir políticas `USING (true)` por políticas efetivas. — *plano nas Fases 3-4 do audit*
 - [ ] Avaliar migração da autenticação client-side (`localStorage`) para Supabase Auth ou tokens assinados. — *Fases 0/2 do audit*
 - [ ] Cortar vetores críticos das RPCs de gestão de usuário (revoke/authz). — *Fase 1 do audit*
