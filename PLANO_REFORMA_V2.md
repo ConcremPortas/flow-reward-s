@@ -1,6 +1,6 @@
 # Plano de Reforma V2 — ConcremRH / Recompensa-Flow
 
-**Versão:** 1.7 (Etapa 8A — auditoria de segurança concluída)
+**Versão:** 1.8 (Etapa 8B — plano de endurecimento de segurança proposto)
 **Data:** 2026-07-07
 **Base de referência:** [SDD.md](SDD.md) · [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md) · [MIGRATION_DATA_PLAN_V2.md](MIGRATION_DATA_PLAN_V2.md)
 **Princípio norteador:** *reaproveitar o sistema existente e reformar de forma estrutural e segura, sem quebrar regra de negócio nem dados em produção.*
@@ -340,6 +340,7 @@ npm run build  →  ✓ built in ~10s
 ### Etapa 5 / 8A — Segurança (autenticação e autorização)
 *Objetivo: endurecer o modelo hoje frágil (ver §11 do SDD). Ainda sem mudar telas.*
 - [x] **Etapa 8A — Auditoria de segurança concluída (2026-07-08).** Relatório em [SECURITY_AUDIT_V2.md](SECURITY_AUDIT_V2.md). Achados: 2 críticos (RPCs de gestão de usuário sem authz; RLS `allow_all` para anon em 27 tabelas), 4 médios (auth client-side forjável, brute-force de login, escrita anon dirigida, RLS de `usuarios` inócua sob auth custom), 4 baixos. Proposta de correção em 6 fases (Fase 0 = decidir modelo de auth). **Nada alterado.**
+- [x] **Etapa 8B — Plano de endurecimento proposto (2026-07-08).** [SECURITY_HARDENING_PLAN_V2.md](SECURITY_HARDENING_PLAN_V2.md) + migrations **propostas** (não aplicadas) em [supabase/security-hardening-proposals/](supabase/security-hardening-proposals/). Destino recomendado: **Supabase Auth**; interim Fase 1 fecha o C1 via **re-autenticação de admin** nas RPCs (sem quebrar o app anon). Inclui comparação custom×Supabase Auth, impacto frontend/banco, rollback e plano de testes. **Nada aplicado.**
 - [ ] Revisar RLS: substituir políticas `USING (true)` por políticas efetivas. — *plano nas Fases 3-4 do audit*
 - [ ] Avaliar migração da autenticação client-side (`localStorage`) para Supabase Auth ou tokens assinados. — *Fases 0/2 do audit*
 - [ ] Cortar vetores críticos das RPCs de gestão de usuário (revoke/authz). — *Fase 1 do audit*
