@@ -12,6 +12,11 @@
 -- Reversivel: ver 0001_phase1_rollback.sql (restaura as assinaturas/definicoes originais).
 -- Requer: extensao pgcrypto (ja presente). Pareia com a mudanca de frontend proposta
 -- em SECURITY_HARDENING_PLAN_V2.md (§ Impacto no frontend).
+--
+-- IMPORTANTE (search_path): no Supabase o pgcrypto vive no schema `extensions`.
+-- Por isso as funcoes usam `set search_path = public, extensions` — senao `crypt`/
+-- `gen_salt` nao resolvem (erro 42883 "function crypt(text,text) does not exist").
+-- Idempotente: re-aplicar (CREATE OR REPLACE) e seguro.
 -- ============================================================================
 
 -- Remove as assinaturas ANTIGAS (sem authz). Novas assinaturas incluem credenciais do admin.
@@ -33,7 +38,7 @@ create or replace function public.concremrh_create_user(
 ) returns jsonb
   language plpgsql
   security definer
-  set search_path = public
+  set search_path = public, extensions
 as $function$
 declare
   v_admin record;
@@ -73,7 +78,7 @@ create or replace function public.concremrh_update_user_password(
 ) returns jsonb
   language plpgsql
   security definer
-  set search_path = public
+  set search_path = public, extensions
 as $function$
 declare
   v_admin record;
