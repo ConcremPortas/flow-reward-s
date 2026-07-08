@@ -1,13 +1,15 @@
 # Plano de Reforma V2 — ConcremRH / Recompensa-Flow
 
-**Versão:** 1.4 (Etapa 4 concluída — auditoria de schema/migrations)
+**Versão:** 1.5 (migração para novo Supabase concluída e validada em localhost)
 **Data:** 2026-07-07
-**Base de referência:** [SDD.md](SDD.md) · [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md)
+**Base de referência:** [SDD.md](SDD.md) · [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md) · [MIGRATION_DATA_PLAN_V2.md](MIGRATION_DATA_PLAN_V2.md)
 **Princípio norteador:** *reaproveitar o sistema existente e reformar de forma estrutural e segura, sem quebrar regra de negócio nem dados em produção.*
 
-> **Progresso:** Etapas 0 (diagnóstico), **1 (rede de segurança e tooling)**, **2 (testes de caracterização)**, **3 (extração do motor)** e **4 (auditoria de schema/migrations) concluídas**. Ver §1-A a §1-D para os relatórios de conclusão.
+> **Progresso:** Etapas 0–4 concluídas (ver §1-A a §1-D) + **migração para o novo projeto Supabase concluída e validada em localhost** (ver §1-E).
 >
-> **⚠️ Mudança de rumo (2026-07-07):** a aplicação será **migrada para um novo projeto Supabase**. A prioridade a partir de agora passa a ser **preparar schema/migrations completas** para recriar o banco no novo projeto (ver §1-C, §1-D e "Reordenação de prioridades"). Etapas visuais/UX ficam **depois** da estabilização do schema.
+> **⚠️ Mudança de rumo (2026-07-07):** a aplicação foi **migrada para um novo projeto Supabase**. O banco novo já está criado, com migrations aplicadas, dados migrados e login/telas validados localmente.
+>
+> **🚩 Publicação na Vercel = ÚLTIMA etapa.** O projeto será publicado em **outra conta da Vercel**, então a troca/publicação fica deliberadamente para o **final** — só depois de todo o restante estar validado. Nada de Vercel até lá.
 
 ---
 
@@ -135,6 +137,37 @@
 ### Mudança de prioridade
 - A aplicação será **migrada para um novo projeto Supabase**. Por isso, a próxima etapa passa a ser **preparar schema/migrations completas** para recriar o banco no novo projeto (capturando inclusive as colunas/estruturas hoje fora das migrations).
 - **Etapas visuais/UX ficam depois** da estabilização do schema.
+
+---
+
+## 1-E. Migração para o novo Supabase — concluída e validada em localhost (2026-07-07)
+
+*Escopo: migração ponta a ponta para o novo projeto Supabase e validação em ambiente local. Sem alteração de código, regra, UI ou dados de produção antiga.*
+
+### Status
+| Etapa | Resultado |
+|-------|-----------|
+| **Novo projeto Supabase criado** | ✅ (`ewfebwljhmcvuopopqpb`, região sa-east-1) |
+| **Migrations V2 aplicadas** | ✅ 0001–0010 (29 tabelas, 38 FKs, 30 policies, 26 triggers, 5 RPCs, seed de config) |
+| **Dados migrados** | ✅ **1725 linhas** (org + transacional + pessoal), contagens origem×destino conferem 100% |
+| **Login validado** | ✅ `concremrh_verify_login` no banco novo retorna perfil correto; senha errada → `ok:false`. `senha_hash` (bcrypt) preservado |
+| **Telas validadas em localhost (Supabase novo)** | ✅ Todas as telas validadas apontando o ambiente local para o projeto novo (funcionários, DSS, EPI, produção, indicadores, gerar/relatório de premiação, exportação Excel/PDF, cargos & salários, usuários) |
+| **`typecheck` / `build` / `test`** | ✅ Todos passando (0 erros / build OK / 32 testes) |
+
+### Como o ambiente local aponta para o novo projeto
+- Criado **`.env.local`** (git-ignored) com `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID` do projeto novo. Nenhuma credencial commitada.
+- Camada de dados validada com a **anon key nova** (login RPC + leituras RLS das tabelas do app com as contagens esperadas).
+
+### Detalhes da migração de dados
+- Script idempotente [scripts/migration/migrate-data.mjs](scripts/migration/migrate-data.mjs), ordem por FK, ciclo `setores↔funcionarios` resolvido em duas passadas. Config seedada não duplicada. Ver [MIGRATION_DATA_PLAN_V2.md](MIGRATION_DATA_PLAN_V2.md).
+- Perfis reais: `admin/rh/sesmt/producao` (nenhum `custom`) → migração de `usuarios` não violou o CHECK.
+
+### 🚩 Publicação na Vercel — ÚLTIMA etapa (deliberado)
+- O projeto será publicado em **outra conta da Vercel**. Por isso a **troca/publicação na Vercel fica para o final**, só após todo o restante estar validado.
+- Até lá: **não** alterar env vars da Vercel nem fazer deploy. O switch de produção (env vars + redeploy) é o último passo do roadmap.
+
+### Próximo passo técnico
+- **Regenerar o `types.ts` a partir do banco novo** e **eliminar o drift de tipos** (as 7 colunas hoje ausentes: `peso_faturamento`, `peso_itens_nc`, `peso_tratamento_nc`, `peso_hora_maquina`, `peso_operacao_segura`, `peso_limpeza`, `multiplicador_kits`; + `configuracoes_kits`, `secoes`/`senha_hash` em `usuarios`). Requer ambiente com Docker/podman (`supabase gen types`). Depois: rodar `typecheck/build/test` e, idealmente, remover o patch type-only da Etapa 1 que hoje contorna o drift.
 
 ---
 
@@ -297,10 +330,11 @@ npm run build  →  ✓ built in ~10s
 - [x] Obter **dump autoritativo** do banco atual. — **feito via introspecção `pg` (pooler sa-east-1); gerado [schema_atual.sql](schema_atual.sql)**
 - [x] Escrever as migrations `0001`–`0010` para recriar o schema no novo projeto. — **feito em [supabase/migrations-v2/](supabase/migrations-v2/) (29 tabelas, 38 FKs, 30 policies, 26 triggers, 5 RPCs, seed de config)**
 - [ ] Regenerar `types.ts` a partir do banco real. — **bloqueado: `supabase gen types` exige Docker/podman (indisponível). Fazer em ambiente com container.**
-- [ ] Aplicar em **staging/novo projeto**, validar, e só então apontar `.env`/Vercel.
+- [x] Aplicar no **novo projeto**, migrar dados e validar em localhost. — **feito (ver §1-E): migrations 0001–0010 aplicadas, 1725 linhas migradas, login e telas validados apontando o local para o Supabase novo.**
+- [ ] Apontar `.env`/Vercel de **produção** — **adiado para a ÚLTIMA etapa** (publicação em outra conta da Vercel). Localmente já aponta para o novo via `.env.local`.
 - [ ] Alinhar `supabase/config.toml` (`project_id`) ao projeto ativo.
 - [ ] Planejar depreciação/arquivamento das tabelas `concrem_*` órfãs — via migração, com backup.
-- **Critério de saída:** schema `concremrh_` recriado por migrations versionadas no novo projeto, validado ponta a ponta.
+- **Critério de saída:** schema `concremrh_` recriado por migrations versionadas no novo projeto, validado ponta a ponta. — **atingido em localhost.**
 
 ---
 
@@ -320,6 +354,17 @@ npm run build  →  ✓ built in ~10s
 - [ ] Cada mudança de regra atualiza os testes de forma explícita (o "antes/depois" fica documentado).
 - [ ] Considerar versionamento das fórmulas/configs para não afetar competências passadas (padrão já existente em `concremrh_configuracoes_kits`).
 - **Critério de saída:** V2 do motor com comportamento novo, auditável e testado.
+
+---
+
+### Etapa 9 — Publicação em produção (nova conta Vercel) — 🚩 **ÚLTIMA ETAPA**
+*Objetivo: só aqui a produção passa a apontar para o novo Supabase. Deliberadamente por último — o projeto será publicado em **outra conta da Vercel**.*
+- [ ] Configurar o projeto na **nova conta da Vercel** (import do repositório, build Vite).
+- [ ] Definir as env vars de produção (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`) apontando para o projeto novo.
+- [ ] **Redeploy** (as env do Vite entram no build → precisa rebuildar).
+- [ ] Validar em produção: login, gerar premiação, relatórios, exportações.
+- [ ] Manter o projeto/deploy antigo intacto por alguns dias como rollback.
+- **Critério de saída:** produção rodando na nova conta Vercel contra o novo Supabase, validada ponta a ponta. **Não iniciar sem confirmação explícita.**
 
 ---
 
