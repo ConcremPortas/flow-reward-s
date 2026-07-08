@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useUsuarios, Usuario } from '@/hooks/useUsuarios';
-import { UserPerfil, SectionKey, ALL_SECTIONS, HUB_MODULE_SECTIONS } from '@/contexts/AuthContext';
+import { UserPerfil, SectionKey, ALL_SECTIONS, HUB_MODULE_SECTIONS, useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,17 +77,22 @@ const EMPTY_FORM = {
 
 export default function Usuarios() {
   const { usuarios, loading, createUsuario, updateUsuario, updateSenha, toggleAtivo } = useUsuarios();
+  const { profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [senhaOpen, setSenhaOpen] = useState(false);
   const [editing, setEditing] = useState<Usuario | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmarNovaSenha, setConfirmarNovaSenha] = useState('');
+  // Fase 1 (segurança): senha do admin logado, exigida para criar usuário / resetar senha.
+  // Nunca persistida — só vive no estado do diálogo e é limpa após submeter.
+  const [adminSenha, setAdminSenha] = useState('');
   const [saving, setSaving] = useState(false);
 
   function openCreate() {
     setEditing(null);
     setForm(EMPTY_FORM);
+    setAdminSenha('');
     setOpen(true);
   }
 
@@ -108,7 +113,18 @@ export default function Usuarios() {
     setEditing(u);
     setNovaSenha('');
     setConfirmarNovaSenha('');
+    setAdminSenha('');
     setSenhaOpen(true);
+  }
+
+  // Mensagem amigável para falha de autorização vinda das RPCs (Fase 1).
+  function reportError(e: unknown, fallback: string) {
+    const msg = e instanceof Error ? e.message : fallback;
+    if (msg === 'Não autorizado') {
+      toast.error('Senha de administrador incorreta ou você não tem permissão para esta ação.');
+    } else {
+      toast.error(msg);
+    }
   }
 
   function handlePerfilChange(perfil: UserPerfil) {
@@ -146,6 +162,11 @@ export default function Usuarios() {
       toast.error('A senha deve ter pelo menos 6 caracteres.');
       return;
     }
+    // Criar usuário exige confirmação da senha do admin logado (Fase 1).
+    if (!editing && !adminSenha) {
+      toast.error('Confirme sua senha de administrador para criar o usuário.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -163,13 +184,16 @@ export default function Usuarios() {
           senha: form.senha,
           perfil: form.perfil,
           secoes: form.perfil === 'admin' ? ALL_SECTIONS : form.secoes,
+          adminEmail: profile?.email ?? '',
+          adminSenha,
         });
         toast.success('Usuário cadastrado com sucesso.');
       }
       setOpen(false);
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao salvar.');
+      reportError(e, 'Erro ao salvar.');
     } finally {
+      setAdminSenha('');
       setSaving(false);
     }
   }
@@ -178,14 +202,16 @@ export default function Usuarios() {
     if (!novaSenha) { toast.error('Informe a nova senha.'); return; }
     if (novaSenha !== confirmarNovaSenha) { toast.error('As senhas não conferem.'); return; }
     if (novaSenha.length < 6) { toast.error('Mínimo 6 caracteres.'); return; }
+    if (!adminSenha) { toast.error('Confirme sua senha de administrador para redefinir.'); return; }
     setSaving(true);
     try {
-      await updateSenha(editing!.id, novaSenha);
+      await updateSenha(editing!.id, novaSenha, profile?.email ?? '', adminSenha);
       toast.success('Senha atualizada.');
       setSenhaOpen(false);
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao atualizar senha.');
+      reportError(e, 'Erro ao atualizar senha.');
     } finally {
+      setAdminSenha('');
       setSaving(false);
     }
   }
@@ -337,6 +363,19 @@ export default function Usuarios() {
                       onChange={e => setForm(f => ({ ...f, confirmarSenha: e.target.value }))}
                     />
                   </div>
+                  <div className="space-y-1.5 col-span-2 border-t pt-3 mt-1">
+                    <Label>Confirme sua senha de administrador</Label>
+                    <Input
+                      type="password"
+                      placeholder="Sua senha (para autorizar a criação)"
+                      value={adminSenha}
+                      onChange={e => setAdminSenha(e.target.value)}
+                      autoComplete="off"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Exigida para criar usuários ({profile?.email ?? 'admin'}).
+                    </p>
+                  </div>
                 </>
               )}
               <div className="space-y-1.5 col-span-2">
@@ -437,6 +476,19 @@ export default function Usuarios() {
                 value={confirmarNovaSenha}
                 onChange={e => setConfirmarNovaSenha(e.target.value)}
               />
+            </div>
+            <div className="space-y-1.5 border-t pt-3">
+              <Label>Confirme sua senha de administrador</Label>
+              <Input
+                type="password"
+                placeholder="Sua senha (para autorizar a redefinição)"
+                value={adminSenha}
+                onChange={e => setAdminSenha(e.target.value)}
+                autoComplete="off"
+              />
+              <p className="text-xs text-gray-500">
+                Exigida para redefinir senhas ({profile?.email ?? 'admin'}).
+              </p>
             </div>
           </div>
           <DialogFooter>
