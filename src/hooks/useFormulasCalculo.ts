@@ -8,22 +8,20 @@ export interface FormulaCalculo {
   base_premiacao_id?: string;
   nome: string;
   descricao?: string;
-  // Pesos presentes no schema gerado do Supabase (types.ts) — podem vir null do banco.
+  // Pesos do schema real (concremrh_formulas_calculo). Podem vir null do banco,
+  // por isso `number | null` — alinhado ao types.ts (regenerado/atualizado na Etapa 7).
   peso_producao_setor: number | null;
   peso_epi: number | null;
   peso_faltas: number | null;
   peso_advertencias: number | null;
   peso_dss: number | null;
-  // Pesos usados pelo motor de cálculo (supervisor/encarregado) que NÃO constam
-  // em nenhuma migration nem no types.ts gerado. Mantidos opcionais para refletir
-  // o schema real; o motor já os trata com fallback (`peso || 0`). Ver PLANO_REFORMA_V2.md.
-  peso_faturamento?: number | null;
-  peso_itens_nc?: number | null;
-  peso_tratamento_nc?: number | null;
-  peso_hora_maquina?: number | null;
-  peso_operacao_segura?: number | null;
-  peso_limpeza?: number | null;
-  multiplicador_kits?: number | null;
+  peso_faturamento: number | null;
+  peso_itens_nc: number | null;
+  peso_tratamento_nc: number | null;
+  peso_hora_maquina: number | null;
+  peso_operacao_segura: number | null;
+  peso_limpeza: number | null;
+  multiplicador_kits: number | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;

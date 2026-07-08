@@ -1,6 +1,6 @@
 # Plano de Reforma V2 — ConcremRH / Recompensa-Flow
 
-**Versão:** 1.5 (migração para novo Supabase concluída e validada em localhost)
+**Versão:** 1.6 (Etapa 7 — types.ts alinhado ao schema do Supabase novo)
 **Data:** 2026-07-07
 **Base de referência:** [SDD.md](SDD.md) · [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md) · [MIGRATION_DATA_PLAN_V2.md](MIGRATION_DATA_PLAN_V2.md)
 **Princípio norteador:** *reaproveitar o sistema existente e reformar de forma estrutural e segura, sem quebrar regra de negócio nem dados em produção.*
@@ -167,7 +167,30 @@
 - Até lá: **não** alterar env vars da Vercel nem fazer deploy. O switch de produção (env vars + redeploy) é o último passo do roadmap.
 
 ### Próximo passo técnico
-- **Regenerar o `types.ts` a partir do banco novo** e **eliminar o drift de tipos** (as 7 colunas hoje ausentes: `peso_faturamento`, `peso_itens_nc`, `peso_tratamento_nc`, `peso_hora_maquina`, `peso_operacao_segura`, `peso_limpeza`, `multiplicador_kits`; + `configuracoes_kits`, `secoes`/`senha_hash` em `usuarios`). Requer ambiente com Docker/podman (`supabase gen types`). Depois: rodar `typecheck/build/test` e, idealmente, remover o patch type-only da Etapa 1 que hoje contorna o drift.
+- **Etapa 7 — alinhamento do `types.ts`** (executada em 2026-07-07, ver §1-F): drift principal fechado manualmente com base no `schema_atual.sql`. Regeneração **completa** via Supabase CLI segue pendente para ambiente com Docker/podman.
+
+---
+
+## 1-F. Etapa 7 — alinhamento do `types.ts` ao schema do Supabase novo (2026-07-07)
+
+*Escopo: fechar o drift de tipos entre `src/integrations/supabase/types.ts` e o banco novo, sem alterar regra, banco, UI ou Vercel.*
+
+### Status — ✅ **concluída operacionalmente** (regeneração completa via CLI pendente)
+Como o ambiente **não tem Docker/podman**, o `supabase gen types` não pôde rodar. O drift **principal** foi fechado **manualmente e de forma fiel** ao schema real ([schema_atual.sql](schema_atual.sql)); a regeneração completa via CLI fica documentada e pendente.
+
+### O que foi feito
+- **`types.ts` atualizado manualmente** com base no schema real:
+  - Adicionada a tabela **`concremrh_configuracoes_kits`** (incluindo `max_faixas`).
+  - Adicionadas as **7 colunas extras** em `concremrh_formulas_calculo`: `peso_faturamento`, `peso_itens_nc`, `peso_tratamento_nc`, `peso_hora_maquina`, `peso_operacao_segura`, `peso_limpeza`, `multiplicador_kits`.
+  - Adicionados **`senha_hash`** e **`secoes`** em `concremrh_usuarios`.
+  - Cabeçalho do `types.ts` documenta o **comando de regeneração** (para quando houver Docker).
+- **`useFormulasCalculo.ts` revisado** — removido o **patch provisório da Etapa 1**: os 6 pesos extras + `multiplicador_kits`, antes opcionais (contorno pela ausência no `types.ts`), agora são `number | null` obrigatórios, alinhados ao `types.ts`. A nulabilidade foi mantida por ser fiel ao schema (colunas nullable).
+- `typecheck` (0 erros), `test` (32/32) e `build` (OK) passando.
+
+### Pendências (para a regeneração completa via CLI, com Docker/podman)
+- **RPCs no bloco `Functions`** do `types.ts` ainda não incluídas (`concremrh_verify_login`, `concremrh_create_user`, `concremrh_update_user_password`). Não bloqueiam: hoje o app chama algumas via `(supabase as any).rpc(...)`.
+- Regeneração completa também traria `Relationships`/`Functions` 100% e permitiria remover estas edições manuais.
+- Comando: `npx supabase gen types typescript --project-id ewfebwljhmcvuopopqpb > src/integrations/supabase/types.ts` (requer Docker).
 
 ---
 
@@ -304,9 +327,9 @@ npm run build  →  ✓ built in ~10s
 
 ---
 
-### Etapa 4 — Consolidação de tipos e camada de dados
+### Etapa 4 / 7 — Consolidação de tipos e camada de dados
 *Objetivo: eliminar `any` e unificar acesso a dados.*
-- [ ] Regenerar/validar `types.ts` contra o schema real do Supabase.
+- [~] Regenerar/validar `types.ts` contra o schema real do Supabase. — **drift principal fechado manualmente na Etapa 7 (ver §1-F); regeneração completa via CLI pendente (Docker).**
 - [ ] Substituir `any` por tipos concretos, começando pelos hooks do domínio de premiação.
 - [ ] Padronizar hooks sobre **React Query** (já é dependência) para cache/refetch consistentes.
 - [ ] Zerar os avisos `exhaustive-deps` (risco real de dados desatualizados no cálculo).

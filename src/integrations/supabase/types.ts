@@ -1,3 +1,17 @@
+// Tipos do banco Supabase.
+//
+// REGENERAR a partir do projeto novo (requer Docker/podman para o supabase CLI):
+//   npx supabase gen types typescript --project-id ewfebwljhmcvuopopqpb > src/integrations/supabase/types.ts
+//   # ou, via conexão direta (requer a senha do banco):
+//   npx supabase gen types typescript --db-url "postgresql://postgres.<ref>:<senha>@<pooler-host>:5432/postgres" > src/integrations/supabase/types.ts
+//
+// NOTA (Etapa 7 da Reforma V2, 2026-07-07): como o ambiente atual não tem
+// Docker, o drift conhecido foi fechado manualmente e de forma fiel ao schema
+// real (schema_atual.sql): +7 colunas em concremrh_formulas_calculo
+// (peso_faturamento/itens_nc/tratamento_nc/hora_maquina/operacao_segura/limpeza
+// + multiplicador_kits), tabela concremrh_configuracoes_kits (com max_faixas) e
+// concremrh_usuarios.senha_hash/secoes. Ao ter Docker, rodar o comando acima para
+// uma regeneração completa (relationships/functions) e substituir estas edições.
 export type Json =
   | string
   | number
@@ -208,6 +222,45 @@ export type Database = {
           id?: string
           nome?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      concremrh_configuracoes_kits: {
+        Row: {
+          ativo: boolean | null
+          bonus_base: number | null
+          bonus_por_faixa: number | null
+          created_at: string | null
+          id: string
+          incremento_faixa: number | null
+          max_faixas: number | null
+          minimo_kits: number | null
+          updated_at: string | null
+          vigencia_inicio: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          bonus_base?: number | null
+          bonus_por_faixa?: number | null
+          created_at?: string | null
+          id?: string
+          incremento_faixa?: number | null
+          max_faixas?: number | null
+          minimo_kits?: number | null
+          updated_at?: string | null
+          vigencia_inicio?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          bonus_base?: number | null
+          bonus_por_faixa?: number | null
+          created_at?: string | null
+          id?: string
+          incremento_faixa?: number | null
+          max_faixas?: number | null
+          minimo_kits?: number | null
+          updated_at?: string | null
+          vigencia_inicio?: string | null
         }
         Relationships: []
       }
@@ -554,12 +607,19 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          multiplicador_kits: number | null
           nome: string
           peso_advertencias: number | null
           peso_dss: number | null
           peso_epi: number | null
           peso_faltas: number | null
+          peso_faturamento: number | null
+          peso_hora_maquina: number | null
+          peso_itens_nc: number | null
+          peso_limpeza: number | null
+          peso_operacao_segura: number | null
           peso_producao_setor: number | null
+          peso_tratamento_nc: number | null
           updated_at: string
         }
         Insert: {
@@ -569,12 +629,19 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          multiplicador_kits?: number | null
           nome: string
           peso_advertencias?: number | null
           peso_dss?: number | null
           peso_epi?: number | null
           peso_faltas?: number | null
+          peso_faturamento?: number | null
+          peso_hora_maquina?: number | null
+          peso_itens_nc?: number | null
+          peso_limpeza?: number | null
+          peso_operacao_segura?: number | null
           peso_producao_setor?: number | null
+          peso_tratamento_nc?: number | null
           updated_at?: string
         }
         Update: {
@@ -584,12 +651,19 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          multiplicador_kits?: number | null
           nome?: string
           peso_advertencias?: number | null
           peso_dss?: number | null
           peso_epi?: number | null
           peso_faltas?: number | null
+          peso_faturamento?: number | null
+          peso_hora_maquina?: number | null
+          peso_itens_nc?: number | null
+          peso_limpeza?: number | null
+          peso_operacao_segura?: number | null
           peso_producao_setor?: number | null
+          peso_tratamento_nc?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1439,6 +1513,8 @@ export type Database = {
           ativo: boolean
           created_at: string
           updated_at: string
+          senha_hash: string | null
+          secoes: Json | null
         }
         Insert: {
           id?: string
@@ -1449,6 +1525,8 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           updated_at?: string
+          senha_hash?: string | null
+          secoes?: Json | null
         }
         Update: {
           id?: string
@@ -1459,6 +1537,8 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           updated_at?: string
+          senha_hash?: string | null
+          secoes?: Json | null
         }
         Relationships: []
       }
