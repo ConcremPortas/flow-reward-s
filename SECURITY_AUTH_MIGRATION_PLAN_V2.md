@@ -83,11 +83,12 @@ Peças:
 
 ## 8. Impactos (todos FUTUROS — não aplicados nesta etapa)
 
-### 8.1 `AuthContext.tsx`
+### 8.1 `AuthContext.tsx` — ✅ IMPLEMENTADO na Etapa 8E (atrás da flag, modo `supabase` inativo)
 - `signIn`: ramifica pela flag. Modo `supabase`: `signInWithPassword` (+ bridge no catch de senha) e depois `get_my_profile()`.
 - Restauração de sessão: usar `supabase.auth.getSession()` + `onAuthStateChange` em vez de ler `localStorage`.
 - `signOut`: `supabase.auth.signOut()`.
 - O objeto `profile` passa a derivar de **sessão verificada** (não mais de objeto cru forjável) — corrige **M1** no modo supabase.
+- **Status:** o código dos dois modos já está em [AuthContext.tsx](src/contexts/AuthContext.tsx). O modo `supabase` só será **validável** após aplicar a infra (SQL `get_my_profile`, `link-migrate-users`, deploy da `auth-bridge`). Padrão continua `custom`.
 
 ### 8.2 `ProtectedRoute.tsx`
 - Estrutura **inalterada** (mesma lógica `allowedPerfis`/`DEFAULT_ROUTE`), mas `profile`/`loading` passam a vir da sessão do Supabase Auth. Ganho de segurança sem reescrever a guarda.

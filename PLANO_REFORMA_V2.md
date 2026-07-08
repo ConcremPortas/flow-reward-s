@@ -1,6 +1,6 @@
 # Plano de Reforma V2 — ConcremRH / Recompensa-Flow
 
-**Versão:** 2.0 (Etapa 8D — proposta de migração para Supabase Auth / Fase 2)
+**Versão:** 2.1 (Etapa 8E — AuthContext dual-mode atrás de VITE_AUTH_MODE)
 **Data:** 2026-07-07
 **Base de referência:** [SDD.md](SDD.md) · [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md) · [MIGRATION_DATA_PLAN_V2.md](MIGRATION_DATA_PLAN_V2.md)
 **Princípio norteador:** *reaproveitar o sistema existente e reformar de forma estrutural e segura, sem quebrar regra de negócio nem dados em produção.*
@@ -348,6 +348,7 @@ npm run build  →  ✓ built in ~10s
   - **Risco C1 fechado:** anon não consegue mais criar admin nem resetar senha. **Mergeado em `main`** (merge `52f59d5`).
   - **RLS aberta (C2)** e **Supabase Auth (M1/M4)** seguem **pendentes** para as Fases 2/3. **Nada de RLS/policies/AuthContext foi tocado.**
 - [x] **Etapa 8D — Proposta de migração para Supabase Auth / Fase 2 (2026-07-08).** [SECURITY_AUTH_MIGRATION_PLAN_V2.md](SECURITY_AUTH_MIGRATION_PLAN_V2.md) + propostas em [supabase/security-hardening-proposals/phase2-auth/](supabase/security-hardening-proposals/phase2-auth/) (SQL de vínculo `auth_user_id`↔`auth.users` + RPC `get_my_profile`, script `link-migrate-users.mjs`, Edge Function `auth-bridge`). **Estratégia de senha recomendada: bridge no 1º login** (sem SMTP, sem fricção). Migração via **feature flag `VITE_AUTH_MODE`** (custom↔supabase) com fallback. **Nada aplicado** — sem tocar AuthContext/RLS/Vercel.
+- [x] **Etapa 8E — AuthContext dual-mode implementado (2026-07-08).** [AuthContext.tsx](src/contexts/AuthContext.tsx) passou a suportar `VITE_AUTH_MODE`: `custom` (padrão e fallback quando ausente) preserva o comportamento atual (RPC `concremrh_verify_login` + `localStorage`); `supabase` usa `signInWithPassword` + Edge Function `auth-bridge` (bridge de senha no 1º login) + `get_my_profile()` + `getSession`/`onAuthStateChange`/`signOut`. `ProtectedRoute` e `client.ts` **inalterados**. **Modo `supabase` NÃO ativado** — só é validável após aplicar a infra da Fase 2 (SQL `get_my_profile`, `link-migrate-users`, deploy da `auth-bridge`). Validado no modo **custom**: default correto, login RPC OK, `typecheck/test/build` verdes, dev sobe sem erro.
 - [ ] Revisar RLS: substituir políticas `USING (true)` por políticas efetivas. — *plano nas Fases 3-4 do audit*
 - [ ] Avaliar migração da autenticação client-side (`localStorage`) para Supabase Auth ou tokens assinados. — *Fases 0/2 do audit*
 - [ ] Cortar vetores críticos das RPCs de gestão de usuário (revoke/authz). — *Fase 1 do audit*

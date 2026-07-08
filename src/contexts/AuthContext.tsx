@@ -34,6 +34,50 @@ export const DEFAULT_ROUTE: Record<UserPerfil, string> = {
 
 const SESSION_KEY = 'concremrh_session';
 
+// Feature flag da migração de autenticação (Fase 2 — SECURITY_AUTH_MIGRATION_PLAN_V2.md).
+// 'custom' (padrão) = comportamento atual (RPC concremrh_verify_login + localStorage).
+// 'supabase' = Supabase Auth (signInWithPassword + bridge de senha + get_my_profile).
+// Ausente/qualquer outro valor => 'custom' (não quebra o app enquanto a infra da Fase 2 não é aplicada).
+export type AuthMode = 'custom' | 'supabase';
+export const AUTH_MODE: AuthMode =
+  import.meta.env.VITE_AUTH_MODE === 'supabase' ? 'supabase' : 'custom';
+
+// Formato de resposta da RPC get_my_profile() (proposta na Fase 2).
+interface GetMyProfileResponse {
+  ok: boolean;
+  id?: string;
+  email?: string;
+  nome?: string | null;
+  perfil?: string;
+  secoes?: string[];
+}
+
+// Formato de resposta da Edge Function auth-bridge (proposta na Fase 2).
+interface AuthBridgeResponse {
+  ok: boolean;
+  error?: string;
+}
+
+// Monta o UserProfile a partir da sessão do Supabase Auth (via get_my_profile()).
+// Usado apenas no modo 'supabase'.
+async function fetchSupabaseProfile(): Promise<UserProfile | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('get_my_profile');
+  if (error) {
+    console.error('get_my_profile error:', error);
+    return null;
+  }
+  const r = data as GetMyProfileResponse;
+  if (!r?.ok) return null;
+  return {
+    id:     r.id!,
+    email:  r.email!,
+    nome:   r.nome ?? null,
+    perfil: (r.perfil ?? 'custom') as UserPerfil,
+    secoes: (r.secoes ?? []) as SectionKey[],
+  };
+}
+
 interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
@@ -50,6 +94,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (AUTH_MODE === 'supabase') {
+      // Modo Supabase Auth: restaura a sessão gerenciada e escuta mudanças.
+      let mounted = true;
+      (async () => {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        if (data.session) {
+          const prof = await fetchSupabaseProfile();
+          if (mounted) setProfile(prof);
+        }
+        if (mounted) setLoading(false);
+      })();
+      const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (!session) {
+          setProfile(null);
+          return;
+        }
+        const prof = await fetchSupabaseProfile();
+        setProfile(prof);
+      });
+      return () => {
+        mounted = false;
+        sub.subscription.unsubscribe();
+      };
+    }
+
+    // Modo custom (padrão) — comportamento atual preservado.
     try {
       const stored = localStorage.getItem(SESSION_KEY);
       if (stored) setProfile(JSON.parse(stored));
@@ -59,7 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  // --- Modo custom (padrão): RPC concremrh_verify_login + localStorage. Inalterado. ---
+  const signInCustom = async (email: string, password: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).rpc('concremrh_verify_login', {
       p_email: email,
@@ -74,7 +146,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = data as { ok: boolean; id?: string; email?: string; nome?: string; perfil?: string; secoes?: string[] };
 
     if (!result?.ok) return { error: 'Email ou senha inválidos.' };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
     const prof: UserProfile = {
       id:     result.id!,
@@ -89,7 +160,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, profile: prof };
   };
 
+  // --- Modo supabase: signInWithPassword + bridge de senha (1º login) + get_my_profile. ---
+  const signInSupabase = async (email: string, password: string) => {
+    let { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      // Usuário talvez ainda não migrado: tenta o bridge (define a senha no Auth) e repete.
+      const { data: bridge, error: bridgeErr } = await supabase.functions.invoke('auth-bridge', {
+        body: { email, password },
+      });
+      const b = bridge as AuthBridgeResponse | null;
+      if (bridgeErr || !b?.ok) {
+        return { error: 'Email ou senha inválidos.' };
+      }
+      const retry = await supabase.auth.signInWithPassword({ email, password });
+      if (retry.error) return { error: 'Email ou senha inválidos.' };
+      error = null;
+    }
+
+    const prof = await fetchSupabaseProfile();
+    if (!prof) return { error: 'Não foi possível carregar o perfil do usuário.' };
+
+    setProfile(prof);
+    return { error: null, profile: prof };
+  };
+
+  const signIn = (email: string, password: string) =>
+    AUTH_MODE === 'supabase' ? signInSupabase(email, password) : signInCustom(email, password);
+
   const signOut = () => {
+    if (AUTH_MODE === 'supabase') {
+      // A sessão é gerenciada pelo Supabase; onAuthStateChange também limpa o profile.
+      void supabase.auth.signOut();
+      setProfile(null);
+      return;
+    }
     setProfile(null);
     localStorage.removeItem(SESSION_KEY);
   };
