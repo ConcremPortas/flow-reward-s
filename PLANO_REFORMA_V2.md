@@ -1,6 +1,6 @@
 # Plano de Reforma V2 — ConcremRH / Recompensa-Flow
 
-**Versão:** 1.8 (Etapa 8B — plano de endurecimento de segurança proposto)
+**Versão:** 1.9 (Etapa 8C — Fase 1 de segurança: frontend pronto; SQL a aplicar)
 **Data:** 2026-07-07
 **Base de referência:** [SDD.md](SDD.md) · [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md) · [MIGRATION_DATA_PLAN_V2.md](MIGRATION_DATA_PLAN_V2.md)
 **Princípio norteador:** *reaproveitar o sistema existente e reformar de forma estrutural e segura, sem quebrar regra de negócio nem dados em produção.*
@@ -341,6 +341,12 @@ npm run build  →  ✓ built in ~10s
 *Objetivo: endurecer o modelo hoje frágil (ver §11 do SDD). Ainda sem mudar telas.*
 - [x] **Etapa 8A — Auditoria de segurança concluída (2026-07-08).** Relatório em [SECURITY_AUDIT_V2.md](SECURITY_AUDIT_V2.md). Achados: 2 críticos (RPCs de gestão de usuário sem authz; RLS `allow_all` para anon em 27 tabelas), 4 médios (auth client-side forjável, brute-force de login, escrita anon dirigida, RLS de `usuarios` inócua sob auth custom), 4 baixos. Proposta de correção em 6 fases (Fase 0 = decidir modelo de auth). **Nada alterado.**
 - [x] **Etapa 8B — Plano de endurecimento proposto (2026-07-08).** [SECURITY_HARDENING_PLAN_V2.md](SECURITY_HARDENING_PLAN_V2.md) + migrations **propostas** (não aplicadas) em [supabase/security-hardening-proposals/](supabase/security-hardening-proposals/). Destino recomendado: **Supabase Auth**; interim Fase 1 fecha o C1 via **re-autenticação de admin** nas RPCs (sem quebrar o app anon). Inclui comparação custom×Supabase Auth, impacto frontend/banco, rollback e plano de testes. **Nada aplicado.**
+- [~] **Etapa 8C — Fase 1 (branch `security/phase1-user-rpcs`, 2026-07-08).**
+  - **Frontend adaptado** (feito): [useUsuarios.ts](src/hooks/useUsuarios.ts) envia `p_admin_email`/`p_admin_password` para `concremrh_create_user` e `concremrh_update_user_password`; [Usuarios.tsx](src/pages/cadastros/Usuarios.tsx) pede a **senha do admin logado** (via `profile.email`) antes de criar usuário e de resetar senha, com toast amigável para "Não autorizado" e limpeza do campo. `typecheck/test/build` verdes.
+  - **SQL da Fase 1 — aplicado e corrigido.** A 1ª versão tinha `set search_path = public`, mas o `pgcrypto` vive no schema `extensions` no Supabase → `crypt`/`gen_salt` não resolviam (erro 42883). Os **testes de segurança via REST detectaram o bug**; corrigido para `set search_path = public, extensions` em [0001_phase1_harden_user_rpcs.sql](supabase/security-hardening-proposals/0001_phase1_harden_user_rpcs.sql) e **re-aplicado**.
+  - **Status: ✅ VALIDADA (2026-07-08).** Testes de segurança via REST: **12/12 PASS** — (1) admin cria com senha correta ✅; (2) admin com senha errada → "Não autorizado", nada criado ✅; (3) **não-admin com senha própria correta** → "Não autorizado", nada criado ✅ (prova o gate de `perfil`, não só de senha); (4) admin reseta com senha correta ✅ (nova senha loga, antiga não); (5) admin com senha errada → "Não autorizado", senha inalterada ✅. Frontend `typecheck/test/build` verdes.
+  - **Risco C1 fechado:** anon não consegue mais criar admin nem resetar senha. Pronto para **merge em `main`**.
+  - **RLS aberta (C2)** e **Supabase Auth (M1/M4)** seguem **pendentes** para as Fases 2/3. **Nada de RLS/policies/AuthContext foi tocado.**
 - [ ] Revisar RLS: substituir políticas `USING (true)` por políticas efetivas. — *plano nas Fases 3-4 do audit*
 - [ ] Avaliar migração da autenticação client-side (`localStorage`) para Supabase Auth ou tokens assinados. — *Fases 0/2 do audit*
 - [ ] Cortar vetores críticos das RPCs de gestão de usuário (revoke/authz). — *Fase 1 do audit*

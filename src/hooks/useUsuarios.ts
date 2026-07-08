@@ -34,9 +34,14 @@ export function useUsuarios() {
     senha: string;
     perfil: UserPerfil;
     secoes: SectionKey[];
+    // Re-autenticação de admin (Fase 1 do endurecimento de segurança — SECURITY_HARDENING_PLAN_V2.md)
+    adminEmail: string;
+    adminSenha: string;
   }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).rpc('concremrh_create_user', {
+      p_admin_email: payload.adminEmail,
+      p_admin_password: payload.adminSenha,
       p_nome: payload.nome,
       p_email: payload.email,
       p_senha: payload.senha,
@@ -63,13 +68,18 @@ export function useUsuarios() {
     await fetchUsuarios();
   }
 
-  async function updateSenha(id: string, senha: string) {
+  async function updateSenha(id: string, senha: string, adminEmail: string, adminSenha: string) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).rpc('concremrh_update_user_password', {
+    const { data, error } = await (supabase as any).rpc('concremrh_update_user_password', {
+      p_admin_email: adminEmail,
+      p_admin_password: adminSenha,
       p_id: id,
       p_senha: senha,
     });
     if (error) throw new Error(error.message);
+    // Fase 1: a RPC agora retorna jsonb { ok, error? } (antes era void).
+    const result = data as { ok: boolean; error?: string };
+    if (!result?.ok) throw new Error(result?.error ?? 'Erro ao atualizar senha');
   }
 
   async function toggleAtivo(id: string, ativo: boolean) {
