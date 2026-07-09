@@ -2,12 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, Users, DollarSign, TrendingUp, Building2, Award } from 'lucide-react';
 import { useCargos } from '@/hooks/useCargos';
 import { useSetores } from '@/hooks/useSetores';
-import { useFuncionarios } from '@/hooks/useFuncionarios';
+import { useFuncionariosSensivel } from '@/hooks/useFuncionariosSensivel';
 
 export default function CargosSalariosDashboard() {
   const { cargos } = useCargos();
   const { setores } = useSetores();
-  const { funcionarios } = useFuncionarios();
+  // Media salarial precisa de salario -> view guardada (Fase 5B). Traz tambem
+  // ativo/funcao_id, suficientes para os contadores deste dashboard.
+  const { dados: funcionarios } = useFuncionariosSensivel();
 
   const funcionariosAtivos = funcionarios.filter(f => f.ativo);
   

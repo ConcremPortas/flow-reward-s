@@ -43,10 +43,17 @@ export const useFuncionarios = () => {
   const fetchFuncionarios = async () => {
     try {
       setLoading(true);
+      // Projecao explicita (Fase 5B): NAO buscar colunas sensiveis
+      // (salario/email/telefone/data_nascimento). Estas ficam na view guardada
+      // concremrh_funcionarios_sensivel (hook useFuncionariosSensivel). `cpf` e
+      // mantido pois funciona como Codigo Funcionario (import/export/premiacao).
       const { data, error } = await supabase
         .from('concremrh_funcionarios')
         .select(`
-          *,
+          id, user_id, nome, cpf, data_admissao, data_demissao,
+          empresa_id, setor_id, funcao_id, categoria_id,
+          base_premiacao_id, faixa_id, local_dss_id,
+          status, valor_fixo, ativo, created_at, updated_at,
           empresa:concremrh_empresas(nome),
           setor:concremrh_setores!concremrh_funcionarios_setor_id_fkey(nome),
           funcao:concremrh_funcoes(nome),

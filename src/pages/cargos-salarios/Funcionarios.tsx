@@ -5,10 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Users, Briefcase, Building2, Mail } from 'lucide-react';
 import { useFuncionarios } from '@/hooks/useFuncionarios';
+import { useFuncionariosSensivel } from '@/hooks/useFuncionariosSensivel';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function FuncionariosCargosSalarios() {
   const { funcionarios, loading } = useFuncionarios();
+  // salario/email vem da view guardada (Fase 5B); ausente/NULL se sem permissao.
+  const { porId: sensiveisPorId } = useFuncionariosSensivel();
   const [searchTerm, setSearchTerm] = useState('');
 
   const funcionariosAtivos = funcionarios.filter(f => {
@@ -83,7 +86,9 @@ export default function FuncionariosCargosSalarios() {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredFuncionarios.map((func) => (
+              {filteredFuncionarios.map((func) => {
+                const sens = sensiveisPorId[func.id];
+                return (
                 <Card key={func.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -110,18 +115,18 @@ export default function FuncionariosCargosSalarios() {
                               {func.setor.nome}
                             </span>
                           )}
-                          {func.email && (
+                          {sens?.email && (
                             <span className="flex items-center gap-1">
                               <Mail className="h-3 w-3" />
-                              {func.email}
+                              {sens.email}
                             </span>
                           )}
                         </div>
 
-                        {func.salario && (
+                        {sens?.salario && (
                           <div className="text-sm">
                             <span className="font-medium">Salário: </span>
-                            <span className="text-muted-foreground">{formatCurrency(func.salario)}</span>
+                            <span className="text-muted-foreground">{formatCurrency(sens.salario)}</span>
                           </div>
                         )}
                       </div>
@@ -137,7 +142,8 @@ export default function FuncionariosCargosSalarios() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
