@@ -98,21 +98,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Modo Supabase Auth: restaura a sessão gerenciada e escuta mudanças.
       let mounted = true;
       (async () => {
-        const { data } = await supabase.auth.getSession();
-        if (!mounted) return;
-        if (data.session) {
-          const prof = await fetchSupabaseProfile();
-          if (mounted) setProfile(prof);
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (!mounted) return;
+          if (data.session) {
+            const prof = await fetchSupabaseProfile();
+            if (!mounted) return;
+            if (prof) {
+              setProfile(prof);
+            } else {
+              // Sessão presente mas perfil não resolveu (token expirado/inválido,
+              // get_my_profile falhou): limpa a sessão e cai no login, sem travar.
+              await supabase.auth.signOut();
+              setProfile(null);
+            }
+          }
+        } catch (err) {
+          // Qualquer falha na inicialização NÃO pode deixar o app preso em loading.
+          console.error('Erro ao inicializar auth (supabase):', err);
+          if (mounted) {
+            setProfile(null);
+            try { await supabase.auth.signOut(); } catch { /* ignore */ }
+          }
+        } finally {
+          if (mounted) setLoading(false);
         }
-        if (mounted) setLoading(false);
       })();
       const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
         if (!session) {
           setProfile(null);
           return;
         }
-        const prof = await fetchSupabaseProfile();
-        setProfile(prof);
+        try {
+          const prof = await fetchSupabaseProfile();
+          setProfile(prof);
+        } catch (err) {
+          console.error('Erro ao carregar perfil (onAuthStateChange):', err);
+          setProfile(null);
+        }
       });
       return () => {
         mounted = false;
