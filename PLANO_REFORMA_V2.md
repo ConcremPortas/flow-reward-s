@@ -1,6 +1,6 @@
 # Plano de Reforma V2 — ConcremRH / Recompensa-Flow
 
-**Versão:** 2.4 (Fase 3 — RLS aplicada e validada; C2 fechado)
+**Versão:** 2.5 (Etapa 9 concluída — publicado em produção na Vercel: https://rewargap.vercel.app/)
 **Data:** 2026-07-07
 **Base de referência:** [SDD.md](SDD.md) · [MIGRATION_AUDIT_V2.md](MIGRATION_AUDIT_V2.md) · [MIGRATION_DATA_PLAN_V2.md](MIGRATION_DATA_PLAN_V2.md)
 **Princípio norteador:** *reaproveitar o sistema existente e reformar de forma estrutural e segura, sem quebrar regra de negócio nem dados em produção.*
@@ -395,14 +395,18 @@ npm run build  →  ✓ built in ~10s
 
 ---
 
-### Etapa 9 — Publicação em produção (nova conta Vercel) — 🚩 **ÚLTIMA ETAPA**
-*Objetivo: só aqui a produção passa a apontar para o novo Supabase. Deliberadamente por último — o projeto será publicado em **outra conta da Vercel**.*
-- [ ] Configurar o projeto na **nova conta da Vercel** (import do repositório, build Vite).
-- [ ] Definir as env vars de produção (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`) apontando para o projeto novo.
-- [ ] **Redeploy** (as env do Vite entram no build → precisa rebuildar).
-- [ ] Validar em produção: login, gerar premiação, relatórios, exportações.
-- [ ] Manter o projeto/deploy antigo intacto por alguns dias como rollback.
-- **Critério de saída:** produção rodando na nova conta Vercel contra o novo Supabase, validada ponta a ponta. **Não iniciar sem confirmação explícita.**
+### Etapa 9 — Publicação em produção (nova conta Vercel) — ✅ **CONCLUÍDA (2026-07-09)**
+*Objetivo: só aqui a produção passa a apontar para o novo Supabase. Deliberadamente por último — publicado em **outra conta da Vercel** (`ConcremPortas`).*
+- [x] Repositório final `ConcremPortas/flow-reward-s` no GitHub; `main` == `origin/main`.
+- [x] Projeto configurado na **nova conta da Vercel** (import do repo, framework Vite, build `npm run build`, output `dist`). **URL final: https://rewargap.vercel.app/**
+- [x] Env vars de produção definidas (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_AUTH_MODE=supabase`) apontando para o projeto novo `ewfebwljhmcvuopopqpb`. `service_role` **não** exposta (nenhum segredo em `VITE_`/bundle).
+- [x] Deploy **Ready** em produção.
+- [x] **Fallback SPA** (`vercel.json` `rewrites` → `/index.html`): refresh/deep-link em rotas internas retornam 200 (antes davam 404).
+- [x] **Preview OG/Twitter** atualizado (title/description/imagem próprios; removida marca Lovable) + arte final `og-recompensa-rh.png` (1731×909) publicada.
+- [x] **Fix crítico de auth publicado:** o F5 na seleção de módulos travava por **deadlock do `supabase-js`** (chamada async dentro do callback do `onAuthStateChange`). Corrigido (defer via `setTimeout(0)` + `finally` + rede de segurança por timeout); F5 não trava mais. Commits `b808ef8`/`c600392`.
+- [x] Validado em produção: **login/logout**, **F5 em rota interna sem travar**, perfis **admin/RH/SESMT/Produção**, telas principais.
+- **Critério de saída:** ✅ produção rodando na nova conta Vercel contra o novo Supabase, validada ponta a ponta.
+- *Pendências não bloqueantes:* preview no WhatsApp pode exigir imagem <600 KB (a atual tem ~1,2 MB); `public/faviconss.ico` removido localmente aguarda decisão; manter o projeto/Supabase antigos como rollback por alguns dias.
 
 ---
 
