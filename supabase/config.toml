@@ -1,1 +1,6 @@
 project_id = "wjwloskftqxudndzegrs"
+
+# auth-bridge: chamada ANTES de o usuario ter um JWT (migra a senha no 1o login).
+# Por isso NAO pode exigir verificacao de JWT.
+[functions.auth-bridge]
+verify_jwt = false

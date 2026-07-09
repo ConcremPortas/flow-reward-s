@@ -34,3 +34,7 @@ scripts/migration/.env.migration
 *.dump
 schema_data*.sql
 db_dados_*.sql
+
+# Supabase CLI — arquivos gerados localmente (nao versionar)
+supabase/.temp/
+supabase/.branches/
