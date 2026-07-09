@@ -97,48 +97,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (AUTH_MODE === 'supabase') {
       // Modo Supabase Auth: restaura a sessão gerenciada e escuta mudanças.
       let mounted = true;
-      (async () => {
+
+      // Rede de segurança: o loading NUNCA pode ficar preso (hang de rede/deadlock).
+      const safety = setTimeout(() => {
+        if (mounted) setLoading(false);
+      }, 8000);
+
+      // Carrega o perfil e SEMPRE encerra o loading (sucesso, vazio ou erro).
+      const carregarPerfil = async () => {
         try {
-          const { data } = await supabase.auth.getSession();
+          const prof = await fetchSupabaseProfile();
           if (!mounted) return;
-          if (data.session) {
-            const prof = await fetchSupabaseProfile();
-            if (!mounted) return;
-            if (prof) {
-              setProfile(prof);
-            } else {
-              // Sessão presente mas perfil não resolveu (token expirado/inválido,
-              // get_my_profile falhou): limpa a sessão e cai no login, sem travar.
-              await supabase.auth.signOut();
-              setProfile(null);
-            }
-          }
-        } catch (err) {
-          // Qualquer falha na inicialização NÃO pode deixar o app preso em loading.
-          console.error('Erro ao inicializar auth (supabase):', err);
-          if (mounted) {
+          if (prof) {
+            setProfile(prof);
+          } else {
+            // Sessão presente mas perfil não resolveu (token expirado/inválido):
+            // limpa a sessão e cai no login, sem travar.
             setProfile(null);
             try { await supabase.auth.signOut(); } catch { /* ignore */ }
           }
+        } catch (err) {
+          console.error('Erro ao carregar perfil (supabase):', err);
+          if (mounted) setProfile(null);
         } finally {
           if (mounted) setLoading(false);
         }
-      })();
-      const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      };
+
+      // IMPORTANTE (supabase-js): NÃO chamar funções async do supabase de dentro
+      // do callback do onAuthStateChange — ele roda segurando um lock interno e
+      // isso causa DEADLOCK (a promise nunca resolve → spinner infinito no F5).
+      // Solução: deferir a chamada para fora do callback com setTimeout(0).
+      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
         if (!session) {
           setProfile(null);
+          if (mounted) setLoading(false);
           return;
         }
-        try {
-          const prof = await fetchSupabaseProfile();
-          setProfile(prof);
-        } catch (err) {
-          console.error('Erro ao carregar perfil (onAuthStateChange):', err);
-          setProfile(null);
-        }
+        setTimeout(() => {
+          if (mounted) void carregarPerfil();
+        }, 0);
       });
+
+      // Fallback do estado inicial (getSession roda fora de lock, sem deadlock):
+      // resolve o caso "sem sessão" rápido; com sessão, o INITIAL_SESSION acima
+      // já dispara carregarPerfil.
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          if (!mounted) return;
+          if (!data.session) setLoading(false);
+        })
+        .catch((err) => {
+          console.error('Erro no getSession inicial (supabase):', err);
+          if (mounted) setLoading(false);
+        });
+
       return () => {
         mounted = false;
+        clearTimeout(safety);
         sub.subscription.unsubscribe();
       };
     }
