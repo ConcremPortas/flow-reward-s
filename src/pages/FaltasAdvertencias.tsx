@@ -1,7 +1,9 @@
 // Página Faltas/Advertências - Grid mensal de apuração
 import { useRef, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/app/PageHeader";
+import { SectionCard } from "@/components/app/SectionCard";
+import { StatusBadge } from "@/components/app/StatusBadge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -30,7 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Save, Calendar, Edit, Trash2, Filter, Eye, Download, UploadCloud } from "lucide-react";
+import { Plus, Search, Save, AlertTriangle, Edit, Trash2, Filter, Eye, Download, UploadCloud } from "lucide-react";
 import { format } from "date-fns";
 import { parseDateSafe } from "@/lib/dateUtils";
 import { ptBR } from "date-fns/locale";
@@ -309,20 +311,20 @@ export const FaltasAdvertencias = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      <PageHeader
+        icon={AlertTriangle}
+        title="Faltas / Advertências"
+        description="Apuração mensal de faltas e advertências."
+      />
+
       {/* Grid de Apuração Mensal */}
       <div ref={apuracaoRef} />
-      <Card className="card-elegant">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Apuração Mensal - Faltas e Advertências
-          </CardTitle>
-          <CardDescription>
-            Lance as faltas e advertências do mês de competência para todos os funcionários
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <SectionCard
+        title="Apuração Mensal — Faltas e Advertências"
+        description="Lance as faltas e advertências do mês de competência para todos os funcionários"
+      >
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
               <label className="text-sm font-medium">Mês de Competência *</label>
@@ -473,19 +475,15 @@ export const FaltasAdvertencias = () => {
               <p className="text-sm">Verifique os funcionários com status ativo e ativo=true.</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
 
       {/* Histórico de Registros */}
       <div ref={historicoRef} />
-      <Card className="card-elegant">
-        <CardHeader>
-          <CardTitle>Histórico de Apurações</CardTitle>
-          <CardDescription>
-            Registros históricos de faltas e advertências já lançados
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <SectionCard
+        title="Histórico de Apurações"
+        description="Registros históricos de faltas e advertências já lançados"
+      >
           <div className="space-y-4 mb-6">
             <h3 className="text-lg font-medium">Apurações Lançadas por Competência</h3>
             {apuracoesLancadas.length === 0 ? (
@@ -663,13 +661,9 @@ export const FaltasAdvertencias = () => {
                             {funcionario?.nome || "Funcionário não encontrado"}
                           </TableCell>
                           <TableCell>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              registro.tipo === 'falta' 
-                                ? 'bg-orange-100 text-orange-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
+                            <StatusBadge variant={registro.tipo === 'falta' ? 'warning' : 'danger'}>
                               {registro.tipo === 'falta' ? 'Falta' : 'Advertência'}
-                            </span>
+                            </StatusBadge>
                           </TableCell>
                           <TableCell className="text-center font-medium">
                             {registro.quantidade || 1}
@@ -732,8 +726,7 @@ export const FaltasAdvertencias = () => {
               <p className="text-sm">As apurações aparecerão aqui após serem salvas.</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </SectionCard>
     </div>
   );
 };

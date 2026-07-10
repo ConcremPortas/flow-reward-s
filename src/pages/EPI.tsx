@@ -1,7 +1,8 @@
 // Página EPI - conectada ao banco de dados
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/app/PageHeader";
+import { SectionCard } from "@/components/app/SectionCard";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,7 +38,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { parseDateSafe } from "@/lib/dateUtils";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Save, FileText, Edit, Trash2, Search } from "lucide-react";
+import { CalendarIcon, Save, FileText, Edit, Trash2, Search, HardHat } from "lucide-react";
 import { useFuncionarios } from "@/hooks/useFuncionarios";
 import { useEPI } from "@/hooks/useEPI";
 
@@ -170,16 +171,19 @@ export const EPI = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      <PageHeader
+        icon={HardHat}
+        title="EPI"
+        description="Auditorias de equipamentos de proteção individual."
+      />
+
       {/* Nova Auditoria EPI */}
-      <Card className="card-elegant">
-        <CardHeader>
-          <CardTitle>Nova Auditoria de EPI</CardTitle>
-          <CardDescription>
-            Registre uma nova auditoria de equipamentos de proteção individual
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <SectionCard
+        title="Nova Auditoria de EPI"
+        description="Registre uma nova auditoria de equipamentos de proteção individual"
+      >
+        <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Data da Auditoria</label>
@@ -281,26 +285,20 @@ export const EPI = () => {
               Salvar Auditoria
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
 
       {/* Histórico de Auditorias */}
-      <Card className="card-elegant">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>Histórico de Auditorias</CardTitle>
-              <CardDescription>
-                Auditorias de EPI realizadas
-              </CardDescription>
-            </div>
-            <Button variant="outline" className="gap-2">
-              <FileText className="h-4 w-4" />
-              Relatório
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <SectionCard
+        title="Histórico de Auditorias"
+        description="Auditorias de EPI realizadas"
+        actions={
+          <Button variant="outline" className="gap-2">
+            <FileText className="h-4 w-4" />
+            Relatório
+          </Button>
+        }
+      >
           {epiLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-lg">Carregando histórico...</div>
@@ -495,8 +493,7 @@ export const EPI = () => {
               <p className="text-sm">As auditorias realizadas aparecerão aqui.</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </SectionCard>
     </div>
   );
 };

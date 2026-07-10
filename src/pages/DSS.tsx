@@ -1,7 +1,8 @@
 // Página DSS - conectada ao banco de dados
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/app/PageHeader";
+import { SectionCard } from "@/components/app/SectionCard";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -30,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/dateUtils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Save, FileText, Edit, Trash2 } from "lucide-react";
+import { CalendarIcon, Save, FileText, Edit, Trash2, Shield } from "lucide-react";
 import { 
   Select,
   SelectContent,
@@ -157,16 +158,19 @@ export const DSS = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      <PageHeader
+        icon={Shield}
+        title="DSS"
+        description="Diálogo Semanal de Segurança — registro e histórico."
+      />
+
       {/* Novo DSS */}
-      <Card className="card-elegant">
-        <CardHeader>
-          <CardTitle>Novo DSS - Diálogo Semanal de Segurança</CardTitle>
-          <CardDescription>
-            Registre a realização de um novo diálogo semanal de segurança
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <SectionCard
+        title="Novo DSS"
+        description="Registre a realização de um novo diálogo semanal de segurança"
+      >
+        <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Local do DSS *</Label>
@@ -288,26 +292,20 @@ export const DSS = () => {
               Salvar DSS
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
 
       {/* Histórico de DSS */}
-      <Card className="card-elegant">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>Histórico de DSS</CardTitle>
-              <CardDescription>
-                DSS realizados anteriormente
-              </CardDescription>
-            </div>
-            <Button variant="outline" className="gap-2">
-              <FileText className="h-4 w-4" />
-              Relatório
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <SectionCard
+        title="Histórico de DSS"
+        description="DSS realizados anteriormente"
+        actions={
+          <Button variant="outline" className="gap-2">
+            <FileText className="h-4 w-4" />
+            Relatório
+          </Button>
+        }
+      >
           {dssLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-lg">Carregando histórico...</div>
@@ -477,8 +475,7 @@ export const DSS = () => {
               <p className="text-sm">Os DSS realizados aparecerão aqui.</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </SectionCard>
     </div>
   );
 };

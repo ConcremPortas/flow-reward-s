@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/app/PageHeader";
+import { SectionCard } from "@/components/app/SectionCard";
 import { Input } from "@/components/ui/input";
 import { 
   Table, 
@@ -29,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2, UploadCloud, Download } from "lucide-react";
+import { Plus, Search, Edit, TrendingUp, TrendingDown, Minus, Trash2, UploadCloud, Download, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSetores } from "@/hooks/useSetores";
 import { useProducaoSetor } from "@/hooks/useProducaoSetor";
@@ -413,16 +414,19 @@ export const ProducaoSetor = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      <PageHeader
+        icon={BarChart3}
+        title="Produção por Setor"
+        description="Metas e produção realizada por setor."
+      />
+
       {/* Novo Registro */}
-      <Card className="card-elegant">
-        <CardHeader>
-          <CardTitle>{editingRecord ? "Editar" : "Registrar"} Produção por Setor</CardTitle>
-          <CardDescription>
-            {editingRecord ? "Edite o registro selecionado" : "Registre a meta e produção realizada por setor"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <SectionCard
+        title={`${editingRecord ? "Editar" : "Registrar"} Produção por Setor`}
+        description={editingRecord ? "Edite o registro selecionado" : "Registre a meta e produção realizada por setor"}
+      >
+        <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Setor *</label>
@@ -533,19 +537,14 @@ export const ProducaoSetor = () => {
               {editingRecord ? "Atualizar" : "Adicionar"} Registro
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
 
       {/* Dados de Produção */}
-      <Card className="card-elegant">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>Produção por Setor</CardTitle>
-              <CardDescription>
-                Histórico de metas e realizações por setor
-              </CardDescription>
-            </div>
+      <SectionCard
+        title="Produção por Setor"
+        description="Histórico de metas e realizações por setor"
+        actions={
             <Dialog
               open={importOpen}
               onOpenChange={(v) => {
@@ -643,9 +642,9 @@ export const ProducaoSetor = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        }
+      >
+        <div className="space-y-4">
           {/* Filtros */}
           <div className="flex items-end gap-4">
             <div className="relative w-[300px]">
@@ -821,8 +820,8 @@ export const ProducaoSetor = () => {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
     </div>
   );
 };
