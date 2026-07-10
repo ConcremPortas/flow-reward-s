@@ -4,8 +4,9 @@ import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoHubUrl from '@/assets/logo-concrem-hub.png';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/app/PageHeader';
+import { SectionCard } from '@/components/app/SectionCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -164,7 +165,7 @@ const addExcelBranding = async (
 // Célula de nota colorida: vermelho se < 1, verde se = 1
 const NotaCell = ({ value }: { value: number | null | undefined }) => {
   if (value == null) return <TableCell className="text-center text-muted-foreground">—</TableCell>;
-  const cor = value < 1 ? 'text-red-600 font-semibold' : value >= 1 ? 'text-green-700' : '';
+  const cor = value < 1 ? 'text-destructive font-semibold' : value >= 1 ? 'text-success' : '';
   return <TableCell className={`text-center ${cor}`}>{pct(value)}</TableCell>;
 };
 
@@ -689,18 +690,15 @@ const RelatorioPremiacao = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-foreground">Relatório de Premiações</h1>
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      <PageHeader
+        icon={FileText}
+        title="Relatório de Premiações"
+        description="Consulte, filtre e exporte os resultados de premiação."
+      />
 
       {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Search className="h-4 w-4" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <SectionCard title="Filtros">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>Base de Premiação</Label>
@@ -736,48 +734,35 @@ const RelatorioPremiacao = () => {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </SectionCard>
 
       {/* Tabela */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">
-              {resultadosFiltrados.length > 0
-                ? `${resultadosFiltrados.length} funcionário(s)${competencia ? ` — ${formatCompetencia(competencia)}` : ''}${baseSelecionada ? ` — ${baseSelecionada.nome}` : ''}`
-                : 'Selecione os filtros para visualizar'}
-            </CardTitle>
-            {resultadosFiltrados.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                <Button variant="outline" size="sm" onClick={exportarExcel}>
-                  <Download className="h-4 w-4 mr-1" /> Excel
-                </Button>
-                <Button variant="outline" size="sm" onClick={exportarPDF}>
-                  <FileText className="h-4 w-4 mr-1" /> PDF
-                </Button>
-                <div className="w-px bg-border mx-1" />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => exportarRelatorioRH('excel')}
-                  className="border-green-700 text-green-700 hover:bg-green-50"
-                >
-                  <Download className="h-4 w-4 mr-1" /> RH Excel
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => exportarRelatorioRH('pdf')}
-                  className="border-green-700 text-green-700 hover:bg-green-50"
-                >
-                  <FileText className="h-4 w-4 mr-1" /> RH PDF
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
+      <SectionCard
+        title={
+          resultadosFiltrados.length > 0
+            ? `${resultadosFiltrados.length} funcionário(s)${competencia ? ` — ${formatCompetencia(competencia)}` : ''}${baseSelecionada ? ` — ${baseSelecionada.nome}` : ''}`
+            : 'Selecione os filtros para visualizar'
+        }
+        actions={
+          resultadosFiltrados.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={exportarExcel}>
+                <Download className="mr-1 h-4 w-4" /> Excel
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportarPDF}>
+                <FileText className="mr-1 h-4 w-4" /> PDF
+              </Button>
+              <div className="mx-1 w-px bg-border" />
+              <Button variant="outline" size="sm" onClick={() => exportarRelatorioRH('excel')} className="border-primary/40 text-primary hover:bg-primary/10">
+                <Download className="mr-1 h-4 w-4" /> RH Excel
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportarRelatorioRH('pdf')} className="border-primary/40 text-primary hover:bg-primary/10">
+                <FileText className="mr-1 h-4 w-4" /> RH PDF
+              </Button>
+            </div>
+          ) : undefined
+        }
+      >
           {resultadosFiltrados.length === 0 ? (
             <div className="text-sm text-muted-foreground py-8 text-center">
               Nenhum resultado encontrado com os filtros selecionados.
@@ -787,7 +772,7 @@ const RelatorioPremiacao = () => {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-green-800 hover:bg-green-800">
+                    <TableRow className="bg-primary hover:bg-primary">
                       <TableHead className="text-white font-bold text-xs">COD</TableHead>
                       <TableHead className="text-white font-bold text-xs">FUNCIONÁRIO</TableHead>
                       <TableHead className="text-white font-bold text-xs">SETOR</TableHead>
@@ -818,7 +803,7 @@ const RelatorioPremiacao = () => {
                       const valorFinal = r.valor_ajustado ?? r.bonus_alcancado ?? 0;
                       const diferenca = valorFinal - (r.bonus_possivel || 0);
                       return (
-                        <TableRow key={r.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <TableRow key={r.id} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted/40'}>
                           <TableCell className="font-mono text-xs py-1.5">{r.cod_funcionario}</TableCell>
                           <TableCell className="font-medium text-xs py-1.5">{r.nome}</TableCell>
                           <TableCell className="text-xs py-1.5">{r.setor}</TableCell>
@@ -837,16 +822,16 @@ const RelatorioPremiacao = () => {
                             <NotaCell value={r.nota_operacao_segura} />
                             <NotaCell value={r.nota_limpeza} />
                           </>}
-                          <TableCell className={`text-center text-xs font-bold py-1.5 ${r.nota_geral < 1 ? 'text-orange-600' : 'text-green-700'}`}>
+                          <TableCell className={`text-center text-xs font-bold py-1.5 ${r.nota_geral < 1 ? 'text-status-warning' : 'text-success'}`}>
                             {pct(r.nota_geral)}
                           </TableCell>
                           <TableCell className="text-right text-xs py-1.5">{fmt(r.bonus_possivel || 0)}</TableCell>
-                          <TableCell className="text-right text-xs font-semibold text-green-700 py-1.5">{fmt(r.bonus_alcancado || 0)}</TableCell>
+                          <TableCell className="text-right text-xs font-semibold text-success py-1.5">{fmt(r.bonus_alcancado || 0)}</TableCell>
                           <TableCell className="text-right text-xs font-semibold py-1.5">
                             {fmt(valorFinal)}
                             {r.valor_ajustado != null && <span className="ml-1 text-xs text-muted-foreground">(aj.)</span>}
                           </TableCell>
-                          <TableCell className={`text-right text-xs font-semibold py-1.5 ${diferenca < 0 ? 'text-red-600' : diferenca > 0 ? 'text-green-600' : ''}`}>
+                          <TableCell className={`text-right text-xs font-semibold py-1.5 ${diferenca < 0 ? 'text-destructive' : diferenca > 0 ? 'text-success' : ''}`}>
                             {fmt(diferenca)}
                           </TableCell>
                         </TableRow>
@@ -872,15 +857,14 @@ const RelatorioPremiacao = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-muted-foreground text-xs">Diferença Total</div>
-                  <div className={`font-semibold ${totalValorFinal - totalBonusPossivel < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  <div className={`font-semibold ${totalValorFinal - totalBonusPossivel < 0 ? 'text-destructive' : 'text-success'}`}>
                     {fmt(totalValorFinal - totalBonusPossivel)}
                   </div>
                 </div>
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+      </SectionCard>
     </div>
   );
 };

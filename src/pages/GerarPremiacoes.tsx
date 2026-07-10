@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/app/PageHeader';
+import { SectionCard } from '@/components/app/SectionCard';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -552,39 +553,31 @@ const GerarPremiacoes = () => {
     .join(', ');
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Gerar Premiações</h1>
-      </div>
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      <PageHeader
+        icon={Calculator}
+        title="Gerar Premiações"
+        description="Calcule e salve as premiações por competência e base."
+      />
 
-      {/* Card Informativo */}
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Calculator className="h-4 w-4 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-1">Salvamento Automático</h3>
-              <p className="text-sm text-blue-700">
-                Os resultados das premiações são salvos automaticamente. Se já existir um cálculo
-                para o mesmo mês e base de premiação, o sistema perguntará se deseja sobrescrever.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Banner informativo */}
+      <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/[0.06] p-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Calculator className="h-4 w-4" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Salvamento automático</h3>
+          <p className="text-sm text-muted-foreground">
+            Os resultados das premiações são salvos automaticamente. Se já existir um cálculo
+            para o mesmo mês e base de premiação, o sistema perguntará se deseja sobrescrever.
+          </p>
+        </div>
+      </div>
 
       {/* Filtros */}
       <div ref={parametrosRef}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
-              Parâmetros de Cálculo
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <SectionCard title="Parâmetros de Cálculo">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Multi-select Base de Premiação */}
               <div className="space-y-2">
@@ -707,8 +700,8 @@ const GerarPremiacoes = () => {
 
             {/* Funcionários elegíveis */}
             {baseIds.length > 0 && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="text-sm text-blue-800">
+              <div className="mt-4 rounded-lg border border-primary/15 bg-primary/[0.06] p-3">
+                <div className="text-sm text-foreground">
                   <strong>Funcionários elegíveis:</strong>{' '}
                   {funcionariosElegiveis.length} funcionário(s) — bases: {basesSelecionadasNomes}
                   {categoriaIds.length > 0 && (
@@ -717,22 +710,18 @@ const GerarPremiacoes = () => {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Premiações Geradas</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <SectionCard title="Premiações Geradas">
           {calculosGerados.length === 0 ? (
             <div className="text-sm text-muted-foreground">Nenhuma premiação gerada ainda.</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
                     <TableHead>Competência</TableHead>
                     <TableHead>Base</TableHead>
                     <TableHead>Categorias</TableHead>
@@ -822,8 +811,7 @@ const GerarPremiacoes = () => {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </SectionCard>
 
     </div>
   );
