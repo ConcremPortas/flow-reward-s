@@ -6,7 +6,7 @@ import { IntroOverlay } from '@/components/IntroOverlay';
 import { LoginHero } from '@/components/login/LoginHero';
 import { LoginCard } from '@/components/login/LoginCard';
 
-const WALLPAPER = '/logos/walpaper-concrem.png';
+const WALLPAPER = '/logos/walpaper-concrem.jpg';
 
 const introKey = (idOrEmail: string) => `recompensa_intro_seen_${idOrEmail}`;
 

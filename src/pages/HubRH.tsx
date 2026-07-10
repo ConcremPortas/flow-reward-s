@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Trophy, Briefcase, BarChart3, LogOut, Info, ArrowRight, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const WALLPAPER = '/logos/walpaper-concrem.png';
+const WALLPAPER = '/logos/walpaper-concrem.jpg';
 const LOGO_BRANCO = '/logos/Logo-Branco.png';
 
 const iconMap: Record<string, any> = {

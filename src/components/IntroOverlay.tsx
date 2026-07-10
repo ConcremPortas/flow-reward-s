@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-const WALLPAPER = '/logos/walpaper-concrem.png';
+const WALLPAPER = '/logos/walpaper-concrem.jpg';
 const LOGO_BRANCO = '/logos/Logo-Branco.png';
 
 const TITLE = 'Bem-vindo à Gestão RH';
