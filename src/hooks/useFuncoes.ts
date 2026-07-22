@@ -68,6 +68,31 @@ export const useFuncoes = () => {
     }
   };
 
+  const updateFuncao = async (id: string, funcao: Partial<Omit<Funcao, 'id' | 'created_at' | 'updated_at'>>) => {
+    try {
+      const { error } = await supabase
+        .from('concremrh_funcoes')
+        .update(funcao)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Função atualizada com sucesso",
+      });
+
+      fetchFuncoes();
+    } catch (error) {
+      console.error('Erro ao atualizar função:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a função",
+        variant: "destructive",
+      });
+    }
+  };
+
   const deleteFuncao = async (id: string) => {
     try {
       const { error } = await supabase
@@ -101,6 +126,7 @@ export const useFuncoes = () => {
     funcoes,
     loading,
     createFuncao,
+    updateFuncao,
     deleteFuncao,
     refetch: fetchFuncoes
   };

@@ -1,0 +1,81 @@
+import { describe, it, expect } from 'vitest';
+import type { SectionKey } from '@/contexts/AuthContext';
+import {
+  navigationByModule, resolveSidebarModule, moduleHome,
+  isItemActive, isGroupActive, filterNavigation, activeGroupIds,
+} from './sidebarNavigation';
+
+const ctxAdmin = { isAdmin: true, canAccess: () => true };
+const ctxNone = { isAdmin: false, canAccess: () => false };
+const ctxSome = (secs: SectionKey[]) => ({ isAdmin: false, canAccess: (s: SectionKey) => secs.includes(s) });
+
+const byId = (items: { id: string }[]) => items.map((i) => i.id);
+
+describe('resolveSidebarModule — fonte única do módulo', () => {
+  it('detecta cargos-salários por prefixo, senão premiações', () => {
+    expect(resolveSidebarModule('/cargos-salarios')).toBe('cargos-salarios');
+    expect(resolveSidebarModule('/cargos-salarios/cargos')).toBe('cargos-salarios');
+    expect(resolveSidebarModule('/premiacoes')).toBe('premiacoes');
+    expect(resolveSidebarModule('/premiacoes/funcionarios')).toBe('premiacoes');
+    expect(resolveSidebarModule('/cadastros/usuarios')).toBe('premiacoes');
+  });
+  it('tem home para cada módulo', () => {
+    expect(moduleHome['cargos-salarios']).toBe('/cargos-salarios');
+    expect(moduleHome.premiacoes).toBe('/premiacoes');
+  });
+});
+
+describe('isItemActive — exato para raízes, prefixo para filhos', () => {
+  const dash = { id: 'd', title: 'D', icon: {} as never, href: '/premiacoes', exactActive: true };
+  const func = { id: 'f', title: 'F', icon: {} as never, href: '/premiacoes/funcionarios' };
+  it('raiz exata não ativa em subrota', () => {
+    expect(isItemActive(dash, '/premiacoes')).toBe(true);
+    expect(isItemActive(dash, '/premiacoes/funcionarios')).toBe(false);
+  });
+  it('folha ativa por prefixo de segmento', () => {
+    expect(isItemActive(func, '/premiacoes/funcionarios')).toBe(true);
+    expect(isItemActive(func, '/premiacoes/funcionarios/123')).toBe(true);
+    expect(isItemActive(func, '/premiacoes/funcionarios-x')).toBe(false); // não confunde prefixo textual
+  });
+});
+
+describe('isGroupActive + activeGroupIds', () => {
+  const nav = navigationByModule.premiacoes;
+  it('grupo ativo quando filho está ativo', () => {
+    const cadastros = nav.find((i) => i.id === 'cadastros')!;
+    expect(isGroupActive(cadastros, '/premiacoes/cadastros/setores')).toBe(true);
+    expect(isGroupActive(cadastros, '/premiacoes/funcionarios')).toBe(false);
+  });
+  it('activeGroupIds retorna o grupo que contém a rota', () => {
+    expect(activeGroupIds(nav, '/premiacoes/cadastros/faixas')).toEqual(['cadastros']);
+    expect(activeGroupIds(nav, '/premiacoes/dss')).toEqual(['sesmt']);
+    expect(activeGroupIds(nav, '/premiacoes')).toEqual([]);
+  });
+});
+
+describe('filterNavigation — reflete permissões existentes', () => {
+  it('admin vê tudo, inclusive USUÁRIOS', () => {
+    const nav = filterNavigation(navigationByModule.premiacoes, ctxAdmin);
+    expect(byId(nav)).toContain('usuarios');
+    expect(byId(nav)).toContain('cadastros');
+  });
+  it('sem permissões: nada de premiações (nem usuarios)', () => {
+    const nav = filterNavigation(navigationByModule.premiacoes, ctxNone);
+    expect(nav).toHaveLength(0);
+  });
+  it('acesso limitado mostra só as seções permitidas', () => {
+    const nav = filterNavigation(navigationByModule.premiacoes, ctxSome(['rh']));
+    expect(byId(nav)).toEqual(['rh']);
+    expect(nav[0].children?.length).toBe(2);
+  });
+  it('USUÁRIOS é adminOnly (oculto para não-admin mesmo com seções)', () => {
+    const nav = filterNavigation(navigationByModule.premiacoes, ctxSome(['dashboard', 'cadastros']));
+    expect(byId(nav)).not.toContain('usuarios');
+    expect(byId(nav)).toEqual(['dashboard', 'cadastros']);
+  });
+  it('cargos-salários não depende de seção (módulo guardado por rota) e mantém estrutura', () => {
+    const nav = filterNavigation(navigationByModule['cargos-salarios'], ctxNone);
+    expect(byId(nav)).toEqual(['cs-dashboard', 'cs-cargos', 'cs-func', 'cs-cadastros']);
+    expect(nav.find((i) => i.id === 'cs-cadastros')?.children?.[0].href).toBe('/cargos-salarios/cadastros/setores');
+  });
+});

@@ -32,7 +32,8 @@ import RelatorioPremiacao from "./pages/RelatorioPremiacao";
 import CargosSalariosDashboard from "./pages/cargos-salarios/Dashboard";
 import Cargos from "./pages/cargos-salarios/Cargos";
 import FuncionariosCargosSalarios from "./pages/cargos-salarios/Funcionarios";
-import NotFound from "./pages/NotFound";
+import ControleEstoque from "./pages/controle-estoque/ControleEstoque";
+import { IndicadoresRH } from "./pages/IndicadoresRH";
 import Usuarios from "./pages/cadastros/Usuarios";
 
 const queryClient = new QueryClient();
@@ -197,10 +198,67 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Indicadores RH - TODO */}
-            <Route path="/indicadores-rh" element={
+            {/* Controle de Estoque (Gestão de Fardamentos) - Admin/RH */}
+            <Route path="/controle-estoque" element={
               <ProtectedRoute allowedPerfis={['admin', 'rh']}>
-                <MainLayout><NotFound /></MainLayout>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/fardamentos" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/entradas" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/entregas" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/devolucoes" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/troca" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/ajuste" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/movimentacoes" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/alertas" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/estornos" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/controle-estoque/cadastros" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+                <MainLayout><ControleEstoque /></MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Indicadores RH - landing do módulo */}
+            <Route path="/indicadores-rh" element={
+              <ProtectedRoute allowedPerfis={['admin', 'rh', 'producao']}>
+                <MainLayout><IndicadoresRH /></MainLayout>
               </ProtectedRoute>
             } />
 

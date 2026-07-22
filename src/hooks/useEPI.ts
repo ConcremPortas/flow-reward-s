@@ -104,6 +104,69 @@ export const useEPI = () => {
     }
   };
 
+  /**
+   * Salva uma auditoria completa em uma única operação: opcionalmente apaga
+   * linhas antigas (edição) e insere as novas linhas (1 por funcionário
+   * auditado + 1 resumo) em um único INSERT em lote — evita N chamadas
+   * separadas (e N toasts) para auditorias com centenas de funcionários.
+   * `funcionario_id: null` identifica a linha-resumo da auditoria.
+   */
+  const saveAuditoria = async (
+    rows: (Omit<EPI, 'id' | 'created_at' | 'updated_at' | 'funcionario_id'> & { funcionario_id: string | null })[],
+    deleteIds: string[] = [],
+  ) => {
+    try {
+      if (deleteIds.length > 0) {
+        const { error: deleteError } = await supabase.from('concremrh_epi').delete().in('id', deleteIds);
+        if (deleteError) throw deleteError;
+      }
+
+      const { error } = await supabase.from('concremrh_epi').insert(rows);
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Auditoria de EPI salva com sucesso",
+      });
+
+      await fetchEPI();
+      return true;
+    } catch (error) {
+      console.error('Erro ao salvar auditoria de EPI:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar a auditoria de EPI",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  /** Exclui todas as linhas de uma auditoria (resumo + detalhe por funcionário) em uma única operação. */
+  const deleteManyEPI = async (ids: string[]) => {
+    if (ids.length === 0) return true;
+    try {
+      const { error } = await supabase.from('concremrh_epi').delete().in('id', ids);
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Auditoria de EPI excluída com sucesso",
+      });
+
+      await fetchEPI();
+      return true;
+    } catch (error) {
+      console.error('Erro ao excluir auditoria de EPI:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a auditoria de EPI",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   const deleteEPI = async (id: string) => {
     try {
       const { error } = await supabase
@@ -141,6 +204,8 @@ export const useEPI = () => {
     createEPI,
     updateEPI,
     deleteEPI,
+    saveAuditoria,
+    deleteManyEPI,
     refetch: fetchEPI
   };
 };

@@ -1,102 +1,117 @@
-import { Users, TrendingUp, AlertTriangle, BarChart3, LayoutDashboard } from "lucide-react";
-import { PageHeader } from "@/components/app/PageHeader";
-import { MetricCard } from "@/components/app/MetricCard";
-import { SectionCard } from "@/components/app/SectionCard";
-import { StatusBadge, type StatusVariant } from "@/components/app/StatusBadge";
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { RefreshCw, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
+import { useDashboardData } from "@/features/dashboard/hooks/useDashboardData";
+import { normalizeView, type ViewKey } from "@/features/dashboard/views";
+
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { AnalyticsNavigation } from "@/components/dashboard/AnalyticsNavigation";
+import { AnalyticsFilterBar } from "@/components/dashboard/AnalyticsFilterBar";
+import { AnalyticsFooterNavigation } from "@/components/dashboard/AnalyticsFooterNavigation";
+import { ViewModeToggle } from "@/components/dashboard/ViewModeToggle";
+import { AttentionCenter } from "@/components/dashboard/AttentionCenter";
+import { AnalyticsDrawer, type DrawerData } from "@/components/dashboard/AnalyticsDrawer";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { DashboardEmptyState } from "@/components/dashboard/DashboardEmptyState";
+
+import { ExecutiveOverviewPage } from "@/components/dashboard/pages/ExecutiveOverviewPage";
+import { PeopleMovementPage } from "@/components/dashboard/pages/PeopleMovementPage";
+import { HealthSafetyPage } from "@/components/dashboard/pages/HealthSafetyPage";
+import { SectorPerformancePage } from "@/components/dashboard/pages/SectorPerformancePage";
+import { RewardsImpactPage } from "@/components/dashboard/pages/RewardsImpactPage";
+import type { PageProps } from "@/components/dashboard/pages/_shared";
+
+/**
+ * Central Analítica de RH — experiência paginada (5 visões).
+ * Container único: carrega os dados uma vez, mantém filtros e controla a página
+ * via query string (?view=...). As páginas recebem o modelo já processado.
+ */
 export const Dashboard = () => {
-  // Dados de exemplo para o dashboard
-  const stats = [
-    { title: "Total de Funcionários", value: "127", description: "93 ativos, 34 inativos", icon: Users, trend: "+3 este mês" },
-    { title: "Meta de Produção", value: "87%", description: "Meta atingida este mês", icon: TrendingUp, trend: "+12% vs mês anterior" },
-    { title: "Participação DSS", value: "94%", description: "Média de presença", icon: BarChart3, trend: "+2% vs mês anterior" },
-    { title: "Não conformidades EPI", value: "8", description: "Pendências para resolução", icon: AlertTriangle, trend: "-3 vs semana anterior" },
-  ];
+  const dash = useDashboardData();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = normalizeView(searchParams.get("view"));
 
-  const recentActivities: { action: string; description: string; time: string; status: StatusVariant; label: string }[] = [
-    { action: "Funcionário cadastrado", description: "João Silva - Setor Produção", time: "2 horas atrás", status: "success", label: "Concluído" },
-    { action: "DSS realizado", description: "Tema: Uso correto de EPIs", time: "1 dia atrás", status: "success", label: "Concluído" },
-    { action: "Não conformidade EPI", description: "Maria Santos - Capacete danificado", time: "2 dias atrás", status: "warning", label: "Atenção" },
-    { action: "Meta de produção atingida", description: "Setor Montagem - 105% da meta", time: "3 dias atrás", status: "success", label: "Concluído" },
-  ];
+  const [drawer, setDrawer] = useState<DrawerData | null>(null);
+  const [showAllAttention, setShowAllAttention] = useState(false);
 
-  const setores = [
-    { setor: "Produção", funcionarios: 45, meta: 98 },
-    { setor: "Montagem", funcionarios: 32, meta: 105 },
-    { setor: "Qualidade", funcionarios: 18, meta: 92 },
-    { setor: "Expedição", funcionarios: 22, meta: 87 },
-  ];
+  const setView = (v: ViewKey) => {
+    const sp = new URLSearchParams(searchParams);
+    sp.set("view", v);
+    setSearchParams(sp);
+  };
 
-  const metaTone = (m: number) =>
-    m >= 100 ? "bg-success" : m >= 90 ? "bg-primary" : "bg-status-warning";
+  if (dash.loading && !dash.lastUpdated) return <DashboardSkeleton />;
+
+  const pageProps: PageProps = {
+    dash,
+    openDrawer: setDrawer,
+    onSeeAllAttention: () => setShowAllAttention(true),
+  };
+
+  const renderPage = () => {
+    switch (view) {
+      case "pessoas": return <PeopleMovementPage {...pageProps} />;
+      case "saude": return <HealthSafetyPage {...pageProps} />;
+      case "setores": return <SectorPerformancePage {...pageProps} />;
+      case "premiacao": return <RewardsImpactPage {...pageProps} />;
+      default: return <ExecutiveOverviewPage {...pageProps} />;
+    }
+  };
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-6">
-      <PageHeader
-        icon={LayoutDashboard}
-        title="Dashboard"
-        description="Visão geral do módulo de Premiações"
-      />
-
-      {/* KPIs */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <MetricCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            description={stat.description}
-            icon={stat.icon}
-            trend={stat.trend}
+    <div className="mx-auto w-full max-w-[1800px] space-y-[18px]">
+      <DashboardHeader
+        competencia={dash.filters.competencia}
+        lastUpdated={dash.lastUpdated}
+        actions={
+          <>
+            <ViewModeToggle value={dash.viewMode} onChange={dash.setViewMode} />
+            <Button variant="outline" size="sm" className="h-8" onClick={dash.refetch} disabled={dash.loading}>
+              <RefreshCw className={`mr-1.5 h-4 w-4 ${dash.loading ? "animate-spin" : ""}`} /> Atualizar
+            </Button>
+            <Button variant="outline" size="sm" className="h-8" disabled title="Exportação do painel em breve">
+              <Download className="mr-1.5 h-4 w-4" /> Exportar
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <AnalyticsNavigation active={view} onChange={setView} />
+          <AnalyticsFilterBar
+            filters={dash.filters}
+            options={dash.options}
+            onChange={dash.setFilters}
+            onReset={dash.resetFilters}
           />
-        ))}
-      </div>
+        </div>
+      </DashboardHeader>
 
-      {/* Conteúdo */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SectionCard title="Atividades Recentes" description="Últimas movimentações no sistema">
-          <div className="space-y-2">
-            {recentActivities.map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-start justify-between gap-3 rounded-lg border border-transparent p-3 transition-colors hover:border-border/60 hover:bg-muted/50"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{activity.action}</p>
-                  <p className="truncate text-sm text-muted-foreground">{activity.description}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{activity.time}</p>
-                </div>
-                <StatusBadge variant={activity.status}>{activity.label}</StatusBadge>
-              </div>
-            ))}
+      {!dash.hasData ? (
+        <DashboardEmptyState onRetry={dash.refetch} />
+      ) : (
+        <>
+          <div key={view} className="animate-in fade-in slide-in-from-right-2 duration-200 motion-reduce:animate-none">
+            {renderPage()}
           </div>
-        </SectionCard>
+          <AnalyticsFooterNavigation active={view} onChange={setView} />
+        </>
+      )}
 
-        <SectionCard title="Resumo por Setor" description="Performance dos setores no mês atual">
-          <div className="space-y-4">
-            {setores.map((item, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{item.setor}</p>
-                    <p className="text-xs text-muted-foreground">{item.funcionarios} funcionários</p>
-                  </div>
-                  <p className="text-lg font-bold text-foreground">
-                    {item.meta}
-                    <span className="text-sm font-medium text-muted-foreground">%</span>
-                  </p>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={`h-full rounded-full ${metaTone(item.meta)}`}
-                    style={{ width: `${Math.min(item.meta, 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+      <AnalyticsDrawer data={drawer} onClose={() => setDrawer(null)} />
+
+      <Sheet open={showAllAttention} onOpenChange={setShowAllAttention}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Central de Atenção — todas as situações</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <AttentionCenter items={dash.attention} />
           </div>
-        </SectionCard>
-      </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

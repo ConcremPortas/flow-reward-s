@@ -9,6 +9,9 @@ export interface ConfiguracaoKits {
   incremento_faixa: number;
   bonus_base: number;
   bonus_por_faixa: number;
+  // Coluna real do schema (concremrh_configuracoes_kits.max_faixas). Armazenada,
+  // mas NÃO aplicada pelo motor atual (calcularComissao não impõe teto de faixas).
+  max_faixas?: number | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;

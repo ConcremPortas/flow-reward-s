@@ -10,6 +10,10 @@ export interface Usuario {
   secoes: SectionKey[];
   ativo: boolean;
   created_at: string;
+  updated_at?: string | null;
+  // Usado apenas para DERIVAR o estado de autenticação (Supabase/legado/migração).
+  // NÃO é secreto e NUNCA é exibido cru na interface. senha_hash jamais é lido.
+  auth_user_id?: string | null;
 }
 
 export function useUsuarios() {
@@ -20,7 +24,7 @@ export function useUsuarios() {
     setLoading(true);
     const { data } = await supabase
       .from('concremrh_usuarios')
-      .select('id, email, nome, perfil, secoes, ativo, created_at')
+      .select('id, email, nome, perfil, secoes, ativo, created_at, updated_at, auth_user_id')
       .order('nome');
     setUsuarios((data ?? []) as unknown as Usuario[]);
     setLoading(false);

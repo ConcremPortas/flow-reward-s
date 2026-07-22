@@ -121,6 +121,16 @@ export default {
           from: { transform: "scale(1.05)" },
           to: { transform: "scale(1.12)" },
         },
+        // Linha luminosa da divisão esquerda/direita: sobe e desce suavemente.
+        "login-line-drift": {
+          "0%, 100%": { transform: "translateY(-4%)", opacity: "0.65" },
+          "50%": { transform: "translateY(4%)", opacity: "1" },
+        },
+        // Barra verde sob o título: desliza dentro da largura da frase (ida e volta).
+        "login-underline": {
+          from: { left: "0" },
+          to: { left: "calc(100% - 3rem)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -132,6 +142,8 @@ export default {
         "slide-in-right": "slide-in-right 0.7s ease-out both",
         "glow-pulse": "glow-pulse 3.5s ease-in-out infinite",
         "slow-zoom": "slow-zoom 20s ease-in-out infinite alternate",
+        "login-line-drift": "login-line-drift 9s ease-in-out infinite",
+        "login-underline": "login-underline 3.4s ease-in-out infinite alternate",
       },
     },
   },

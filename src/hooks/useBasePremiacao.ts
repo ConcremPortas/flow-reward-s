@@ -69,6 +69,31 @@ export const useBasePremiacao = () => {
     }
   };
 
+  const updateBase = async (id: string, base: Partial<Omit<BasePremiacao, 'id' | 'created_at' | 'updated_at'>>) => {
+    try {
+      const { error } = await supabase
+        .from('concremrh_base_premiacao')
+        .update(base)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Base de premiação atualizada com sucesso",
+      });
+
+      fetchBases();
+    } catch (error) {
+      console.error('Erro ao atualizar base de premiação:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a base de premiação",
+        variant: "destructive",
+      });
+    }
+  };
+
   const deleteBase = async (id: string) => {
     try {
       const { error } = await supabase
@@ -102,6 +127,7 @@ export const useBasePremiacao = () => {
     bases,
     loading,
     createBase,
+    updateBase,
     deleteBase,
     refetch: fetchBases
   };

@@ -211,6 +211,58 @@ export const useIndicadoresSetor = () => {
     }
   };
 
+  /**
+   * Salva a apuração mensal de indicadores de vários setores de uma vez,
+   * preservando o formato esperado pela premiação (uma linha por
+   * setor+competência com os 15 campos: meta/realizado/percentual dos 5
+   * indicadores; competência como 'YYYY-MM-01'; percentual como FRAÇÃO). Atualiza
+   * registros existentes (por id) e insere os novos. Em falha, informa quais
+   * setores não foram salvos (falha parcial) — as alterações são mantidas.
+   */
+  const saveApuracaoIndicadores = async (params: {
+    updates: { id: string; setorId: string; values: Record<string, number | null> }[];
+    inserts: { setor_id: string; competencia: string; values: Record<string, number | null> }[];
+  }): Promise<{ ok: boolean; updated: number; inserted: number; failedSetorIds: string[] } | null> => {
+    const { updates, inserts } = params;
+    const failedSetorIds: string[] = [];
+    let updated = 0;
+    let inserted = 0;
+    try {
+      await Promise.all(updates.map(async (u) => {
+        const { error } = await supabase
+          .from('concremrh_indicadores_setor')
+          .update(u.values)
+          .eq('id', u.id);
+        if (error) failedSetorIds.push(u.setorId);
+        else updated += 1;
+      }));
+
+      if (inserts.length > 0) {
+        const rows = inserts.map((i) => ({ setor_id: i.setor_id, competencia: i.competencia, ...i.values }));
+        const { error } = await supabase.from('concremrh_indicadores_setor').insert(rows);
+        if (error) inserts.forEach((r) => failedSetorIds.push(r.setor_id));
+        else inserted = inserts.length;
+      }
+
+      const ok = failedSetorIds.length === 0;
+      if (ok) {
+        toast({ title: 'Apuração salva', description: `${updated} atualizado(s), ${inserted} inserido(s)` });
+      } else {
+        toast({
+          title: 'Falha parcial ao salvar',
+          description: `${failedSetorIds.length} setor(es) não foram salvos. As alterações foram mantidas.`,
+          variant: 'destructive',
+        });
+      }
+      await fetchIndicadores();
+      return { ok, updated, inserted, failedSetorIds };
+    } catch (error) {
+      console.error('Erro ao salvar apuração de indicadores:', error);
+      toast({ title: 'Erro', description: 'Não foi possível salvar a apuração', variant: 'destructive' });
+      return null;
+    }
+  };
+
   const deleteIndicador = async (id: string) => {
     try {
       const { error } = await supabase
@@ -246,6 +298,7 @@ export const useIndicadoresSetor = () => {
     createIndicador,
     createIndicadoresBulk,
     updateIndicador,
+    saveApuracaoIndicadores,
     deleteIndicador,
     refetch: fetchIndicadores
   };

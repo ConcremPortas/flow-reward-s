@@ -68,6 +68,31 @@ export const useCategorias = () => {
     }
   };
 
+  const updateCategoria = async (id: string, categoria: Partial<Omit<Categoria, 'id' | 'created_at' | 'updated_at'>>) => {
+    try {
+      const { error } = await supabase
+        .from('concremrh_categorias')
+        .update(categoria)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Categoria atualizada com sucesso",
+      });
+
+      fetchCategorias();
+    } catch (error) {
+      console.error('Erro ao atualizar categoria:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a categoria",
+        variant: "destructive",
+      });
+    }
+  };
+
   const deleteCategoria = async (id: string) => {
     try {
       const { error } = await supabase
@@ -101,6 +126,7 @@ export const useCategorias = () => {
     categorias,
     loading,
     createCategoria,
+    updateCategoria,
     deleteCategoria,
     refetch: fetchCategorias
   };

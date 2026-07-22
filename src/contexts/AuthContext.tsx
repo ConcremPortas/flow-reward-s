@@ -1,19 +1,21 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { saveCustomSession, loadCustomSession, clearCustomSession, purgeLegacyAuthStorage } from './authStorage';
 
 export type UserPerfil = 'admin' | 'rh' | 'sesmt' | 'producao' | 'custom';
 
-export type SectionKey = 'dashboard' | 'rh' | 'sesmt' | 'producao' | 'premiacoes' | 'cadastros' | 'cargos_salarios';
+export type SectionKey = 'dashboard' | 'rh' | 'sesmt' | 'producao' | 'premiacoes' | 'cadastros' | 'cargos_salarios' | 'estoque';
 
 export const ALL_SECTIONS: SectionKey[] = [
-  'dashboard', 'rh', 'sesmt', 'producao', 'premiacoes', 'cadastros', 'cargos_salarios',
+  'dashboard', 'rh', 'sesmt', 'producao', 'premiacoes', 'cadastros', 'cargos_salarios', 'estoque',
 ];
 
 // Quais seções dão acesso a cada módulo do Hub
 export const HUB_MODULE_SECTIONS: Record<string, SectionKey[]> = {
-  premiacoes:      ['rh', 'sesmt', 'producao', 'premiacoes'],
-  cargos_salarios: ['cargos_salarios'],
-  indicadores_rh:  ['dashboard', 'rh'],
+  premiacoes:       ['rh', 'sesmt', 'producao', 'premiacoes'],
+  cargos_salarios:  ['cargos_salarios'],
+  controle_estoque: ['estoque'],
+  indicadores_rh:   ['dashboard', 'rh'],
 };
 
 export interface UserProfile {
@@ -32,11 +34,12 @@ export const DEFAULT_ROUTE: Record<UserPerfil, string> = {
   custom:   '/premiacoes/dss',
 };
 
-const SESSION_KEY = 'concremrh_session';
-
 // Feature flag da migração de autenticação (Fase 2 — SECURITY_AUTH_MIGRATION_PLAN_V2.md).
-// 'custom' (padrão) = comportamento atual (RPC concremrh_verify_login + localStorage).
-// 'supabase' = Supabase Auth (signInWithPassword + bridge de senha + get_my_profile).
+// Em AMBOS os modos o login passa pela Edge Function `turnstile-login` (gate forte
+// do Cloudflare Turnstile validado no servidor com a secret key).
+// A SESSÃO é por aba (sessionStorage — ver ./authStorage): custom = perfil; supabase = tokens.
+// 'custom' (padrão) = a função valida credenciais (service role) e devolve o perfil.
+// 'supabase' = a função valida só o captcha; a auth segue por signInWithPassword + bridge + get_my_profile.
 // Ausente/qualquer outro valor => 'custom' (não quebra o app enquanto a infra da Fase 2 não é aplicada).
 export type AuthMode = 'custom' | 'supabase';
 export const AUTH_MODE: AuthMode =
@@ -81,7 +84,7 @@ async function fetchSupabaseProfile(): Promise<UserProfile | null> {
 interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null; profile?: UserProfile | null }>;
+  signIn: (email: string, password: string, captchaToken: string) => Promise<{ error: string | null; profile?: UserProfile | null }>;
   signOut: () => void;
   canAccess: (section: SectionKey) => boolean;
   canAccessHub: (appCode: string) => boolean;
@@ -94,8 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Migração para sessão por aba: remove sessões de auth LEGADAS do localStorage
+    // (idempotente e limitada — não toca em preferências). Após esta versão, quem
+    // tinha sessão antiga precisa logar de novo — comportamento esperado.
+    purgeLegacyAuthStorage();
+
     if (AUTH_MODE === 'supabase') {
-      // Modo Supabase Auth: restaura a sessão gerenciada e escuta mudanças.
+      // Modo Supabase Auth: restaura a sessão gerenciada (sessionStorage) e escuta mudanças.
       let mounted = true;
 
       // Rede de segurança: o loading NUNCA pode ficar preso (hang de rede/deadlock).
@@ -160,48 +168,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    // Modo custom (padrão) — comportamento atual preservado.
+    // Modo custom — restaura o perfil SOMENTE da sessão desta aba (sessionStorage).
     try {
-      const stored = localStorage.getItem(SESSION_KEY);
+      const stored = loadCustomSession();
       if (stored) setProfile(JSON.parse(stored));
     } catch {
-      localStorage.removeItem(SESSION_KEY);
+      clearCustomSession();
     }
     setLoading(false);
   }, []);
 
-  // --- Modo custom (padrão): RPC concremrh_verify_login + localStorage. Inalterado. ---
-  const signInCustom = async (email: string, password: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc('concremrh_verify_login', {
-      p_email: email,
-      p_password: password,
+  // --- Modo custom (padrão): gate FORTE via Edge Function turnstile-login. ---
+  // O cliente NÃO chama mais concremrh_verify_login direto: a função valida o
+  // token do Turnstile (secret no servidor) e, se ok, as credenciais (service
+  // role), devolvendo o perfil. Sessão por aba (sessionStorage).
+  const signInCustom = async (email: string, password: string, captchaToken: string) => {
+    const { data, error } = await supabase.functions.invoke('turnstile-login', {
+      body: { email, password, token: captchaToken },
     });
 
     if (error) {
-      console.error('RPC error:', error);
-      return { error: `Erro: ${error.message}` };
+      console.error('turnstile-login invoke error:', error);
+      return { error: 'Não foi possível validar o acesso. Tente novamente.' };
     }
 
-    const result = data as { ok: boolean; id?: string; email?: string; nome?: string; perfil?: string; secoes?: string[] };
-
-    if (!result?.ok) return { error: 'Email ou senha inválidos.' };
+    const result = data as { ok: boolean; error?: string; profile?: { id: string; email: string; nome?: string | null; perfil?: string; secoes?: string[] } };
+    if (!result?.ok || !result.profile) return { error: result?.error ?? 'Email ou senha inválidos.' };
 
     const prof: UserProfile = {
-      id:     result.id!,
-      email:  result.email!,
-      nome:   result.nome ?? null,
-      perfil: result.perfil as UserPerfil,
-      secoes: (result.secoes ?? []) as SectionKey[],
+      id:     result.profile.id,
+      email:  result.profile.email,
+      nome:   result.profile.nome ?? null,
+      perfil: result.profile.perfil as UserPerfil,
+      secoes: (result.profile.secoes ?? []) as SectionKey[],
     };
 
     setProfile(prof);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(prof));
+    saveCustomSession(JSON.stringify(prof));
     return { error: null, profile: prof };
   };
 
-  // --- Modo supabase: signInWithPassword + bridge de senha (1º login) + get_my_profile. ---
-  const signInSupabase = async (email: string, password: string) => {
+  // --- Modo supabase: gate do Turnstile (server-side) + signInWithPassword + bridge + get_my_profile. ---
+  const signInSupabase = async (email: string, password: string, captchaToken: string) => {
+    // Gate FORTE: valida o Turnstile no servidor antes de autenticar.
+    const { data: gate, error: gateErr } = await supabase.functions.invoke('turnstile-login', {
+      body: { token: captchaToken },
+    });
+    if (gateErr || !(gate as { ok?: boolean } | null)?.ok) {
+      return { error: 'Falha na verificação de segurança. Tente novamente.' };
+    }
+
     let { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
@@ -225,18 +241,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, profile: prof };
   };
 
-  const signIn = (email: string, password: string) =>
-    AUTH_MODE === 'supabase' ? signInSupabase(email, password) : signInCustom(email, password);
+  const signIn = (email: string, password: string, captchaToken: string) =>
+    AUTH_MODE === 'supabase' ? signInSupabase(email, password, captchaToken) : signInCustom(email, password, captchaToken);
 
   const signOut = () => {
     if (AUTH_MODE === 'supabase') {
-      // A sessão é gerenciada pelo Supabase; onAuthStateChange também limpa o profile.
-      void supabase.auth.signOut();
+      // scope 'local': encerra SOMENTE a sessão desta aba (limpa o sessionStorage),
+      // sem revogar o refresh token das outras sessões/abas/dispositivos do usuário.
+      // onAuthStateChange também zera o profile.
+      void supabase.auth.signOut({ scope: 'local' });
       setProfile(null);
+      setLoading(false);
       return;
     }
     setProfile(null);
-    localStorage.removeItem(SESSION_KEY);
+    clearCustomSession();
+    setLoading(false);
   };
 
   const canAccess = (section: SectionKey): boolean => {

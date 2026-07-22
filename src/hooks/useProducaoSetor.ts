@@ -106,6 +106,58 @@ export const useProducaoSetor = () => {
     }
   };
 
+  /**
+   * Salva a apuração mensal de vários setores de uma vez, preservando o formato
+   * de dados esperado pela premiação (setor_id, data_producao 'YYYY-MM-01',
+   * meta_diaria, producao_realizada, unidade_medida). Atualiza registros
+   * existentes (por id) e insere os novos, em lote. Retorna a contagem por
+   * operação; em falha, informa quais setores não foram salvos (falha parcial).
+   */
+  const saveApuracao = async (params: {
+    updates: { id: string; meta_diaria: number; producao_realizada: number }[];
+    inserts: { setor_id: string; data_producao: string; meta_diaria: number; producao_realizada: number; unidade_medida: string }[];
+  }): Promise<{ ok: boolean; updated: number; inserted: number; failedSetorIds: string[] } | null> => {
+    const { updates, inserts } = params;
+    const failedSetorIds: string[] = [];
+    let updated = 0;
+    let inserted = 0;
+    try {
+      // Updates: um por registro existente (Supabase não faz update em lote com valores distintos).
+      await Promise.all(updates.map(async (u) => {
+        const { error } = await supabase
+          .from('concremrh_producao_setor')
+          .update({ meta_diaria: u.meta_diaria, producao_realizada: u.producao_realizada })
+          .eq('id', u.id);
+        if (error) failedSetorIds.push(u.id);
+        else updated += 1;
+      }));
+
+      // Inserts: em uma única chamada em lote.
+      if (inserts.length > 0) {
+        const { error } = await supabase.from('concremrh_producao_setor').insert(inserts);
+        if (error) inserts.forEach((r) => failedSetorIds.push(r.setor_id));
+        else inserted = inserts.length;
+      }
+
+      const ok = failedSetorIds.length === 0;
+      if (ok) {
+        toast({ title: 'Apuração salva', description: `${updated} atualizado(s), ${inserted} inserido(s)` });
+      } else {
+        toast({
+          title: 'Falha parcial ao salvar',
+          description: `${failedSetorIds.length} setor(es) não foram salvos. As alterações foram mantidas.`,
+          variant: 'destructive',
+        });
+      }
+      await fetchRegistros();
+      return { ok, updated, inserted, failedSetorIds };
+    } catch (error) {
+      console.error('Erro ao salvar apuração de produção:', error);
+      toast({ title: 'Erro', description: 'Não foi possível salvar a apuração', variant: 'destructive' });
+      return null;
+    }
+  };
+
   const deleteRegistro = async (id: string) => {
     try {
       const { error } = await supabase
@@ -141,6 +193,7 @@ export const useProducaoSetor = () => {
     createRegistro,
     updateRegistro,
     deleteRegistro,
+    saveApuracao,
     refetch: fetchRegistros
   };
 };

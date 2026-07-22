@@ -1,7 +1,6 @@
 import { ReactNode, createContext, useContext, useState } from "react";
-import { Sidebar } from "./Sidebar";
-import { CargosSalariosSidebar } from "./CargosSalariosSidebar";
-import { useLocation } from "react-router-dom";
+import { AppSidebar } from "./AppSidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -24,17 +23,18 @@ interface MainLayoutProps {
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const location = useLocation();
-  
-  // Determinar qual sidebar usar baseado na rota
-  const isCargosSalariosRoute = location.pathname.startsWith('/cargos-salarios');
-  const SidebarComponent = isCargosSalariosRoute ? CargosSalariosSidebar : Sidebar;
+  const isMobile = useIsMobile();
+
+  // Uma única sidebar global (AppSidebar) para todos os módulos; a árvore de
+  // navegação é resolvida internamente pela rota. O deslocamento do conteúdo é
+  // o mesmo em toda a aplicação (não há margem específica por módulo).
+  const marginClass = isMobile ? 'ml-0' : isCollapsed ? 'ml-[76px]' : 'ml-60';
 
   return (
     <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
       <div className="min-h-screen bg-background w-full flex">
-        <SidebarComponent />
-        <main className={`flex-1 p-6 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+        <AppSidebar />
+        <main className={`min-w-0 flex-1 p-4 transition-all duration-300 sm:p-6 ${marginClass}`}>
           {children}
         </main>
       </div>

@@ -2,19 +2,15 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Briefcase, DollarSign, Target, CheckSquare, FileText, Award, AlertCircle } from 'lucide-react';
 import type { Cargo } from '@/hooks/useCargos';
+import { formatCurrencyBRL } from '@/lib/formatters';
 
 interface CargoDetailsProps {
   cargo: Cargo;
 }
 
 export function CargoDetails({ cargo }: CargoDetailsProps) {
-  const formatCurrency = (value?: number) => {
-    if (!value) return 'Não definido';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  const formatCurrency = (value?: number) =>
+    value ? formatCurrencyBRL(value) : 'Não definido';
 
   return (
     <div className="space-y-6">
