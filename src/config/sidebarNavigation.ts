@@ -73,9 +73,11 @@ export const navigationByModule: Record<SidebarModuleId, SidebarNavItem[]> = {
     },
   ],
   'controle-estoque': [
-    { id: 'ce-visao-geral', title: 'DASHBOARD', href: '/controle-estoque', icon: LayoutDashboard, exactActive: true },
+    // Todos os itens exigem a seção 'estoque' (admin bypassa via canAccess). Sem a
+    // seção, filterNavigation esconde o módulo inteiro — espelha o gate da rota.
+    { id: 'ce-visao-geral', title: 'DASHBOARD', href: '/controle-estoque', icon: LayoutDashboard, section: 'estoque', exactActive: true },
     {
-      id: 'ce-grp-estoque', title: 'ESTOQUE', icon: Boxes,
+      id: 'ce-grp-estoque', title: 'ESTOQUE', icon: Boxes, section: 'estoque',
       children: [
         { id: 'ce-fardamentos', title: 'Fardamentos', href: '/controle-estoque/fardamentos', icon: Shirt },
         { id: 'ce-alertas', title: 'Alertas', href: '/controle-estoque/alertas', icon: BellRing },
@@ -83,7 +85,7 @@ export const navigationByModule: Record<SidebarModuleId, SidebarNavItem[]> = {
       ],
     },
     {
-      id: 'ce-grp-operacoes', title: 'OPERAÇÕES', icon: Truck,
+      id: 'ce-grp-operacoes', title: 'OPERAÇÕES', icon: Truck, section: 'estoque',
       children: [
         { id: 'ce-entradas', title: 'Entradas', href: '/controle-estoque/entradas', icon: PackagePlus },
         { id: 'ce-entregas', title: 'Entregas', href: '/controle-estoque/entregas', icon: ClipboardCheck },
@@ -92,13 +94,13 @@ export const navigationByModule: Record<SidebarModuleId, SidebarNavItem[]> = {
       ],
     },
     {
-      id: 'ce-grp-historico', title: 'HISTÓRICO', icon: History,
+      id: 'ce-grp-historico', title: 'HISTÓRICO', icon: History, section: 'estoque',
       children: [
         { id: 'ce-movimentacoes', title: 'Movimentações', href: '/controle-estoque/movimentacoes', icon: ArrowLeftRight },
         { id: 'ce-estornos', title: 'Estornos', href: '/controle-estoque/estornos', icon: Undo2 },
       ],
     },
-    { id: 'ce-cadastros', title: 'CADASTROS', href: '/controle-estoque/cadastros', icon: Settings },
+    { id: 'ce-cadastros', title: 'CADASTROS', href: '/controle-estoque/cadastros', icon: Settings, section: 'estoque' },
   ],
 };
 

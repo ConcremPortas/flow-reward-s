@@ -78,4 +78,22 @@ describe('filterNavigation — reflete permissões existentes', () => {
     expect(byId(nav)).toEqual(['cs-dashboard', 'cs-cargos', 'cs-func', 'cs-cadastros']);
     expect(nav.find((i) => i.id === 'cs-cadastros')?.children?.[0].href).toBe('/cargos-salarios/cadastros/setores');
   });
+
+  describe('controle-estoque — módulo gateado pela seção estoque', () => {
+    it('sem a seção estoque: módulo inteiro oculto', () => {
+      expect(filterNavigation(navigationByModule['controle-estoque'], ctxNone)).toHaveLength(0);
+      expect(filterNavigation(navigationByModule['controle-estoque'], ctxSome(['rh']))).toHaveLength(0);
+    });
+    it('com a seção estoque: mostra todos os grupos/itens', () => {
+      const nav = filterNavigation(navigationByModule['controle-estoque'], ctxSome(['estoque']));
+      expect(byId(nav)).toEqual(['ce-visao-geral', 'ce-grp-estoque', 'ce-grp-operacoes', 'ce-grp-historico', 'ce-cadastros']);
+      expect(nav.find((i) => i.id === 'ce-grp-operacoes')?.children?.map((c) => c.id))
+        .toEqual(['ce-entradas', 'ce-entregas', 'ce-devolucoes', 'ce-troca']);
+    });
+    it('admin vê tudo', () => {
+      const nav = filterNavigation(navigationByModule['controle-estoque'], ctxAdmin);
+      expect(byId(nav)).toContain('ce-cadastros');
+      expect(byId(nav)).toContain('ce-grp-estoque');
+    });
+  });
 });

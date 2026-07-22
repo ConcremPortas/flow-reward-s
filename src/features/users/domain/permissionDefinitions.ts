@@ -28,9 +28,10 @@ export const PERMISSION_DEFS: PermissionDef[] = [
   { key: 'rh', label: 'RH', description: 'Recursos Humanos e dados de funcionários.', group: 'operacao', sensitivity: 'normal', order: 2 },
   { key: 'sesmt', label: 'SESMT', description: 'Segurança do trabalho (DSS, EPI, ocorrências).', group: 'operacao', sensitivity: 'normal', order: 3 },
   { key: 'producao', label: 'Produção', description: 'Produção por setor e indicadores setoriais.', group: 'operacao', sensitivity: 'normal', order: 4 },
-  { key: 'premiacoes', label: 'Premiações', description: 'Processamento e relatórios de premiação.', group: 'operacao', sensitivity: 'sensivel', order: 5, route: '/premiacoes' },
-  { key: 'cadastros', label: 'Cadastros', description: 'Cadastros mestres, incluindo Usuários e Acessos.', group: 'administracao', sensitivity: 'sensivel', order: 6, route: '/premiacoes/cadastros' },
-  { key: 'cargos_salarios', label: 'Cargos e Salários', description: 'Módulo de cargos e salários (Cargos).', group: 'administracao', sensitivity: 'sensivel', order: 7, route: '/cargos-salarios' },
+  { key: 'estoque', label: 'Controle de Estoque', description: 'Fardamentos, entradas, entregas, devoluções e movimentações.', group: 'operacao', sensitivity: 'sensivel', order: 5, route: '/controle-estoque' },
+  { key: 'premiacoes', label: 'Premiações', description: 'Processamento e relatórios de premiação.', group: 'operacao', sensitivity: 'sensivel', order: 6, route: '/premiacoes' },
+  { key: 'cadastros', label: 'Cadastros', description: 'Cadastros mestres, incluindo Usuários e Acessos.', group: 'administracao', sensitivity: 'sensivel', order: 7, route: '/premiacoes/cadastros' },
+  { key: 'cargos_salarios', label: 'Cargos e Salários', description: 'Módulo de cargos e salários (Cargos).', group: 'administracao', sensitivity: 'sensivel', order: 8, route: '/cargos-salarios' },
 ];
 
 const BY_KEY = new Map<string, PermissionDef>(PERMISSION_DEFS.map(d => [d.key, d]));

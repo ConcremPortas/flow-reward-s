@@ -198,59 +198,59 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Controle de Estoque (Gestão de Fardamentos) - Admin/RH */}
+            {/* Controle de Estoque — acesso pela SEÇÃO 'estoque' (admin bypassa). Concessão via Usuários e Acessos. */}
             <Route path="/controle-estoque" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/fardamentos" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/entradas" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/entregas" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/devolucoes" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/troca" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/ajuste" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/movimentacoes" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/alertas" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/estornos" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
             <Route path="/controle-estoque/cadastros" element={
-              <ProtectedRoute allowedPerfis={['admin', 'rh']}>
+              <ProtectedRoute section="estoque">
                 <MainLayout><ControleEstoque /></MainLayout>
               </ProtectedRoute>
             } />
