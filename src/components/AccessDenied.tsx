@@ -20,7 +20,7 @@ export function AccessDenied({ area = 'esta área' }: { area?: string }) {
         </span>
         <h1 className="mt-5 text-xl font-bold text-foreground">Acesso não autorizado</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Seu usuário não possui permissão para acessar {area} do Controle de Estoque.
+          Seu usuário não possui permissão para acessar {area} do Controle de Farda.
           Solicite acesso ao administrador em Usuários e Acessos.
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">

@@ -64,7 +64,7 @@ export function VisaoGeralView() {
 
   return (
     <div className="mx-auto w-full max-w-[1800px] space-y-5">
-      <PageHeader icon={LayoutDashboard} title="Controle de Estoque" description="Visão consolidada de saldos, movimentações e pontos de atenção." actions={acoes} />
+      <PageHeader icon={LayoutDashboard} title="Controle de Farda" description="Visão consolidada de saldos, movimentações e pontos de atenção." actions={acoes} />
 
       {/* Linha contextual */}
       <div className="-mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">

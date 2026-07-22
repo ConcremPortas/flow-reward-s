@@ -15,7 +15,7 @@
 insert into public.concremrh_hr_applications (code, name, description, icon, color, route, is_active, display_order)
 values (
   'controle_estoque',
-  'Controle de Estoque',
+  'Controle de Farda',
   'Gestão de fardamentos, entradas, entregas e devoluções.',
   'Boxes',
   null,

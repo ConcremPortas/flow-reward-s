@@ -5,10 +5,10 @@ import {
 } from './permissionDefinitions';
 
 describe('permissionDefinitions — registro central de seções', () => {
-  it('inclui a seção estoque (Controle de Estoque) sincronizada com o domínio', () => {
+  it('inclui a seção estoque (Controle de Farda) sincronizada com o domínio', () => {
     const def = permissionDef('estoque');
     expect(def).toBeDefined();
-    expect(def?.label).toBe('Controle de Estoque');
+    expect(def?.label).toBe('Controle de Farda');
     expect(def?.group).toBe('operacao');
     expect(def?.sensitivity).toBe('sensivel');
     expect(def?.route).toBe('/controle-estoque');
@@ -16,7 +16,7 @@ describe('permissionDefinitions — registro central de seções', () => {
 
   it('estoque é seção conhecida e tem rótulo amigável (não a chave crua)', () => {
     expect(isKnownSection('estoque')).toBe(true);
-    expect(sectionLabel('estoque')).toBe('Controle de Estoque');
+    expect(sectionLabel('estoque')).toBe('Controle de Farda');
   });
 
   it('estoque aparece após Produção e antes de Premiações', () => {
